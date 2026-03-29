@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
@@ -23,7 +24,10 @@ import {
   CheckCircle,
   MessageSquare,
   Calendar,
-  Home
+  Home,
+  Shield,
+  Star,
+  HeartHandshake
 } from 'lucide-react'
 
 const contactReasons = [
@@ -31,6 +35,12 @@ const contactReasons = [
   { value: 'property', label: 'Property Information', icon: Home },
   { value: 'partnership', label: 'Partnership Opportunity', icon: MessageSquare },
   { value: 'other', label: 'Other', icon: Mail },
+]
+
+const trustFeatures = [
+  { icon: Clock, title: 'Response within 2 hours', description: 'During business hours' },
+  { icon: Shield, title: 'No obligations', description: 'Free consultation' },
+  { icon: Star, title: 'Expert advice', description: '6+ years experience' }
 ]
 
 export default function ContactPage() {
@@ -45,7 +55,6 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulate form submission
     setSubmitted(true)
   }
 
@@ -56,15 +65,30 @@ export default function ContactPage() {
         {/* Hero Section */}
         <section className="relative py-20 bg-gradient-to-b from-accent/30 to-background">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-3xl mx-auto text-center"
+            >
+              <p className="luxury-subheading text-gold mb-4">We&apos;re Here to Help</p>
               <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-6 text-balance">
-                Get in Touch
+                Let&apos;s Plan Your Perfect Stay
               </h1>
-              <p className="text-lg text-muted-foreground text-pretty">
-                Our dedicated team is here to help you find the perfect property 
-                and create an unforgettable Marrakech experience.
+              <p className="text-lg text-muted-foreground text-pretty mb-8">
+                Our dedicated concierge team is here to answer your questions 
+                and help you discover the perfect property for your Marrakech experience.
               </p>
-            </div>
+              
+              {/* Trust indicators */}
+              <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
+                {trustFeatures.map((feature) => (
+                  <div key={feature.title} className="flex items-center gap-2 text-sm">
+                    <feature.icon className="w-4 h-4 text-gold" />
+                    <span className="text-muted-foreground">{feature.title}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </section>
 
@@ -73,13 +97,17 @@ export default function ContactPage() {
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
               {/* Contact Information */}
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+              >
                 <h2 className="font-serif text-2xl md:text-3xl mb-8">Contact Information</h2>
                 
                 <div className="space-y-6 mb-12">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-5 h-5 text-primary" />
+                    <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5 text-gold" />
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Office Address</h3>
@@ -92,34 +120,34 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Phone className="w-5 h-5 text-primary" />
+                    <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-5 h-5 text-gold" />
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Phone</h3>
                       <p className="text-muted-foreground">
-                        +212 5 24 XX XX XX<br />
-                        +212 6 XX XX XX XX (WhatsApp)
+                        <a href="tel:+212524000000" className="hover:text-gold transition-colors">+212 5 24 XX XX XX</a><br />
+                        <a href="tel:+212600000000" className="hover:text-gold transition-colors">+212 6 XX XX XX XX (WhatsApp)</a>
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-5 h-5 text-primary" />
+                    <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-5 h-5 text-gold" />
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Email</h3>
                       <p className="text-muted-foreground">
-                        info@marrakechriadsrent.com<br />
-                        bookings@marrakechriadsrent.com
+                        <a href="mailto:info@marrakechriadsrent.com" className="hover:text-gold transition-colors">info@marrakechriadsrent.com</a><br />
+                        <a href="mailto:bookings@marrakechriadsrent.com" className="hover:text-gold transition-colors">bookings@marrakechriadsrent.com</a>
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-5 h-5 text-primary" />
+                    <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-5 h-5 text-gold" />
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Office Hours</h3>
@@ -128,45 +156,79 @@ export default function ContactPage() {
                         Saturday: 10:00 AM - 5:00 PM<br />
                         Sunday: By appointment
                       </p>
+                      <p className="text-sm text-gold mt-2">24/7 support for booked guests</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Contact Options */}
                 <div className="bg-card rounded-2xl p-6 border border-border">
-                  <h3 className="font-semibold mb-4">Quick Response Channels</h3>
+                  <h3 className="font-semibold mb-4">Prefer a Quick Call?</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Speak directly with our concierge team for immediate assistance.
+                  </p>
                   <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                      <Phone className="w-5 h-5" />
-                      <span className="text-sm">Call Us</span>
-                    </Button>
-                    <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                      <MessageSquare className="w-5 h-5" />
-                      <span className="text-sm">WhatsApp</span>
-                    </Button>
+                    <a href="tel:+212524000000">
+                      <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:border-gold hover:text-gold">
+                        <Phone className="w-5 h-5" />
+                        <span className="text-sm">Call Us</span>
+                      </Button>
+                    </a>
+                    <a href="https://wa.me/212600000000" target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:border-gold hover:text-gold">
+                        <MessageSquare className="w-5 h-5" />
+                        <span className="text-sm">WhatsApp</span>
+                      </Button>
+                    </a>
                   </div>
                 </div>
-              </div>
+
+                {/* Reassurance */}
+                <div className="mt-6 p-4 bg-gold/10 border border-gold/20 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <HeartHandshake className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Personal Service Guarantee</p>
+                      <p className="text-xs text-muted-foreground">Every inquiry receives personal attention from our experienced team - no automated responses.</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
 
               {/* Contact Form */}
-              <div className="bg-card rounded-2xl p-8 border border-border">
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="bg-card rounded-2xl p-8 border border-border shadow-lg"
+              >
                 {submitted ? (
-                  <div className="text-center py-12">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-12"
+                  >
                     <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                       <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
-                    <h3 className="font-serif text-2xl mb-4">Message Sent!</h3>
-                    <p className="text-muted-foreground mb-8">
-                      Thank you for reaching out. Our team will get back to you within 24 hours.
+                    <h3 className="font-serif text-2xl mb-4">Message Received!</h3>
+                    <p className="text-muted-foreground mb-2">
+                      Thank you for reaching out to us.
                     </p>
-                    <Button onClick={() => setSubmitted(false)}>
+                    <p className="text-sm text-gold mb-8">
+                      Our team will respond within 2 hours during business hours.
+                    </p>
+                    <Button onClick={() => setSubmitted(false)} variant="outline">
                       Send Another Message
                     </Button>
-                  </div>
+                  </motion.div>
                 ) : (
                   <>
-                    <h2 className="font-serif text-2xl mb-6">Send us a Message</h2>
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="mb-6">
+                      <h2 className="font-serif text-2xl mb-2">Send us a Message</h2>
+                      <p className="text-sm text-muted-foreground">Fill out the form below and we&apos;ll get back to you promptly.</p>
+                    </div>
+                    <form onSubmit={handleSubmit} className="space-y-5">
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="name">Full Name *</Label>
@@ -174,6 +236,7 @@ export default function ContactPage() {
                             id="name"
                             placeholder="Your name"
                             required
+                            className="h-12"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           />
@@ -185,6 +248,7 @@ export default function ContactPage() {
                             type="email"
                             placeholder="your@email.com"
                             required
+                            className="h-12"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           />
@@ -198,6 +262,7 @@ export default function ContactPage() {
                             id="phone"
                             type="tel"
                             placeholder="+1 234 567 890"
+                            className="h-12"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           />
@@ -208,7 +273,7 @@ export default function ContactPage() {
                             value={formData.reason}
                             onValueChange={(value) => setFormData({ ...formData, reason: value })}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="h-12">
                               <SelectValue placeholder="Select a reason" />
                             </SelectTrigger>
                             <SelectContent>
@@ -226,7 +291,7 @@ export default function ContactPage() {
                         <Label htmlFor="message">Message *</Label>
                         <Textarea
                           id="message"
-                          placeholder="Tell us about your inquiry..."
+                          placeholder="Tell us about your inquiry, travel dates, or any questions you have..."
                           rows={5}
                           required
                           value={formData.message}
@@ -234,14 +299,18 @@ export default function ContactPage() {
                         />
                       </div>
 
-                      <Button type="submit" size="lg" className="w-full gap-2">
+                      <Button type="submit" size="lg" className="w-full gap-2 bg-gold text-black hover:bg-gold/90">
                         <Send className="w-4 h-4" />
                         Send Message
                       </Button>
+
+                      <p className="text-xs text-center text-muted-foreground">
+                        By submitting, you agree to our privacy policy. We never share your information.
+                      </p>
                     </form>
                   </>
                 )}
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>

@@ -6,13 +6,16 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { 
   Bed, Bath, Users, MapPin, Check, ArrowRight, 
-  Utensils, Car, Sparkles, Mountain, Calendar 
+  Utensils, Car, Sparkles, Mountain, Calendar, Shield,
+  Star, Clock, Phone, HeartHandshake, Award
 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { ImageGallery } from '@/components/properties/image-gallery'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
 import { Button } from '@/components/ui/button'
+import { MiniTestimonial } from '@/components/ui/social-proof'
 import { mockProperties, mockServices, mockAddons } from '@/lib/data'
 import { FEATURE_LABELS, type PropertyFeatures } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -23,6 +26,22 @@ const serviceIcons = {
   excursion: Mountain,
   spa: Sparkles,
   transport: Car,
+}
+
+// Property-specific storytelling based on type
+const propertyStories = {
+  riad: {
+    intro: 'Step through ancient carved doors into a world of tranquility',
+    atmosphere: 'Traditional Moroccan riads are architectural treasures - intimate courtyard homes where fountain melodies, intricate zellige tilework, and the scent of orange blossoms create an atmosphere of timeless elegance.'
+  },
+  villa: {
+    intro: 'Your private sanctuary with panoramic Atlas views',
+    atmosphere: 'Expansive luxury villas offer the ultimate in privacy and space, with private pools, lush gardens, and mountain vistas that transform every moment into a cherished memory.'
+  },
+  apartment: {
+    intro: 'Modern comfort in the heart of the Red City',
+    atmosphere: 'Contemporary apartments blend Moroccan craftsmanship with modern amenities, offering a sophisticated base from which to explore the magic of Marrakech.'
+  }
 }
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,6 +55,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const activeFeatures = (Object.entries(property.features) as [keyof PropertyFeatures, boolean][])
     .filter(([, value]) => value)
     .map(([key]) => ({ key, label: FEATURE_LABELS[key] }))
+
+  const story = propertyStories[property.type]
 
   return (
     <>
@@ -70,51 +91,77 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-12">
               {/* Title & Location */}
-              <div>
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <span className="px-3 py-1 bg-secondary text-xs uppercase tracking-wider rounded-full">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="flex items-center gap-3 text-muted-foreground mb-3">
+                  <span className="px-3 py-1 bg-gold/10 text-gold text-xs uppercase tracking-wider rounded-full font-medium">
                     {property.type}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     {property.location.subDistrict || property.location.district}
                   </span>
+                  <span className="flex items-center gap-1 text-gold">
+                    <Star className="w-4 h-4 fill-gold" />
+                    <span className="font-medium">4.9</span>
+                  </span>
                 </div>
-                <h1 className="text-3xl md:text-4xl font-semibold luxury-heading">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold luxury-heading mb-4">
                   {property.title}
                 </h1>
                 
+                {/* Evocative intro */}
+                <p className="text-lg text-primary italic mb-6">{story.intro}</p>
+                
                 {/* Quick Stats */}
-                <div className="flex items-center gap-6 mt-6 text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Bed className="w-5 h-5" />
+                    <Bed className="w-5 h-5 text-primary" />
                     <span>{property.bedrooms} Bedrooms</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Bath className="w-5 h-5" />
+                    <Bath className="w-5 h-5 text-primary" />
                     <span>{property.bathrooms} Bathrooms</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
+                    <Users className="w-5 h-5 text-primary" />
                     <span>Up to {property.maxGuests} Guests</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Description */}
-              <div>
-                <h2 className="text-xl font-semibold mb-4">About This Property</h2>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {property.description}
-                </p>
-              </div>
+              {/* The Experience - Storytelling Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <h2 className="text-xl font-semibold mb-4">The Experience</h2>
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    {story.atmosphere}
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {property.description}
+                  </p>
+                </div>
+              </motion.div>
 
               {/* Features */}
-              <div>
-                <h2 className="text-xl font-semibold mb-6">Features & Amenities</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <h2 className="text-xl font-semibold mb-6">Features &amp; Amenities</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {activeFeatures.map(({ key, label }) => (
-                    <div key={key} className="flex items-center gap-3">
+                    <div key={key} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                         <Check className="w-4 h-4 text-primary" />
                       </div>
@@ -122,10 +169,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Additional Amenities */}
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
                 <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
                 <div className="flex flex-wrap gap-2">
                   {property.amenities.map((amenity) => (
@@ -137,10 +189,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Location */}
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
                 <h2 className="text-xl font-semibold mb-4">Location</h2>
                 <div className="bg-secondary/50 rounded-lg p-6">
                   <div className="flex items-start gap-3">
@@ -158,7 +215,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Availability Calendar */}
               <AvailabilityCalendar 
@@ -167,8 +224,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               />
 
               {/* Services Section */}
-              <div>
-                <h2 className="text-xl font-semibold mb-6">Experiences & Services</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <h2 className="text-xl font-semibold mb-6">Experiences &amp; Services</h2>
                 <p className="text-muted-foreground mb-6">
                   Enhance your stay with our premium services, available on request.
                 </p>
@@ -178,7 +240,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     return (
                       <div 
                         key={service.id}
-                        className="flex gap-4 p-4 bg-card rounded-lg border border-border"
+                        className="flex gap-4 p-4 bg-card rounded-lg border border-border hover:border-primary/30 transition-colors"
                       >
                         <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
                           <Image 
@@ -208,58 +270,124 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
-              </div>
+              </motion.div>
             </div>
 
             {/* Sidebar - Booking Card */}
             <div className="lg:col-span-1">
-              <div className="sticky top-24 bg-card rounded-lg border border-border p-6">
-                {/* Price */}
-                <div className="mb-6">
-                  <span className="text-3xl font-semibold">{property.pricePerNight}€</span>
-                  <span className="text-muted-foreground"> / night</span>
-                </div>
-
-                {/* Quick Info */}
-                <div className="space-y-3 mb-6 pb-6 border-b border-border">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Property Type</span>
-                    <span className="capitalize font-medium">{property.type}</span>
+              <div className="sticky top-24 space-y-6">
+                {/* Main Booking Card */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="bg-card rounded-xl border border-border p-6 shadow-lg"
+                >
+                  {/* Price with value proposition */}
+                  <div className="mb-6 pb-6 border-b border-border">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-semibold">{property.pricePerNight}€</span>
+                      <span className="text-muted-foreground">/ night</span>
+                    </div>
+                    <p className="text-sm text-primary mt-1">Includes breakfast &amp; daily housekeeping</p>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Bedrooms</span>
-                    <span className="font-medium">{property.bedrooms}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Max Guests</span>
-                    <span className="font-medium">{property.maxGuests}</span>
-                  </div>
-                </div>
 
-                {/* Book Button */}
-                <Link href={`/booking?property=${property.id}`}>
-                  <Button size="lg" className="w-full gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Book This Property
-                  </Button>
-                </Link>
+                  {/* Quick Info */}
+                  <div className="space-y-3 mb-6 pb-6 border-b border-border">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Property Type</span>
+                      <span className="capitalize font-medium">{property.type}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Bedrooms</span>
+                      <span className="font-medium">{property.bedrooms}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Max Guests</span>
+                      <span className="font-medium">{property.maxGuests}</span>
+                    </div>
+                  </div>
 
-                {/* Contact */}
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-2">Questions about this property?</p>
-                  <Link href="/contact" className="text-primary text-sm hover:underline">
-                    Contact Us
+                  {/* Primary CTA */}
+                  <Link href={`/booking?property=${property.id}`}>
+                    <Button size="lg" className="w-full gap-2 bg-gold text-black hover:bg-gold/90 font-medium">
+                      <Calendar className="w-5 h-5" />
+                      Reserve Your Dates
+                    </Button>
                   </Link>
-                </div>
+
+                  {/* Reassurance */}
+                  <p className="text-xs text-center text-muted-foreground mt-3">
+                    Free cancellation up to 48 hours before check-in
+                  </p>
+
+                  {/* Secondary CTA */}
+                  <div className="mt-4 pt-4 border-t border-border text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Have questions?</p>
+                    <Link href="/contact">
+                      <Button variant="outline" size="sm" className="w-full gap-2">
+                        <Phone className="w-4 h-4" />
+                        Contact Our Team
+                      </Button>
+                    </Link>
+                  </div>
+                </motion.div>
+
+                {/* Trust Elements */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="bg-secondary/50 rounded-xl p-5 space-y-4"
+                >
+                  <h4 className="font-medium text-sm">Why Book Direct</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Shield className="w-5 h-5 text-primary flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">Best Price Guarantee</p>
+                        <p className="text-xs text-muted-foreground">Direct booking = lowest rates</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-primary flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">24/7 Concierge</p>
+                        <p className="text-xs text-muted-foreground">Personal assistance anytime</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <HeartHandshake className="w-5 h-5 text-primary flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">Flexible Booking</p>
+                        <p className="text-xs text-muted-foreground">Change dates without fees</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Mini Testimonial */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  <MiniTestimonial />
+                </motion.div>
 
                 {/* Optional Add-ons Preview */}
-                <div className="mt-6 pt-6 border-t border-border">
-                  <h4 className="font-medium mb-4">Optional Add-ons</h4>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="bg-card rounded-xl border border-border p-5"
+                >
+                  <h4 className="font-medium mb-4">Popular Add-ons</h4>
                   <div className="space-y-3">
                     {mockAddons.slice(0, 3).map((addon) => (
                       <div key={addon.id} className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{addon.name}</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-primary">
                           {addon.pricePerPerson 
                             ? `${addon.pricePerPerson}€/person` 
                             : `${addon.priceFlat}€`}
@@ -267,7 +395,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       </div>
                     ))}
                   </div>
-                </div>
+                  <p className="text-xs text-muted-foreground mt-3">Add during checkout</p>
+                </motion.div>
               </div>
             </div>
           </div>
