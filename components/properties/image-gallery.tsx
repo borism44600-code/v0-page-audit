@@ -38,6 +38,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
             fill
             className="object-cover"
             priority
+            loading="eager"
             sizes="100vw"
           />
           

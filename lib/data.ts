@@ -46,7 +46,9 @@ export const mockProperties: Property[] = [
     maxGuests: 10,
     amenities: ['WiFi', 'Air Conditioning', 'Daily Housekeeping', 'Concierge Service', 'Airport Transfer Available'],
     availability: [
-      { start: '2026-01-01', end: '2026-12-31' }
+      { start: '2026-01-01', end: '2026-04-10' },
+      { start: '2026-04-20', end: '2026-06-30' },
+      { start: '2026-07-15', end: '2026-12-31' }
     ],
     featured: true,
     createdAt: '2025-01-01',
@@ -97,7 +99,9 @@ export const mockProperties: Property[] = [
     maxGuests: 12,
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef Available', 'Tennis Court', 'Daily Housekeeping', 'Security'],
     availability: [
-      { start: '2026-01-01', end: '2026-12-31' }
+      { start: '2026-01-01', end: '2026-03-31' },
+      { start: '2026-04-11', end: '2026-07-14' },
+      { start: '2026-08-01', end: '2026-12-31' }
     ],
     featured: true,
     createdAt: '2025-01-01',

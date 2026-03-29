@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useMemo, Suspense, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
   Calendar, Users, Plus, Minus, Check, ArrowRight, ArrowLeft,
-  CreditCard, MapPin, Bed, Bath, Shield, Clock, Star, Phone,
-  Sparkles, HeartHandshake, CheckCircle2
+  CreditCard, MapPin, Bed, Bath, Shield, Clock, Star, Sparkles, 
+  HeartHandshake, CheckCircle2, AlertCircle, Building2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Header } from '@/components/layout/header'
@@ -15,9 +15,17 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
+import { SplitStaySuggestionCard } from '@/components/booking/split-stay-suggestion'
 import { mockProperties, mockAddons } from '@/lib/data'
+import { 
+  checkPropertyAvailability, 
+  generateSplitStaySuggestion,
+  calculateNights,
+  formatDateShort,
+  SplitStaySuggestion,
+  BookingSegment
+} from '@/lib/availability'
 import { cn } from '@/lib/utils'
 
 const trustFeatures = [
@@ -28,30 +36,73 @@ const trustFeatures = [
 
 function BookingContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const preselectedPropertyId = searchParams.get('property')
+  const preselectedCheckIn = searchParams.get('checkIn')
+  const preselectedCheckOut = searchParams.get('checkOut')
   
-  // If a property is preselected, skip to step 2 (Dates)
+  // Parse preselected dates
+  const initialCheckIn = preselectedCheckIn ? new Date(preselectedCheckIn) : null
+  const initialCheckOut = preselectedCheckOut ? new Date(preselectedCheckOut) : null
+  
+  // If a property is preselected with dates, check availability first
   const [step, setStep] = useState(preselectedPropertyId ? 2 : 1)
   const [selectedPropertyId, setSelectedPropertyId] = useState(preselectedPropertyId || '')
-  const [dates, setDates] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null })
+  const [dates, setDates] = useState<{ start: Date | null; end: Date | null }>({ 
+    start: initialCheckIn, 
+    end: initialCheckOut 
+  })
   const [guests, setGuests] = useState({ adults: 2, children: 0 })
   const [selectedAddons, setSelectedAddons] = useState<{ id: string; quantity: number; persons: number }[]>([])
   const [contactInfo, setContactInfo] = useState({ name: '', email: '', phone: '', specialRequests: '' })
+  
+  // Split-stay state
+  const [splitStaySuggestion, setSplitStaySuggestion] = useState<SplitStaySuggestion | null>(null)
+  const [acceptedSplitStay, setAcceptedSplitStay] = useState(false)
+  const [bookingSegments, setBookingSegments] = useState<BookingSegment[]>([])
 
   const selectedProperty = mockProperties.find(p => p.id === selectedPropertyId)
 
-  const calculateNights = () => {
-    if (!dates.start || !dates.end) return 0
-    const diff = dates.end.getTime() - dates.start.getTime()
-    return Math.ceil(diff / (1000 * 60 * 60 * 24))
-  }
+  // Check availability when dates change
+  useEffect(() => {
+    if (selectedProperty && dates.start && dates.end) {
+      const availability = checkPropertyAvailability(selectedProperty, dates.start, dates.end)
+      
+      if (availability.status === 'partial') {
+        const suggestion = generateSplitStaySuggestion(
+          selectedProperty,
+          dates.start,
+          dates.end,
+          mockProperties
+        )
+        setSplitStaySuggestion(suggestion)
+        setAcceptedSplitStay(false)
+      } else if (availability.status === 'available') {
+        setSplitStaySuggestion(null)
+        setAcceptedSplitStay(false)
+      }
+    }
+  }, [selectedProperty, dates.start, dates.end])
 
-  const nights = calculateNights()
+  const nights = useMemo(() => {
+    if (!dates.start || !dates.end) return 0
+    return calculateNights(dates.start, dates.end)
+  }, [dates.start, dates.end])
 
   const calculateTotal = () => {
-    if (!selectedProperty) return 0
+    let total = 0
     
-    let total = selectedProperty.pricePerNight * nights
+    if (acceptedSplitStay && splitStaySuggestion) {
+      // Calculate total for split stay
+      splitStaySuggestion.segments.forEach(segment => {
+        const property = mockProperties.find(p => p.id === segment.propertyId)
+        if (property) {
+          total += property.pricePerNight * segment.nights
+        }
+      })
+    } else if (selectedProperty) {
+      total = selectedProperty.pricePerNight * nights
+    }
     
     selectedAddons.forEach(addon => {
       const addonData = mockAddons.find(a => a.id === addon.id)
@@ -88,10 +139,27 @@ function BookingContent() {
     }))
   }
 
+  const handleAcceptSplitStay = () => {
+    setAcceptedSplitStay(true)
+    setStep(3)
+  }
+
+  const handleDeclineSplitStay = () => {
+    // Reset and go back to property selection
+    setSplitStaySuggestion(null)
+    setSelectedPropertyId('')
+    setDates({ start: null, end: null })
+    setStep(1)
+  }
+
   const canProceed = () => {
     switch (step) {
       case 1: return !!selectedPropertyId
-      case 2: return dates.start && dates.end && nights > 0
+      case 2: 
+        if (!dates.start || !dates.end || nights <= 0) return false
+        // If there's a split stay suggestion, they must accept or decline
+        if (splitStaySuggestion && !acceptedSplitStay) return false
+        return true
       case 3: return guests.adults >= 1
       case 4: return true
       case 5: return contactInfo.name && contactInfo.email && contactInfo.phone
@@ -107,6 +175,14 @@ function BookingContent() {
     { number: 5, title: 'Details', description: 'Your information' },
     { number: 6, title: 'Confirm', description: 'Review & book' },
   ]
+
+  // Get all properties involved in booking
+  const bookingProperties = useMemo(() => {
+    if (acceptedSplitStay && splitStaySuggestion) {
+      return splitStaySuggestion.properties
+    }
+    return selectedProperty ? [selectedProperty] : []
+  }, [acceptedSplitStay, splitStaySuggestion, selectedProperty])
 
   return (
     <>
@@ -130,7 +206,7 @@ function BookingContent() {
             <div className="flex flex-wrap items-center justify-center gap-6">
               {trustFeatures.map((item) => (
                 <div key={item.text} className="flex items-center gap-2 text-muted-foreground">
-                  <item.icon className="w-4 h-4 text-primary" />
+                  <item.icon className="w-4 h-4 text-gold" />
                   <span className="text-sm">{item.text}</span>
                 </div>
               ))}
@@ -255,7 +331,7 @@ function BookingContent() {
                 </motion.div>
               )}
 
-              {/* Step 2: Select Dates */}
+              {/* Step 2: Select Dates with Split-Stay Logic */}
               {step === 2 && selectedProperty && (
                 <motion.div
                   key="step2"
@@ -268,11 +344,13 @@ function BookingContent() {
                     <h2 className="text-2xl font-semibold mb-2">When Will You Visit?</h2>
                     <p className="text-muted-foreground">Green dates are available for your perfect getaway</p>
                   </div>
+                  
                   <AvailabilityCalendar
                     availability={selectedProperty.availability}
                     selectedDates={dates}
                     onDateSelect={setDates}
                   />
+                  
                   {dates.start && dates.end && (
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }}
@@ -282,7 +360,7 @@ function BookingContent() {
                       <div className="flex items-center justify-between">
                         <div className="text-center">
                           <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Arrival</p>
-                          <p className="font-semibold text-lg">{dates.start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                          <p className="font-semibold text-lg">{formatDateShort(dates.start)}</p>
                         </div>
                         <div className="flex-1 flex items-center justify-center">
                           <div className="w-20 h-px bg-gold/30 relative">
@@ -293,7 +371,44 @@ function BookingContent() {
                         </div>
                         <div className="text-center">
                           <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Departure</p>
-                          <p className="font-semibold text-lg">{dates.end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                          <p className="font-semibold text-lg">{formatDateShort(dates.end)}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Split-Stay Suggestion */}
+                  {splitStaySuggestion && splitStaySuggestion.type === 'split' && !acceptedSplitStay && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-8"
+                    >
+                      <SplitStaySuggestionCard
+                        suggestion={splitStaySuggestion}
+                        properties={splitStaySuggestion.properties}
+                        onAccept={handleAcceptSplitStay}
+                        onDecline={handleDeclineSplitStay}
+                      />
+                    </motion.div>
+                  )}
+
+                  {/* Accepted Split-Stay Confirmation */}
+                  {acceptedSplitStay && splitStaySuggestion && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-green-500/10 border border-green-500/30 rounded-xl p-6"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Split-Stay Accepted</p>
+                          <p className="text-sm text-muted-foreground">
+                            Your curated {splitStaySuggestion.totalNights}-night experience across {splitStaySuggestion.properties.length} properties is ready.
+                          </p>
                         </div>
                       </div>
                     </motion.div>
@@ -312,9 +427,9 @@ function BookingContent() {
                 >
                   <div className="text-center mb-8">
                     <h2 className="text-2xl font-semibold mb-2">Who&apos;s Joining You?</h2>
-                    {selectedProperty && (
+                    {bookingProperties.length > 0 && (
                       <p className="text-muted-foreground">
-                        {selectedProperty.title} welcomes up to {selectedProperty.maxGuests} guests
+                        Accommodates up to {Math.min(...bookingProperties.map(p => p.maxGuests))} guests
                       </p>
                     )}
                   </div>
@@ -343,7 +458,7 @@ function BookingContent() {
                           size="icon"
                           className="rounded-full"
                           onClick={() => setGuests(g => ({ ...g, adults: g.adults + 1 }))}
-                          disabled={selectedProperty && guests.adults + guests.children >= selectedProperty.maxGuests}
+                          disabled={bookingProperties.length > 0 && guests.adults + guests.children >= Math.min(...bookingProperties.map(p => p.maxGuests))}
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
@@ -373,7 +488,7 @@ function BookingContent() {
                           size="icon"
                           className="rounded-full"
                           onClick={() => setGuests(g => ({ ...g, children: g.children + 1 }))}
-                          disabled={selectedProperty && guests.adults + guests.children >= selectedProperty.maxGuests}
+                          disabled={bookingProperties.length > 0 && guests.adults + guests.children >= Math.min(...bookingProperties.map(p => p.maxGuests))}
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
@@ -525,7 +640,7 @@ function BookingContent() {
               )}
 
               {/* Step 6: Confirmation */}
-              {step === 6 && selectedProperty && (
+              {step === 6 && (
                 <motion.div
                   key="step6"
                   initial={{ opacity: 0, x: 20 }}
@@ -539,28 +654,67 @@ function BookingContent() {
                   </div>
                   
                   <div className="bg-card rounded-xl border border-border overflow-hidden">
-                    {/* Property Header */}
-                    <div className="p-6 border-b border-border">
-                      <div className="flex gap-4">
-                        <div className="relative w-32 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image
-                            src={selectedProperty.images[0] || '/images/placeholder-property.jpg'}
-                            alt={selectedProperty.title}
-                            fill
-                            className="object-cover"
-                            sizes="128px"
-                          />
+                    {/* Properties */}
+                    {acceptedSplitStay && splitStaySuggestion ? (
+                      // Split-Stay Summary
+                      <div className="p-6 border-b border-border">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Building2 className="w-5 h-5 text-gold" />
+                          <h3 className="font-semibold">Your Premium Split-Stay</h3>
                         </div>
-                        <div>
-                          <span className="text-xs uppercase tracking-wider text-gold font-medium">{selectedProperty.type}</span>
-                          <h3 className="font-semibold text-lg">{selectedProperty.title}</h3>
-                          <p className="text-muted-foreground flex items-center gap-1 text-sm">
-                            <MapPin className="w-3 h-3" />
-                            {selectedProperty.location.district}
-                          </p>
+                        <div className="space-y-4">
+                          {splitStaySuggestion.segments.map((segment, idx) => {
+                            const property = mockProperties.find(p => p.id === segment.propertyId)
+                            if (!property) return null
+                            return (
+                              <div key={idx} className="flex gap-4 p-3 bg-secondary/30 rounded-lg">
+                                <div className="relative w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                  <Image
+                                    src={property.images[0] || '/images/placeholder-property.jpg'}
+                                    alt={property.title}
+                                    fill
+                                    className="object-cover"
+                                    sizes="80px"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium">{property.title}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {formatDateShort(segment.start)} - {formatDateShort(segment.end)} ({segment.nights} nights)
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold">{property.pricePerNight * segment.nights}€</p>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
-                    </div>
+                    ) : selectedProperty && (
+                      // Single Property
+                      <div className="p-6 border-b border-border">
+                        <div className="flex gap-4">
+                          <div className="relative w-32 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                            <Image
+                              src={selectedProperty.images[0] || '/images/placeholder-property.jpg'}
+                              alt={selectedProperty.title}
+                              fill
+                              className="object-cover"
+                              sizes="128px"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-xs uppercase tracking-wider text-gold font-medium">{selectedProperty.type}</span>
+                            <h3 className="font-semibold text-lg">{selectedProperty.title}</h3>
+                            <p className="text-muted-foreground flex items-center gap-1 text-sm">
+                              <MapPin className="w-3 h-3" />
+                              {selectedProperty.location.district}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Booking Details */}
                     <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6 border-b border-border bg-secondary/30">
@@ -588,10 +742,24 @@ function BookingContent() {
 
                     {/* Pricing */}
                     <div className="p-6 space-y-3 border-b border-border">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{selectedProperty.pricePerNight}€ x {nights} nights</span>
-                        <span>{selectedProperty.pricePerNight * nights}€</span>
-                      </div>
+                      {acceptedSplitStay && splitStaySuggestion ? (
+                        splitStaySuggestion.segments.map((segment, idx) => {
+                          const property = mockProperties.find(p => p.id === segment.propertyId)
+                          if (!property) return null
+                          return (
+                            <div key={idx} className="flex justify-between">
+                              <span className="text-muted-foreground">{property.title} ({segment.nights} nights)</span>
+                              <span>{property.pricePerNight * segment.nights}€</span>
+                            </div>
+                          )
+                        })
+                      ) : selectedProperty && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{selectedProperty.pricePerNight}€ x {nights} nights</span>
+                          <span>{selectedProperty.pricePerNight * nights}€</span>
+                        </div>
+                      )}
+                      
                       {selectedAddons.map(addon => {
                         const addonData = mockAddons.find(a => a.id === addon.id)
                         if (!addonData) return null

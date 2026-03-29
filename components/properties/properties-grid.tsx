@@ -3,15 +3,25 @@
 import { motion } from 'framer-motion'
 import { PropertyCard } from './property-card'
 import { Property } from '@/lib/types'
+import { PropertyAvailabilityResult } from '@/lib/availability'
 import { DisplayMode } from './display-mode-toggle'
 import { cn } from '@/lib/utils'
 
 interface PropertiesGridProps {
   properties: Property[]
   displayMode: DisplayMode
+  checkIn?: Date | null
+  checkOut?: Date | null
+  partialAvailability?: PropertyAvailabilityResult[]
 }
 
-export function PropertiesGrid({ properties, displayMode }: PropertiesGridProps) {
+export function PropertiesGrid({ 
+  properties, 
+  displayMode,
+  checkIn,
+  checkOut,
+  partialAvailability
+}: PropertiesGridProps) {
   const gridClass = {
     large: 'grid-cols-1',
     medium: 'grid-cols-1 md:grid-cols-2',
@@ -33,6 +43,11 @@ export function PropertiesGrid({ properties, displayMode }: PropertiesGridProps)
     )
   }
 
+  const getPartialInfo = (propertyId: string) => {
+    if (!partialAvailability) return undefined
+    return partialAvailability.find(p => p.property.id === propertyId)
+  }
+
   return (
     <div className={cn('grid gap-6', gridClass[displayMode])}>
       {properties.map((property, index) => (
@@ -45,6 +60,9 @@ export function PropertiesGrid({ properties, displayMode }: PropertiesGridProps)
           <PropertyCard 
             property={property} 
             variant={cardVariant[displayMode]}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            partialAvailability={getPartialInfo(property.id)}
           />
         </motion.div>
       ))}

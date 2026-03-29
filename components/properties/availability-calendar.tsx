@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowUpRight, Calendar, Moon } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +12,7 @@ interface AvailabilityCalendarProps {
   onDateSelect?: (dates: { start: Date | null; end: Date | null }) => void
   readOnly?: boolean
   onBookingClick?: () => void
+  compact?: boolean
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -24,12 +26,14 @@ export function AvailabilityCalendar({
   selectedDates,
   onDateSelect,
   readOnly = false,
-  onBookingClick
+  onBookingClick,
+  compact = false
 }: AvailabilityCalendarProps) {
   const today = new Date()
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [selectingStart, setSelectingStart] = useState(true)
+  const [hoverDate, setHoverDate] = useState<Date | null>(null)
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate()
@@ -64,6 +68,19 @@ export function AvailabilityCalendar({
     
     const endTime = selectedDates.end.getTime()
     return dateTime >= startTime && dateTime <= endTime
+  }
+
+  const isInHoverRange = (date: Date) => {
+    if (!selectedDates?.start || selectedDates.end || !hoverDate) return false
+    const dateTime = date.getTime()
+    const startTime = selectedDates.start.getTime()
+    const hoverTime = hoverDate.getTime()
+    
+    if (hoverTime > startTime) {
+      return dateTime > startTime && dateTime <= hoverTime
+    } else {
+      return dateTime >= hoverTime && dateTime < startTime
+    }
   }
 
   const isStartDate = (date: Date) => {
@@ -110,6 +127,14 @@ export function AvailabilityCalendar({
     }
   }
 
+  const calculateNights = () => {
+    if (!selectedDates?.start || !selectedDates?.end) return 0
+    const diff = selectedDates.end.getTime() - selectedDates.start.getTime()
+    return Math.ceil(diff / (1000 * 60 * 60 * 24))
+  }
+
+  const nights = calculateNights()
+
   const daysInMonth = getDaysInMonth(currentMonth, currentYear)
   const firstDay = getFirstDayOfMonth(currentMonth, currentYear)
 
@@ -117,7 +142,7 @@ export function AvailabilityCalendar({
   
   // Empty cells for days before the first day of the month
   for (let i = 0; i < firstDay; i++) {
-    days.push(<div key={`empty-${i}`} className="h-10" />)
+    days.push(<div key={`empty-${i}`} className={cn(compact ? 'h-8' : 'h-10')} />)
   }
   
   // Days of the month
@@ -128,23 +153,36 @@ export function AvailabilityCalendar({
     const isSelected = isDateSelected(date)
     const isStart = isStartDate(date)
     const isEnd = isEndDate(date)
+    const isHoverRange = isInHoverRange(date)
     
     days.push(
-      <button
+      <motion.button
         key={day}
         onClick={() => handleDateClick(date)}
+        onMouseEnter={() => setHoverDate(date)}
+        onMouseLeave={() => setHoverDate(null)}
         disabled={readOnly || isPast || !isAvailable}
+        whileHover={!readOnly && !isPast && isAvailable ? { scale: 1.1 } : {}}
+        whileTap={!readOnly && !isPast && isAvailable ? { scale: 0.95 } : {}}
         className={cn(
-          'h-10 rounded-md text-sm font-medium transition-colors relative',
+          compact ? 'h-8 text-xs' : 'h-10 text-sm',
+          'rounded-full font-medium transition-all relative flex items-center justify-center',
           isPast && 'text-muted-foreground/30 cursor-not-allowed',
-          !isPast && !isAvailable && 'text-muted-foreground/50 cursor-not-allowed line-through',
-          !isPast && isAvailable && !readOnly && 'hover:bg-secondary cursor-pointer',
-          isSelected && 'bg-primary/10',
-          (isStart || isEnd) && 'bg-primary text-primary-foreground hover:bg-primary/90'
+          !isPast && !isAvailable && 'text-muted-foreground/40 cursor-not-allowed',
+          !isPast && isAvailable && !readOnly && 'hover:bg-gold/20 cursor-pointer',
+          !isPast && isAvailable && 'text-foreground',
+          (isSelected || isHoverRange) && !isStart && !isEnd && 'bg-gold/10',
+          isHoverRange && 'bg-gold/20',
+          (isStart || isEnd) && 'bg-gold text-black font-semibold shadow-md shadow-gold/30'
         )}
       >
         {day}
-      </button>
+        {!isPast && !isAvailable && (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="w-full h-px bg-muted-foreground/30 rotate-45 absolute" />
+          </span>
+        )}
+      </motion.button>
     )
   }
 
@@ -155,69 +193,138 @@ export function AvailabilityCalendar({
   }
 
   return (
-    <div 
-      className={cn("bg-card rounded-lg border border-border p-6", readOnly && onBookingClick && "cursor-pointer")}
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "bg-card rounded-2xl border border-border overflow-hidden",
+        readOnly && onBookingClick && "cursor-pointer"
+      )}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Hint for read-only calendar */}
-      {readOnly && onBookingClick && (
-        <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
-          This calendar shows availability. To book, use the 
-          <button 
-            onClick={onBookingClick}
-            className="inline-flex items-center gap-0.5 text-primary hover:underline font-medium"
-          >
-            Reserve Your Dates
-            <ArrowUpRight className="w-3 h-3" />
-          </button>
-          button, or double-click the calendar.
-        </p>
-      )}
-
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg">Availability</h3>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="font-medium min-w-[140px] text-center">
-            {MONTHS[currentMonth]} {currentYear}
-          </span>
-          <Button variant="ghost" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {DAYS.map(day => (
-          <div key={day} className="h-10 flex items-center justify-center text-xs text-muted-foreground font-medium">
-            {day}
+      {/* Header */}
+      <div className={cn(
+        "bg-secondary/50 border-b border-border",
+        compact ? "p-4" : "p-6"
+      )}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className={cn("text-gold", compact ? "w-4 h-4" : "w-5 h-5")} />
+            <h3 className={cn("font-semibold", compact ? "text-base" : "text-lg")}>
+              {readOnly ? 'Availability' : 'Select Your Dates'}
+            </h3>
           </div>
-        ))}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-8 w-8">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className={cn("font-medium min-w-[120px] text-center", compact ? "text-sm" : "")}>
+              {MONTHS[currentMonth]} {currentYear}
+            </span>
+            <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Selection indicator */}
+        {!readOnly && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-3 flex items-center justify-center gap-2"
+          >
+            <span className={cn(
+              "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+              selectingStart ? "bg-gold text-black" : "bg-muted text-muted-foreground"
+            )}>
+              Check-in
+            </span>
+            <ArrowUpRight className="w-3 h-3 text-muted-foreground rotate-45" />
+            <span className={cn(
+              "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+              !selectingStart ? "bg-gold text-black" : "bg-muted text-muted-foreground"
+            )}>
+              Check-out
+            </span>
+          </motion.div>
+        )}
+
+        {/* Hint for read-only calendar */}
+        {readOnly && onBookingClick && (
+          <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+            This calendar shows availability. To book, use the 
+            <button 
+              onClick={onBookingClick}
+              className="inline-flex items-center gap-0.5 text-gold hover:underline font-medium"
+            >
+              Reserve Your Dates
+              <ArrowUpRight className="w-3 h-3" />
+            </button>
+            button.
+          </p>
+        )}
       </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {days}
-      </div>
+      <div className={cn(compact ? "p-4" : "p-6")}>
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {DAYS.map(day => (
+            <div key={day} className={cn(
+              "flex items-center justify-center text-muted-foreground font-medium",
+              compact ? "h-6 text-[10px]" : "h-8 text-xs"
+            )}>
+              {compact ? day.charAt(0) : day}
+            </div>
+          ))}
+        </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-6 mt-6 pt-4 border-t border-border text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-primary" />
-          <span className="text-muted-foreground">Selected</span>
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {days}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-background border border-border" />
-          <span className="text-muted-foreground">Available</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-muted line-through text-center text-xs text-muted-foreground">X</div>
-          <span className="text-muted-foreground">Unavailable</span>
+
+        {/* Selected dates summary */}
+        <AnimatePresence>
+          {selectedDates?.start && selectedDates?.end && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 pt-4 border-t border-border"
+            >
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Moon className="w-4 h-4 text-gold" />
+                  <span>Your stay</span>
+                </div>
+                <span className="font-semibold text-gold">{nights} nights</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Legend */}
+        <div className={cn(
+          "flex items-center gap-4 mt-4 pt-4 border-t border-border text-xs",
+          compact && "gap-3"
+        )}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-gold shadow-sm shadow-gold/30" />
+            <span className="text-muted-foreground">Selected</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-background border border-border" />
+            <span className="text-muted-foreground">Available</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-muted relative overflow-hidden">
+              <span className="w-full h-px bg-muted-foreground/50 rotate-45 absolute top-1/2 left-0" />
+            </div>
+            <span className="text-muted-foreground">Booked</span>
+          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
