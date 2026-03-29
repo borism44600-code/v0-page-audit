@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { X, ChevronDown, SlidersHorizontal, CheckSquare, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -19,6 +19,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { 
+  KASBAH_DISTRICTS,
   MEDINA_DISTRICTS, 
   APARTMENT_DISTRICTS, 
   DISTANCE_OPTIONS, 
@@ -68,12 +69,61 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
       : [...array, item]
   }
 
+  // Select/Deselect all districts in a group
+  const selectAllDistricts = (districtList: readonly string[]) => {
+    const newDistricts = [...filters.districts]
+    districtList.forEach(district => {
+      if (!newDistricts.includes(district)) {
+        newDistricts.push(district)
+      }
+    })
+    updateFilters({ districts: newDistricts })
+  }
+
+  const deselectAllDistricts = (districtList: readonly string[]) => {
+    const newDistricts = filters.districts.filter(d => !districtList.includes(d))
+    updateFilters({ districts: newDistricts })
+  }
+
+  const areAllSelected = (districtList: readonly string[]) => {
+    return districtList.every(d => filters.districts.includes(d))
+  }
+
+  const areSomeSelected = (districtList: readonly string[]) => {
+    return districtList.some(d => filters.districts.includes(d))
+  }
+
   const activeFiltersCount = 
     (filters.priceRange[0] > 0 || filters.priceRange[1] < 2000 ? 1 : 0) +
     filters.districts.length +
     filters.distanceFromCenter.length +
     filters.features.length +
     filters.parking.length
+
+  const SelectAllButton = ({ districtList, label }: { districtList: readonly string[], label: string }) => {
+    const allSelected = areAllSelected(districtList)
+    const someSelected = areSomeSelected(districtList)
+    
+    return (
+      <button
+        type="button"
+        onClick={() => allSelected ? deselectAllDistricts(districtList) : selectAllDistricts(districtList)}
+        className="flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors mb-3"
+      >
+        {allSelected ? (
+          <>
+            <CheckSquare className="w-3.5 h-3.5" />
+            <span>Deselect All</span>
+          </>
+        ) : (
+          <>
+            <Square className="w-3.5 h-3.5" />
+            <span>{someSelected ? 'Select All' : 'Select All'}</span>
+          </>
+        )}
+      </button>
+    )
+  }
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -101,14 +151,39 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Location - Kasbah Royal District */}
+      <Collapsible open={openSections.includes('kasbah')} onOpenChange={() => toggleSection('kasbah')}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-left">
+          <span className="font-medium">Kasbah Royal District</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('kasbah') ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4 pb-2">
+          <div className="space-y-3">
+            {KASBAH_DISTRICTS.map((district) => (
+              <div key={district} className="flex items-center gap-3">
+                <Checkbox
+                  id={`kasbah-${district}`}
+                  checked={filters.districts.includes(district)}
+                  onCheckedChange={() => updateFilters({ districts: toggleArrayItem(filters.districts, district) })}
+                />
+                <Label htmlFor={`kasbah-${district}`} className="text-sm font-normal cursor-pointer">
+                  {district}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Location - Medina Districts */}
       <Collapsible open={openSections.includes('medina')} onOpenChange={() => toggleSection('medina')}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-left">
           <span className="font-medium">Medina Districts</span>
           <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('medina') ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
-        <CollapsibleContent className="pt-4 pb-2 max-h-48 overflow-y-auto">
-          <div className="space-y-3">
+        <CollapsibleContent className="pt-4 pb-2">
+          <SelectAllButton districtList={MEDINA_DISTRICTS} label="Medina Districts" />
+          <div className="space-y-3 max-h-48 overflow-y-auto">
             {MEDINA_DISTRICTS.map((district) => (
               <div key={district} className="flex items-center gap-3">
                 <Checkbox
@@ -132,6 +207,7 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
           <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('apartments') ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4 pb-2">
+          <SelectAllButton districtList={APARTMENT_DISTRICTS} label="Modern Districts" />
           <div className="space-y-3">
             {APARTMENT_DISTRICTS.map((district) => (
               <div key={district} className="flex items-center gap-3">

@@ -127,6 +127,10 @@ export interface Service {
 }
 
 // Location districts
+export const KASBAH_DISTRICTS = [
+  'Kasbah Royal District'
+] as const
+
 export const MEDINA_DISTRICTS = [
   'Arset el Houta',
   'Arset El Maach', 
