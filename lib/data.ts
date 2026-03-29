@@ -431,3 +431,9 @@ export const mockAddons: BookingAddon[] = [
     image: '/images/addons/driver.jpg'
   }
 ]
+
+// Aliases for consistent naming across the app
+export const properties = mockProperties
+export const partners = mockPartners
+export const services = mockServices
+export const addons = mockAddons

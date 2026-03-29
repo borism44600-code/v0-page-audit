@@ -21,9 +21,9 @@ const footerLinks = {
     { href: '/about#invest', label: 'Investment' },
   ],
   legal: [
-    { href: '/privacy', label: 'Privacy Policy' },
-    { href: '/terms', label: 'Terms of Service' },
-    { href: '/cancellation', label: 'Cancellation Policy' },
+    { href: '/legal/privacy', label: 'Privacy Policy' },
+    { href: '/legal/terms', label: 'Terms of Service' },
+    { href: '/legal/rental-agreement', label: 'Rental Agreement' },
   ],
 }
 

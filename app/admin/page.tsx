@@ -41,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { properties } from '@/lib/data'
+import { mockProperties } from '@/lib/data'
 
 const stats = [
   {
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
                 </Button>
               </div>
               <div className="p-4 space-y-4">
-                {properties.slice(0, 4).map((property) => (
+                {mockProperties.slice(0, 4).map((property) => (
                   <div key={property.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
