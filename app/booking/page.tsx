@@ -30,7 +30,8 @@ function BookingContent() {
   const searchParams = useSearchParams()
   const preselectedPropertyId = searchParams.get('property')
   
-  const [step, setStep] = useState(1)
+  // If a property is preselected, skip to step 2 (Dates)
+  const [step, setStep] = useState(preselectedPropertyId ? 2 : 1)
   const [selectedPropertyId, setSelectedPropertyId] = useState(preselectedPropertyId || '')
   const [dates, setDates] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null })
   const [guests, setGuests] = useState({ adults: 2, children: 0 })
