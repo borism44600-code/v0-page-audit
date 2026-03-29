@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +10,7 @@ interface AvailabilityCalendarProps {
   selectedDates?: { start: Date | null; end: Date | null }
   onDateSelect?: (dates: { start: Date | null; end: Date | null }) => void
   readOnly?: boolean
+  onBookingClick?: () => void
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -22,7 +23,8 @@ export function AvailabilityCalendar({
   availability, 
   selectedDates,
   onDateSelect,
-  readOnly = false 
+  readOnly = false,
+  onBookingClick
 }: AvailabilityCalendarProps) {
   const today = new Date()
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
@@ -146,9 +148,33 @@ export function AvailabilityCalendar({
     )
   }
 
+  const handleDoubleClick = () => {
+    if (readOnly && onBookingClick) {
+      onBookingClick()
+    }
+  }
+
   return (
-    <div className="bg-card rounded-lg border border-border p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div 
+      className={cn("bg-card rounded-lg border border-border p-6", readOnly && onBookingClick && "cursor-pointer")}
+      onDoubleClick={handleDoubleClick}
+    >
+      {/* Hint for read-only calendar */}
+      {readOnly && onBookingClick && (
+        <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
+          This calendar shows availability. To book, use the 
+          <button 
+            onClick={onBookingClick}
+            className="inline-flex items-center gap-0.5 text-primary hover:underline font-medium"
+          >
+            Reserve Your Dates
+            <ArrowUpRight className="w-3 h-3" />
+          </button>
+          button, or double-click the calendar.
+        </p>
+      )}
+
+      <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-lg">Availability</h3>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>

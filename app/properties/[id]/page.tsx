@@ -221,6 +221,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               <AvailabilityCalendar 
                 availability={property.availability} 
                 readOnly={true}
+                onBookingClick={() => window.location.href = `/booking?property=${property.id}`}
               />
 
               {/* Services Section */}
