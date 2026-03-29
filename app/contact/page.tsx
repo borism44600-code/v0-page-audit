@@ -38,9 +38,9 @@ const contactReasons = [
 ]
 
 const trustFeatures = [
-  { icon: Clock, title: 'Response within 2 hours', description: 'During business hours' },
-  { icon: Shield, title: 'No obligations', description: 'Free consultation' },
-  { icon: Star, title: 'Expert advice', description: '6+ years experience' }
+  { icon: Clock, title: 'Quick Response', description: 'We aim to reply promptly' },
+  { icon: Shield, title: 'No Obligation', description: 'Just a friendly conversation' },
+  { icon: Star, title: 'Local Knowledge', description: 'We know Marrakech well' }
 ]
 
 export default function ContactPage() {
@@ -70,13 +70,13 @@ export default function ContactPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-3xl mx-auto text-center"
             >
-              <p className="luxury-subheading text-gold mb-4">We&apos;re Here to Help</p>
+              <p className="luxury-subheading text-gold mb-4">Get in Touch</p>
               <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-6 text-balance">
-                Let&apos;s Plan Your Perfect Stay
+                We Would Love to Hear From You
               </h1>
               <p className="text-lg text-muted-foreground text-pretty mb-8">
-                Our dedicated concierge team is here to answer your questions 
-                and help you discover the perfect property for your Marrakech experience.
+                Have a question about one of our properties? Planning a trip to Marrakech? 
+                We&apos;re happy to help however we can.
               </p>
               
               {/* Trust indicators */}
@@ -156,16 +156,16 @@ export default function ContactPage() {
                         Saturday: 10:00 AM - 5:00 PM<br />
                         Sunday: By appointment
                       </p>
-                      <p className="text-sm text-gold mt-2">24/7 support for booked guests</p>
+                      <p className="text-sm text-gold mt-2">Always available for our guests</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Contact Options */}
                 <div className="bg-card rounded-2xl p-6 border border-border">
-                  <h3 className="font-semibold mb-4">Prefer a Quick Call?</h3>
+                  <h3 className="font-semibold mb-4">Prefer to Talk?</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Speak directly with our concierge team for immediate assistance.
+                    Give us a call or send a WhatsApp message - we&apos;re happy to chat.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <a href="tel:+212524000000">
@@ -188,8 +188,8 @@ export default function ContactPage() {
                   <div className="flex items-start gap-3">
                     <HeartHandshake className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-sm">Personal Service Guarantee</p>
-                      <p className="text-xs text-muted-foreground">Every inquiry receives personal attention from our experienced team - no automated responses.</p>
+                      <p className="font-medium text-sm">A Real Person, Every Time</p>
+                      <p className="text-xs text-muted-foreground">When you reach out, you&apos;ll hear from someone on our team who knows our properties and Marrakech well.</p>
                     </div>
                   </div>
                 </div>
@@ -211,12 +211,12 @@ export default function ContactPage() {
                     <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                       <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
-                    <h3 className="font-serif text-2xl mb-4">Message Received!</h3>
+                    <h3 className="font-serif text-2xl mb-4">Thank You</h3>
                     <p className="text-muted-foreground mb-2">
-                      Thank you for reaching out to us.
+                      We&apos;ve received your message.
                     </p>
                     <p className="text-sm text-gold mb-8">
-                      Our team will respond within 2 hours during business hours.
+                      We&apos;ll be in touch soon.
                     </p>
                     <Button onClick={() => setSubmitted(false)} variant="outline">
                       Send Another Message

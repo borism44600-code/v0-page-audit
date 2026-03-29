@@ -7,9 +7,9 @@ import { ArrowRight, Star, Shield, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const trustIndicators = [
-  { icon: Star, text: '98% Guest Satisfaction' },
-  { icon: Shield, text: 'Verified Properties' },
-  { icon: Clock, text: '24/7 Concierge' }
+  { icon: Star, text: 'Carefully Selected Properties' },
+  { icon: Shield, text: 'Personal Service' },
+  { icon: Clock, text: 'Here When You Need Us' }
 ]
 
 export function HeroSection() {
@@ -38,7 +38,7 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <p className="text-sm md:text-base tracking-[0.3em] uppercase mb-6 text-gold">
-            Handpicked Luxury Retreats in Marrakech
+            Thoughtfully Selected Stays in Marrakech
           </p>
         </motion.div>
 
@@ -49,7 +49,7 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-tight luxury-heading max-w-5xl mx-auto text-balance"
         >
-          Where Ancient Beauty Meets Modern Luxury
+          A Warm Welcome Awaits in Marrakech
         </motion.h1>
 
         {/* Evocative description */}
@@ -59,8 +59,8 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="mt-8 text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed"
         >
-          Step through ancient carved doors into private courtyards, rooftop terraces with Atlas views, 
-          and the warm embrace of Moroccan hospitality. Your perfect escape awaits.
+          Discover our collection of stylish riads and villas, each chosen for its character and charm. 
+          Experience genuine Moroccan hospitality in the medina and the finest neighborhoods of the Red City.
         </motion.p>
 
         {/* Strong CTAs */}
@@ -72,7 +72,7 @@ export function HeroSection() {
         >
           <Link href="/properties">
             <Button size="lg" className="text-base px-8 gap-2 bg-gold text-black hover:bg-gold/90 font-medium">
-              Explore Our Collection
+              View Our Properties
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>

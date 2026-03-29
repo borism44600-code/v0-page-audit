@@ -7,36 +7,36 @@ import Image from 'next/image'
 
 const testimonials = [
   {
-    name: 'Sophie Laurent',
+    name: 'Sophie L.',
     location: 'Paris, France',
     rating: 5,
-    text: 'An absolutely magical stay. The riad exceeded every expectation - from the stunning architecture to the impeccable service.',
+    text: 'A beautiful riad with genuine warmth. The team helped us discover hidden corners of the medina we would never have found on our own.',
     property: 'Riad Al Jazira',
     avatar: '/images/testimonials/avatar1.jpg'
   },
   {
-    name: 'James Mitchell',
+    name: 'James M.',
     location: 'London, UK',
     rating: 5,
-    text: 'The villa was perfect for our family celebration. Private pool, attentive staff, and the most breathtaking views of the Atlas Mountains.',
+    text: 'We came back for the third time. The attention to detail and the warm welcome make all the difference.',
     property: 'Villa Palmeraie',
     avatar: '/images/testimonials/avatar2.jpg'
   },
   {
-    name: 'Elena Rodriguez',
+    name: 'Elena R.',
     location: 'Madrid, Spain',
     rating: 5,
-    text: 'From airport pickup to our farewell dinner, every detail was handled with such care. We felt like royalty the entire week.',
+    text: 'What struck us most was the personal touch. From local restaurant tips to arranging a cooking class, nothing was too much trouble.',
     property: 'Dar Yasmine',
     avatar: '/images/testimonials/avatar3.jpg'
   }
 ]
 
 const stats = [
-  { value: '500+', label: 'Happy Guests' },
-  { value: '98%', label: 'Satisfaction Rate' },
-  { value: '6+', label: 'Years Experience' },
-  { value: '24/7', label: 'Support' }
+  { value: '500+', label: 'Guests Welcomed' },
+  { value: '6+', label: 'Years in Marrakech' },
+  { value: '30+', label: 'Properties' },
+  { value: '24/7', label: 'Available' }
 ]
 
 interface TestimonialCardProps {
@@ -100,10 +100,10 @@ export function TestimonialsSection({ className, limit = 3 }: TestimonialsSectio
         >
           <p className="luxury-subheading text-muted-foreground mb-4">Guest Stories</p>
           <h2 className="text-3xl md:text-5xl font-semibold luxury-heading mb-6">
-            Unforgettable Experiences
+            What Our Guests Say
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Discover why discerning travelers choose Marrakech Riads Rent for their luxury Moroccan getaway.
+            The warmth of their experience speaks for itself.
           </p>
         </motion.div>
 

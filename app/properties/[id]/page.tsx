@@ -31,16 +31,16 @@ const serviceIcons = {
 // Property-specific storytelling based on type
 const propertyStories = {
   riad: {
-    intro: 'Step through ancient carved doors into a world of tranquility',
-    atmosphere: 'Traditional Moroccan riads are architectural treasures - intimate courtyard homes where fountain melodies, intricate zellige tilework, and the scent of orange blossoms create an atmosphere of timeless elegance.'
+    intro: 'A traditional home in the heart of the medina',
+    atmosphere: 'Riads are traditional Moroccan courtyard houses, built around a central garden or fountain. With their zellige tilework, carved plaster, and peaceful atmosphere, they offer a genuine taste of Moroccan living.'
   },
   villa: {
-    intro: 'Your private sanctuary with panoramic Atlas views',
-    atmosphere: 'Expansive luxury villas offer the ultimate in privacy and space, with private pools, lush gardens, and mountain vistas that transform every moment into a cherished memory.'
+    intro: 'Space and privacy with views of the Atlas Mountains',
+    atmosphere: 'Our villas offer generous living spaces, private gardens, and swimming pools. Ideal for families or groups who appreciate having room to relax while staying close to the city.'
   },
   apartment: {
-    intro: 'Modern comfort in the heart of the Red City',
-    atmosphere: 'Contemporary apartments blend Moroccan craftsmanship with modern amenities, offering a sophisticated base from which to explore the magic of Marrakech.'
+    intro: 'Contemporary comfort with Moroccan character',
+    atmosphere: 'Modern apartments that combine practical amenities with local craftsmanship. A comfortable base for exploring everything Marrakech has to offer.'
   }
 }
 
@@ -340,27 +340,27 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   transition={{ duration: 0.5, delay: 0.3 }}
                   className="bg-secondary/50 rounded-xl p-5 space-y-4"
                 >
-                  <h4 className="font-medium text-sm">Why Book Direct</h4>
+                  <h4 className="font-medium text-sm">Why Book With Us</h4>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
                       <Shield className="w-5 h-5 text-primary flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium">Best Price Guarantee</p>
-                        <p className="text-xs text-muted-foreground">Direct booking = lowest rates</p>
+                        <p className="text-sm font-medium">Direct Contact</p>
+                        <p className="text-xs text-muted-foreground">Speak with our team directly</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Clock className="w-5 h-5 text-primary flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium">24/7 Concierge</p>
-                        <p className="text-xs text-muted-foreground">Personal assistance anytime</p>
+                        <p className="text-sm font-medium">Local Knowledge</p>
+                        <p className="text-xs text-muted-foreground">Tips and guidance from our team</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <HeartHandshake className="w-5 h-5 text-primary flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium">Flexible Booking</p>
-                        <p className="text-xs text-muted-foreground">Change dates without fees</p>
+                        <p className="text-sm font-medium">Flexible Arrangements</p>
+                        <p className="text-xs text-muted-foreground">We work with you on changes</p>
                       </div>
                     </div>
                   </div>

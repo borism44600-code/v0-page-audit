@@ -75,12 +75,11 @@ export function ServicesSection() {
             >
               <p className="luxury-subheading text-muted-foreground mb-4">Concierge Services</p>
               <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                Elevate Your Stay
+                Services to Enhance Your Stay
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-10">
-                Our dedicated concierge team ensures every moment of your stay is exceptional. 
-                From arranging private dining experiences to organizing exclusive excursions, 
-                we take care of every detail so you can focus on creating memories.
+                We&apos;re here to help with the details - from restaurant recommendations to 
+                arranging excursions. Just let us know what you need and we&apos;ll take care of it.
               </p>
             </motion.div>
 

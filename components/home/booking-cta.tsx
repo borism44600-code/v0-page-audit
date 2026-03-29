@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button'
 import { ArrowRight, Phone, Mail, Shield, Clock, Star, HeartHandshake } from 'lucide-react'
 
 const guarantees = [
-  { icon: Shield, text: 'Best Price Guarantee' },
-  { icon: Clock, text: 'Free Cancellation' },
-  { icon: HeartHandshake, text: '24/7 Concierge' },
-  { icon: Star, text: '5-Star Service' }
+  { icon: Shield, text: 'Secure Booking' },
+  { icon: Clock, text: 'Flexible Cancellation' },
+  { icon: HeartHandshake, text: 'Personal Service' },
+  { icon: Star, text: 'Quality Properties' }
 ]
 
 export function BookingCTA() {
@@ -36,13 +36,13 @@ export function BookingCTA() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <p className="luxury-subheading text-gold mb-4">Your Journey Awaits</p>
+          <p className="luxury-subheading text-gold mb-4">Start Planning</p>
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold luxury-heading max-w-3xl mx-auto text-balance">
-            Ready to Experience Marrakech?
+            We Would Love to Host You
           </h2>
           <p className="mt-6 text-lg text-white/80 max-w-xl mx-auto">
-            Let us curate an unforgettable stay in one of our handpicked luxury properties. 
-            Personal service, authentic experiences, lasting memories.
+            Whether you have questions about a property or you&apos;re ready to book, 
+            our team is here to help you plan a memorable stay in Marrakech.
           </p>
         </motion.div>
 

@@ -15,12 +15,12 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Marrakech Riads Rent | Luxury Property Rentals in Marrakech',
-  description: 'Discover exquisite riads, villas, and apartments in Marrakech. Experience authentic Moroccan luxury with our handpicked collection of premium properties.',
-  keywords: ['Marrakech', 'Riads', 'Villas', 'Apartments', 'Luxury Rentals', 'Morocco', 'Holiday Homes'],
+  title: 'Marrakech Riads Rent | Stylish Stays in Marrakech',
+  description: 'A carefully selected collection of riads, villas, and apartments in Marrakech. Quality properties, personal service, and a warm welcome in the Red City.',
+  keywords: ['Marrakech', 'Riads', 'Villas', 'Apartments', 'Holiday Rentals', 'Morocco', 'Medina'],
   openGraph: {
-    title: 'Marrakech Riads Rent | Luxury Property Rentals',
-    description: 'Discover exquisite riads, villas, and apartments in Marrakech.',
+    title: 'Marrakech Riads Rent | Stylish Stays in Marrakech',
+    description: 'Quality properties and personal service in the Red City.',
     type: 'website',
   },
 }

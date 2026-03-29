@@ -22,8 +22,8 @@ import { cn } from '@/lib/utils'
 
 const trustFeatures = [
   { icon: Shield, text: 'Secure Booking' },
-  { icon: Clock, text: '24/7 Support' },
-  { icon: HeartHandshake, text: 'Free Cancellation' }
+  { icon: Clock, text: 'Here to Help' },
+  { icon: HeartHandshake, text: 'Flexible Cancellation' }
 ]
 
 function BookingContent() {
@@ -99,10 +99,10 @@ function BookingContent() {
   }
 
   const steps = [
-    { number: 1, title: 'Property', description: 'Choose your retreat' },
-    { number: 2, title: 'Dates', description: 'Select your stay' },
-    { number: 3, title: 'Guests', description: 'Who is coming' },
-    { number: 4, title: 'Experiences', description: 'Enhance your stay' },
+    { number: 1, title: 'Property', description: 'Choose your stay' },
+    { number: 2, title: 'Dates', description: 'When are you visiting' },
+    { number: 3, title: 'Guests', description: 'Who is joining' },
+    { number: 4, title: 'Extras', description: 'Optional services' },
     { number: 5, title: 'Details', description: 'Your information' },
     { number: 6, title: 'Confirm', description: 'Review & book' },
   ]
@@ -118,12 +118,12 @@ function BookingContent() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <p className="luxury-subheading text-gold mb-3">Your Journey Begins</p>
+            <p className="luxury-subheading text-gold mb-3">Book Your Stay</p>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold luxury-heading mb-4">
-              Reserve Your Stay
+              Reserve Your Property
             </h1>
             <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-              Complete your booking in just a few steps. Our team will confirm within 24 hours.
+              A few simple steps and we&apos;ll confirm your booking within 24 hours.
             </p>
             {/* Trust indicators */}
             <div className="flex flex-wrap items-center justify-center gap-6">
@@ -190,8 +190,8 @@ function BookingContent() {
                   className="space-y-6"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="text-2xl font-semibold mb-2">Choose Your Retreat</h2>
-                    <p className="text-muted-foreground">Each property has been personally selected for its exceptional quality</p>
+                    <h2 className="text-2xl font-semibold mb-2">Choose Your Property</h2>
+                    <p className="text-muted-foreground">Select from our collection of carefully chosen stays</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {mockProperties.map((property) => (
@@ -392,7 +392,7 @@ function BookingContent() {
                   className="space-y-6"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="text-2xl font-semibold mb-2">Curate Your Experience</h2>
+                    <h2 className="text-2xl font-semibold mb-2">Add Optional Services</h2>
                     <p className="text-muted-foreground">Optional enhancements to make your stay unforgettable</p>
                   </div>
                   <div className="space-y-4">

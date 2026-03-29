@@ -78,9 +78,8 @@ export default function PropertiesPage() {
               All Properties
             </h1>
             <p className="mt-4 text-muted-foreground max-w-2xl">
-              Discover our handpicked selection of luxury riads, villas, and apartments 
-              in Marrakech. Each property has been chosen for its unique character and 
-              exceptional quality.
+              Browse our selection of riads, villas, and apartments in Marrakech. 
+              We keep our collection small so we can know each property well.
             </p>
           </div>
         </section>

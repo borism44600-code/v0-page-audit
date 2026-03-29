@@ -9,50 +9,50 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 
 const stats = [
-  { number: '50+', label: 'Premium Properties' },
-  { number: '1000+', label: 'Happy Guests' },
-  { number: '10+', label: 'Years Experience' },
-  { number: '24/7', label: 'Concierge Support' },
+  { number: '30+', label: 'Properties' },
+  { number: '500+', label: 'Guests Welcomed' },
+  { number: '6+', label: 'Years in Marrakech' },
+  { number: '24/7', label: 'Available' },
 ]
 
 const values = [
   {
     icon: Award,
-    title: 'Excellence',
-    description: 'We curate only the finest properties that meet our exacting standards for luxury and authenticity.'
+    title: 'Quality',
+    description: 'We visit every property ourselves and only work with places we would stay in.'
   },
   {
     icon: Users,
-    title: 'Personal Touch',
-    description: 'Every guest receives dedicated attention from our concierge team to ensure a perfect stay.'
+    title: 'Personal Service',
+    description: 'Our small team means you always speak with someone who knows our properties well.'
   },
   {
     icon: Home,
     title: 'Authenticity',
-    description: 'Our properties showcase genuine Moroccan craftsmanship and cultural heritage.'
+    description: 'We choose properties with character - real Moroccan homes, not cookie-cutter rentals.'
   },
   {
     icon: Heart,
-    title: 'Passion',
-    description: 'We are passionate about sharing the magic of Marrakech with travelers from around the world.'
+    title: 'Local Knowledge',
+    description: 'We live here and love sharing our favorite spots with guests.'
   },
 ]
 
 const investmentBenefits = [
   {
     icon: TrendingUp,
-    title: 'Strong Returns',
-    description: 'Marrakech\'s growing tourism industry offers attractive rental yields and capital appreciation.'
+    title: 'Growing Market',
+    description: 'Marrakech continues to attract visitors year-round, with steady demand for quality properties.'
   },
   {
     icon: Building2,
-    title: 'Diverse Portfolio',
-    description: 'Access to riads, villas, and apartments across prime locations in Marrakech.'
+    title: 'Property Selection',
+    description: 'We can help you find riads, villas, or apartments in desirable neighborhoods.'
   },
   {
     icon: Shield,
-    title: 'Full Support',
-    description: 'Complete legal assistance, property management, and rental services included.'
+    title: 'Local Support',
+    description: 'From purchase guidance to rental management, we can assist at each step.'
   },
 ]
 
@@ -79,7 +79,7 @@ export default function AboutPage() {
               About Us
             </h1>
             <p className="mt-6 text-lg text-white/90 max-w-2xl mx-auto">
-              Dedicated to delivering exceptional Moroccan hospitality experiences since 2015
+              Helping guests discover quality stays in Marrakech since 2018
             </p>
           </div>
         </section>
@@ -94,26 +94,26 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8 }}
               >
-                <p className="luxury-subheading text-muted-foreground mb-4">Our Concept</p>
+                <p className="luxury-subheading text-muted-foreground mb-4">Our Story</p>
                 <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                  The Art of Moroccan Hospitality
+                  A Small Team, A Considered Approach
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
                   <p>
-                    Marrakech Riads Rent was born from a deep love for Moroccan culture and 
-                    a commitment to sharing its magic with the world. Our journey began over 
-                    a decade ago when our founders fell in love with the labyrinthine medina, 
-                    the warmth of local hospitality, and the timeless beauty of traditional riads.
+                    Marrakech Riads Rent began when we fell in love with this city - the winding 
+                    medina streets, the warmth of Moroccan hospitality, and the beauty of 
+                    traditional architecture. We started helping friends find places to stay, 
+                    and it grew from there.
                   </p>
                   <p>
-                    Today, we curate a handpicked collection of the finest properties in Marrakech, 
-                    from historic riads with centuries of stories to modern villas with 
-                    breathtaking mountain views. Each property is selected for its unique character, 
-                    exceptional quality, and authentic Moroccan charm.
+                    Today, we work with a carefully chosen selection of riads, villas, and 
+                    apartments across Marrakech. We intentionally keep our collection small 
+                    so we can know each property well and offer genuine recommendations.
                   </p>
                   <p>
-                    Our mission is simple: to provide unforgettable stays that combine luxury 
-                    with authenticity, creating memories that last a lifetime.
+                    We believe that finding the right place to stay makes all the difference 
+                    to a trip. That&apos;s why we take the time to understand what each guest 
+                    is looking for and match them with properties that suit.
                   </p>
                 </div>
               </motion.div>
@@ -210,15 +210,15 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8 }}
               >
-                <p className="luxury-subheading text-background/60 mb-4">Investment Partner</p>
+                <p className="luxury-subheading text-background/60 mb-4">Thinking of Investing?</p>
                 <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                  Real Estate Opportunities in Marrakech
+                  Property Opportunities in Marrakech
                 </h2>
                 <p className="text-background/70 leading-relaxed mb-8">
-                  Partner with us to discover exceptional real estate investment opportunities 
-                  in one of Africa&apos;s most dynamic property markets. Our deep expertise in the 
-                  Marrakech market, combined with our comprehensive property management services, 
-                  ensures your investment delivers both lifestyle value and strong returns.
+                  If you&apos;re considering purchasing a property in Marrakech - whether for 
+                  personal use, rental income, or both - we&apos;re happy to share what we&apos;ve 
+                  learned over the years. We can help with finding properties, navigating 
+                  the process, and managing rentals if you choose to let.
                 </p>
                 
                 <div className="space-y-6">
@@ -281,11 +281,11 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                Ready to Experience Marrakech?
+                Planning a Trip to Marrakech?
               </h2>
               <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-                Explore our collection of exceptional properties and let us help 
-                you create unforgettable memories.
+                Browse our properties or get in touch - we&apos;re always happy 
+                to help you find the right place for your stay.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/properties">

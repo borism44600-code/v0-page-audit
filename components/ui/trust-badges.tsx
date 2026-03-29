@@ -13,31 +13,31 @@ interface TrustBadgesProps {
 const badges = [
   {
     icon: Shield,
-    title: 'Verified Properties',
-    description: 'Every property personally inspected'
+    title: 'Carefully Selected',
+    description: 'Each property personally visited'
   },
   {
     icon: Star,
-    title: '5-Star Service',
-    description: '98% guest satisfaction rate'
+    title: 'Quality Service',
+    description: 'Attentive Moroccan hospitality'
   },
   {
     icon: Clock,
-    title: '24/7 Support',
-    description: 'Dedicated concierge team'
+    title: 'Always Available',
+    description: 'Our team is here for you'
   },
   {
     icon: BadgeCheck,
-    title: 'Best Price Guarantee',
-    description: 'Direct booking advantages'
+    title: 'Book Direct',
+    description: 'Personal service, no middlemen'
   }
 ]
 
 const compactBadges = [
-  { icon: Shield, label: 'Verified' },
-  { icon: Star, label: '5-Star Rated' },
-  { icon: Clock, label: '24/7 Support' },
-  { icon: BadgeCheck, label: 'Best Price' }
+  { icon: Shield, label: 'Selected with Care' },
+  { icon: Star, label: 'Quality Service' },
+  { icon: Clock, label: 'Here for You' },
+  { icon: BadgeCheck, label: 'Book Direct' }
 ]
 
 export function TrustBadges({ variant = 'horizontal', className, theme = 'light' }: TrustBadgesProps) {
@@ -141,16 +141,16 @@ export function GuaranteeBanner({ className }: { className?: string }) {
       <div className="flex items-center gap-3">
         <Award className="w-8 h-8 text-gold" />
         <div>
-          <p className="font-semibold text-sm">Satisfaction Guarantee</p>
-          <p className="text-xs text-muted-foreground">Free cancellation up to 48h before check-in</p>
+          <p className="font-semibold text-sm">Flexible Booking</p>
+          <p className="text-xs text-muted-foreground">Free cancellation up to 48h before arrival</p>
         </div>
       </div>
       <div className="hidden sm:block w-px h-10 bg-border" />
       <div className="flex items-center gap-3">
         <HeartHandshake className="w-8 h-8 text-gold" />
         <div>
-          <p className="font-semibold text-sm">Personal Touch</p>
-          <p className="text-xs text-muted-foreground">Dedicated concierge for every booking</p>
+          <p className="font-semibold text-sm">Personal Attention</p>
+          <p className="text-xs text-muted-foreground">A dedicated contact for your stay</p>
         </div>
       </div>
     </motion.div>

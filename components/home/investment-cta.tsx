@@ -8,18 +8,18 @@ import { Button } from '@/components/ui/button'
 const benefits = [
   {
     icon: TrendingUp,
-    title: 'High Returns',
-    description: 'Strong rental yields in a growing market'
+    title: 'Growing Market',
+    description: 'Steady demand for quality properties in Marrakech'
   },
   {
     icon: Building2,
-    title: 'Premium Properties',
-    description: 'Access to exclusive investment opportunities'
+    title: 'Property Selection',
+    description: 'Help finding the right property for your goals'
   },
   {
     icon: Shield,
-    title: 'Secure Investment',
-    description: 'Full legal support and property management'
+    title: 'Local Support',
+    description: 'Guidance through the purchase and rental process'
   }
 ]
 
@@ -37,15 +37,15 @@ export function InvestmentCTA() {
               transition={{ duration: 0.6 }}
             >
               <p className="luxury-subheading text-background/60 mb-4">
-                Investment Opportunity
+                Thinking of Investing?
               </p>
               <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                Real Estate Opportunities in Marrakech
+                Property Opportunities in Marrakech
               </h2>
               <p className="text-background/70 leading-relaxed mb-8">
-                Partner with us to discover exceptional real estate investment opportunities 
-                in Marrakech. Our expertise in the local market, combined with our network of 
-                premium properties, ensures you find the perfect investment to match your goals.
+                Interested in owning a property in Marrakech? We can help you navigate the market, 
+                find the right property, and manage it as a rental if you choose. We&apos;ve helped 
+                several clients through this process.
               </p>
               <Link href="/about#invest">
                 <Button 

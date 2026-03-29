@@ -68,8 +68,8 @@ export default function ServicesPage() {
               Our Services
             </h1>
             <p className="mt-6 text-lg text-white/90 max-w-2xl mx-auto">
-              Elevate your stay with our curated collection of premium services, 
-              designed to make every moment exceptional.
+              We can help arrange a range of services to make your stay more comfortable 
+              and your time in Marrakech more enjoyable.
             </p>
           </div>
         </section>
@@ -140,11 +140,10 @@ export default function ServicesPage() {
         <section className="bg-secondary/30 py-16">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold mb-4">
-              Ready to Experience Our Services?
+              Interested in Any of These Services?
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Contact our concierge team to arrange any of our services, 
-              or book your property to unlock exclusive experiences.
+              Get in touch and we&apos;ll help you arrange whatever you need for your stay.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/booking">

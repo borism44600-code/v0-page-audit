@@ -8,9 +8,9 @@ import { mockProperties } from '@/lib/data'
 import { Button } from '@/components/ui/button'
 
 const trustFeatures = [
-  { icon: Shield, text: 'Verified Properties' },
-  { icon: Star, text: 'Hand-Selected' },
-  { icon: Clock, text: 'Instant Booking' }
+  { icon: Shield, text: 'Personally Visited' },
+  { icon: Star, text: 'Chosen for Quality' },
+  { icon: Clock, text: 'Direct Booking' }
 ]
 
 export function FeaturedProperties() {
@@ -28,12 +28,12 @@ export function FeaturedProperties() {
           className="flex flex-col md:flex-row md:items-end md:justify-between mb-12"
         >
           <div>
-            <p className="luxury-subheading text-gold mb-4">Handpicked Collection</p>
+            <p className="luxury-subheading text-gold mb-4">Our Selection</p>
             <h2 className="text-3xl md:text-5xl font-semibold luxury-heading mb-4">
-              Exceptional Properties
+              Featured Properties
             </h2>
             <p className="text-muted-foreground max-w-xl">
-              Each property in our collection has been personally inspected to ensure it meets our exacting standards of luxury and comfort.
+              We keep our collection intentionally small, focusing only on properties that meet our standards for quality, character, and comfort.
             </p>
             {/* Trust indicators */}
             <div className="flex flex-wrap items-center gap-4 mt-4">
@@ -89,11 +89,11 @@ export function FeaturedProperties() {
           className="mt-12 text-center"
         >
           <p className="text-muted-foreground mb-4">
-            Can&apos;t find what you&apos;re looking for?
+            Looking for something specific?
           </p>
           <Link href="/contact">
             <Button variant="outline" className="gap-2">
-              Let Us Help You Find the Perfect Property
+              Get in Touch
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
