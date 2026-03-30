@@ -1,6 +1,8 @@
-export type PropertyType = 'riad' | 'villa' | 'apartment'
+export type PropertyType = 'riad' | 'villa' | 'apartment' | 'other'
 
-// Bed types for sleeping arrangements
+export type PropertyStatus = 'draft' | 'published' | 'archived'
+
+// Bed types for sleeping arrangements (per specification)
 export type BedType = 
   | 'king' 
   | 'queen' 
@@ -8,16 +10,24 @@ export type BedType =
   | 'single' 
   | 'sofa-bed-double' 
   | 'sofa-bed-single'
+  | 'extra-bed-single'
+  | 'extra-bed-double'
+  | 'bench-single'
+  | 'bench-double'
   | 'bunk-bed'
   | 'crib'
 
 export const BED_TYPE_LABELS: Record<BedType, string> = {
-  'king': 'King-size bed',
-  'queen': 'Queen-size bed',
-  'double': 'Double bed',
-  'single': 'Single bed',
-  'sofa-bed-double': 'Double sofa bed',
-  'sofa-bed-single': 'Single sofa bed',
+  'king': 'King-size bed (2 people)',
+  'queen': 'Queen-size bed (2 people)',
+  'double': 'Standard double bed (2 people)',
+  'single': 'Single bed (1 person)',
+  'sofa-bed-double': 'Sofa bed for 2 people',
+  'sofa-bed-single': 'Sofa bed for 1 person',
+  'extra-bed-single': 'Extra bed for 1 person',
+  'extra-bed-double': 'Extra bed for 2 people',
+  'bench-single': 'Converted bench for 1 person',
+  'bench-double': 'Converted bench for 2 people',
   'bunk-bed': 'Bunk bed',
   'crib': 'Crib'
 }
@@ -61,12 +71,29 @@ export type ParkingType =
   | 'less-500m'
 
 export interface PropertyFeatures {
+  // Pool options
   heatedPool: boolean
   unheatedPool: boolean
+  heatedPlungePool: boolean
+  unheatedPlungePool: boolean
+  // Wellness
   jacuzzi: boolean
   hammam: boolean
   bathtub: boolean
   fireplace: boolean
+  // Outdoor
+  terrace: boolean
+  rooftop: boolean
+  privateTerminate: boolean
+  // Services possible
+  wifi: boolean
+  airConditioning: boolean
+  breakfastPossible: boolean
+  mealsPossible: boolean
+  airportTransferPossible: boolean
+  privateDriverPossible: boolean
+  excursionsPossible: boolean
+  // Kitchen
   gasStove: boolean
   washingMachine: boolean
   iron: boolean
@@ -74,8 +101,7 @@ export interface PropertyFeatures {
   oven: boolean
   coffeeMachine: boolean
   fridge: boolean
-  privateTerminate: boolean
-  terrace: boolean
+  // Views
   mountainView: boolean
   koutboubiaView: boolean
   mouleyYazidView: boolean
@@ -85,50 +111,84 @@ export interface PropertyFeatures {
 
 export interface Property {
   id: string
+  // A. General identity
   title: string
+  slug: string
   type: PropertyType
-  description: string
+  subtitle?: string
   shortDescription: string
-  pricePerNight: number
-  monthlyPrices?: Record<number, number> // Month (1-12) to price mapping
+  description: string
+  status: PropertyStatus
+  
+  // B. Location
   location: {
+    city: string
     district: string
     subDistrict?: string
+    address?: string
+    mapLocation?: string
+    nearbyInfo?: string
     distanceFromCenter?: DistanceFromCenter
   }
-  features: PropertyFeatures
-  parking: ParkingType
-  images: string[]
-  // Room and guest capacity
+  
+  // C. Capacity
   numberOfBedrooms: number
   bathrooms: number
   bedroomGuestCapacity: number // Guests who can sleep in bedrooms
   additionalGuestCapacity: number // Guests in additional spaces (sofa beds, etc.)
   totalGuestCapacity: number // Total = bedroomGuestCapacity + additionalGuestCapacity
-  // Detailed sleeping arrangements
   sleepingArrangements?: SleepingSpace[]
+  
+  // D. Pricing
+  pricePerNight: number
+  monthlyPrices?: Record<number, number> // Month (1-12) to price mapping
+  cleaningFee?: number
+  securityDeposit?: number
+  currency: string
+  priceDisplayNote?: string
+  
+  // E. Amenities / Features
+  features: PropertyFeatures
   amenities: string[]
-  availability: {
-    start: string
-    end: string
-  }[]
-  featured: boolean
-  createdAt: string
-  updatedAt: string
-  // External Calendars Sync fields
+  
+  // F. Parking
+  parking: ParkingType
+  parkingNotes?: string
+  
+  // G. Booking / sync settings
   airbnbIcalUrl?: string
   bookingIcalUrl?: string
   internalIcalUrl?: string
   lastExternalSyncAt?: string
   externalSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
   externalSyncError?: string
-  // Individual channel status
   airbnbSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
   airbnbLastSyncAt?: string
   airbnbEventsCount?: number
   bookingSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
   bookingLastSyncAt?: string
   bookingEventsCount?: number
+  
+  // H. SEO
+  metaTitle?: string
+  metaDescription?: string
+  seoKeywords?: string[]
+  
+  // I. Media
+  images: string[]
+  coverImage?: string
+  imageAltTexts?: Record<string, string>
+  
+  // Availability
+  availability: {
+    start: string
+    end: string
+  }[]
+  
+  // System fields
+  featured: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 // External calendar sync types
@@ -298,10 +358,22 @@ export const GUEST_CAPACITY_OPTIONS = [
 export const FEATURE_LABELS: Record<keyof PropertyFeatures, string> = {
   heatedPool: 'Heated Swimming Pool',
   unheatedPool: 'Unheated Swimming Pool',
+  heatedPlungePool: 'Heated Plunge Pool / Basin',
+  unheatedPlungePool: 'Unheated Plunge Pool / Basin',
   jacuzzi: 'Jacuzzi',
   hammam: 'Hammam',
   bathtub: 'Bathtub',
   fireplace: 'Fireplace',
+  terrace: 'Terrace',
+  rooftop: 'Rooftop',
+  privateTerminate: 'Private Terrace',
+  wifi: 'WiFi',
+  airConditioning: 'Air Conditioning',
+  breakfastPossible: 'Breakfast Possible',
+  mealsPossible: 'Meals Possible',
+  airportTransferPossible: 'Airport Transfer Possible',
+  privateDriverPossible: 'Private Driver Possible',
+  excursionsPossible: 'Excursion Options Possible',
   gasStove: 'Gas Stove / Kitchen',
   washingMachine: 'Washing Machine',
   iron: 'Iron / Ironing Board',
@@ -309,8 +381,6 @@ export const FEATURE_LABELS: Record<keyof PropertyFeatures, string> = {
   oven: 'Oven',
   coffeeMachine: 'Coffee / Tea Maker',
   fridge: 'Fridge(s)',
-  privateTerminate: 'Private Terrace',
-  terrace: 'Terrace',
   mountainView: 'Mountain View',
   koutboubiaView: 'Koutoubia View',
   mouleyYazidView: 'Moulay Lyazid Mosque View',

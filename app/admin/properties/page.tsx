@@ -12,7 +12,9 @@ import {
   Search,
   Bed,
   Users,
-  Sofa
+  Sofa,
+  Copy,
+  Archive
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -32,28 +35,15 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { AdminLayout } from '@/components/admin/admin-layout'
-import { PropertyForm } from '@/components/admin/property-form'
 import { mockProperties } from '@/lib/data'
-import { Property } from '@/lib/types'
 
 export default function AdminPropertiesPage() {
-  const [formOpen, setFormOpen] = useState(false)
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const handleAddProperty = () => {
-    setEditingProperty(null)
-    setFormOpen(true)
-  }
-
-  const handleEditProperty = (property: Property) => {
-    setEditingProperty(property)
-    setFormOpen(true)
-  }
-
-  const handleSaveProperty = (data: Partial<Property>) => {
-    // In a real app, this would save to the database
-    console.log('Saving property:', data)
-  }
+  const filteredProperties = mockProperties.filter(property =>
+    property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    property.location.district.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <AdminLayout title="Properties">
@@ -65,12 +55,16 @@ export default function AdminPropertiesPage() {
             <Input 
               placeholder="Search properties..." 
               className="pl-10 w-full sm:w-80"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button className="gap-2 w-full sm:w-auto" onClick={handleAddProperty}>
-            <Plus className="w-4 h-4" />
-            Add Property
-          </Button>
+          <Link href="/admin/properties/new">
+            <Button className="gap-2 w-full sm:w-auto">
+              <Plus className="w-4 h-4" />
+              Add Property
+            </Button>
+          </Link>
         </div>
 
         {/* Properties Table */}
@@ -90,7 +84,7 @@ export default function AdminPropertiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockProperties.map((property) => (
+                {filteredProperties.map((property) => (
                   <TableRow key={property.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -158,14 +152,25 @@ export default function AdminPropertiesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/properties/${property.id}`}>
+                            <Link href={`/properties/${property.id}`} target="_blank">
                               <Eye className="w-4 h-4 mr-2" />
-                              View
+                              View Public Page
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditProperty(property)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/properties/${property.id}/edit`}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Archive className="w-4 h-4 mr-2" />
+                            Archive
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive">
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -183,17 +188,9 @@ export default function AdminPropertiesPage() {
 
         {/* Summary */}
         <div className="text-sm text-muted-foreground">
-          Showing {mockProperties.length} properties
+          Showing {filteredProperties.length} of {mockProperties.length} properties
         </div>
       </div>
-
-      {/* Property Form Dialog */}
-      <PropertyForm
-        property={editingProperty}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSave={handleSaveProperty}
-      />
     </AdminLayout>
   )
 }

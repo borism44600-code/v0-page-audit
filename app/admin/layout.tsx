@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
+import { AuthProvider } from '@/components/providers/session-provider'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard | Marrakech Riads Rent',
   description: 'Manage properties, bookings, and partners',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default function AdminLayout({
@@ -10,5 +15,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return <AuthProvider>{children}</AuthProvider>
 }
