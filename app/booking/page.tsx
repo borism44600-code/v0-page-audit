@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { 
   Calendar, Users, Plus, Minus, Check, ArrowRight, ArrowLeft,
   CreditCard, MapPin, Bed, Bath, Shield, Clock, Star, Sparkles, 
-  HeartHandshake, CheckCircle2, AlertCircle, Building2
+  HeartHandshake, CheckCircle2, AlertCircle, Building2, PartyPopper, Lock
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Header } from '@/components/layout/header'
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
 import { SplitStaySuggestionCard } from '@/components/booking/split-stay-suggestion'
+import { PayPalPayment, PaymentSuccessDetails } from '@/components/payment/paypal-payment'
 import { mockProperties, mockAddons } from '@/lib/data'
 import { 
   checkPropertyAvailability, 
@@ -60,6 +61,11 @@ function BookingContent() {
   const [splitStaySuggestion, setSplitStaySuggestion] = useState<SplitStaySuggestion | null>(null)
   const [acceptedSplitStay, setAcceptedSplitStay] = useState(false)
   const [bookingSegments, setBookingSegments] = useState<BookingSegment[]>([])
+  
+  // Payment state
+  const [paymentComplete, setPaymentComplete] = useState(false)
+  const [paymentDetails, setPaymentDetails] = useState<PaymentSuccessDetails | null>(null)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const selectedProperty = mockProperties.find(p => p.id === selectedPropertyId)
 
@@ -163,8 +169,21 @@ function BookingContent() {
       case 3: return guests.adults >= 1
       case 4: return true
       case 5: return contactInfo.name && contactInfo.email && contactInfo.phone
+      case 6: return true // Review step - always can proceed to payment
+      case 7: return paymentComplete // Payment must be completed
       default: return false
     }
+  }
+
+  const handlePaymentSuccess = (details: PaymentSuccessDetails) => {
+    setPaymentComplete(true)
+    setPaymentDetails(details)
+    setPaymentError(null)
+  }
+
+  const handlePaymentError = (error: Error) => {
+    setPaymentError(error.message)
+    setPaymentComplete(false)
   }
 
   const steps = [
@@ -173,7 +192,8 @@ function BookingContent() {
     { number: 3, title: 'Guests', description: 'Who is joining' },
     { number: 4, title: 'Extras', description: 'Optional services' },
     { number: 5, title: 'Details', description: 'Your information' },
-    { number: 6, title: 'Confirm', description: 'Review & book' },
+    { number: 6, title: 'Review', description: 'Check details' },
+    { number: 7, title: 'Payment', description: 'Secure checkout' },
   ]
 
   // Get all properties involved in booking
@@ -824,41 +844,124 @@ function BookingContent() {
                   </div>
                 </motion.div>
               )}
+
+              {/* Step 7: Payment */}
+              {step === 7 && (
+                <motion.div
+                  key="step7"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-8"
+                >
+                  {paymentComplete && paymentDetails ? (
+                    // Payment Success
+                    <div className="text-center py-12">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', duration: 0.5 }}
+                        className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 mb-6"
+                      >
+                        <CheckCircle2 className="w-10 h-10 text-green-500" />
+                      </motion.div>
+                      <h2 className="text-3xl font-semibold mb-3">Payment Successful!</h2>
+                      <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                        Your booking has been confirmed. We&apos;ve sent a confirmation email to {paymentDetails.payerEmail || contactInfo.email}.
+                      </p>
+                      
+                      <div className="bg-card rounded-xl border border-border p-6 max-w-md mx-auto mb-8">
+                        <div className="flex items-center justify-center gap-2 text-gold mb-4">
+                          <PartyPopper className="w-5 h-5" />
+                          <span className="font-medium">Booking Confirmed</span>
+                        </div>
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Booking Reference</span>
+                            <span className="font-mono font-medium">{paymentDetails.bookingId}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount Paid</span>
+                            <span className="font-semibold text-gold">{paymentDetails.amount.toFixed(2)} {paymentDetails.currency}</span>
+                          </div>
+                          {paymentDetails.payerName && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Paid by</span>
+                              <span>{paymentDetails.payerName}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Button asChild variant="outline">
+                          <Link href="/properties">Browse More Properties</Link>
+                        </Button>
+                        <Button asChild className="bg-gold text-black hover:bg-gold/90">
+                          <Link href="/">Return Home</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Payment Form
+                    <PayPalPayment
+                      amount={total}
+                      currency="EUR"
+                      propertyId={selectedPropertyId}
+                      propertyTitle={selectedProperty?.title || 'Property Booking'}
+                      checkIn={dates.start?.toISOString().split('T')[0] || ''}
+                      checkOut={dates.end?.toISOString().split('T')[0] || ''}
+                      nights={nights}
+                      guests={guests}
+                      customerEmail={contactInfo.email}
+                      customerName={contactInfo.name}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      onCancel={() => setPaymentError('Payment was cancelled. Please try again.')}
+                    />
+                  )}
+                </motion.div>
+              )}
             </AnimatePresence>
 
-            {/* Navigation Buttons */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center justify-between mt-12 pt-6 border-t border-border"
-            >
-              <Button
-                variant="outline"
-                onClick={() => setStep(s => s - 1)}
-                disabled={step === 1}
-                className="gap-2"
+            {/* Navigation Buttons - Hide when payment is complete */}
+            {!(step === 7 && paymentComplete) && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center justify-between mt-12 pt-6 border-t border-border"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-              
-              {step < 6 ? (
                 <Button
-                  onClick={() => setStep(s => s + 1)}
-                  disabled={!canProceed()}
-                  className="gap-2 bg-gold text-black hover:bg-gold/90"
+                  variant="outline"
+                  onClick={() => setStep(s => s - 1)}
+                  disabled={step === 1 || (step === 7 && !paymentComplete)}
+                  className="gap-2"
                 >
-                  Continue
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
                 </Button>
-              ) : (
-                <Button className="gap-2 bg-gold text-black hover:bg-gold/90 px-8">
-                  <CreditCard className="w-4 h-4" />
-                  Confirm Booking
-                </Button>
-              )}
-            </motion.div>
+                
+                {step < 6 ? (
+                  <Button
+                    onClick={() => setStep(s => s + 1)}
+                    disabled={!canProceed()}
+                    className="gap-2 bg-gold text-black hover:bg-gold/90"
+                  >
+                    Continue
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                ) : step === 6 ? (
+                  <Button 
+                    onClick={() => setStep(7)}
+                    className="gap-2 bg-gold text-black hover:bg-gold/90 px-8"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Proceed to Payment
+                  </Button>
+                ) : null}
+              </motion.div>
+            )}
 
             {/* Help text */}
             <p className="text-center text-sm text-muted-foreground mt-6">
