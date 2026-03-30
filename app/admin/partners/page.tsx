@@ -55,6 +55,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
+import { ImageUploader } from '@/components/admin/image-uploader'
 import { mockPartners } from '@/lib/data'
 
 // Extended partner type for admin
@@ -647,18 +648,13 @@ export default function AdminPartnersPage() {
                 Image
               </h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="image">Cover Image URL</Label>
-                <Input
-                  id="image"
-                  value={formData.image}
-                  onChange={(e) => updateField('image', e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                />
-                <p className="text-xs text-muted-foreground">
-                  In production, you would upload images here
-                </p>
-              </div>
+<ImageUploader
+  images={formData.image ? [formData.image] : []}
+  onChange={(images) => updateField('image', images[0] || '')}
+  single={true}
+  label="Cover Image"
+  description="Upload a cover image for this partner"
+  />
 
               {formData.image && (
                 <div className="relative w-32 h-32 rounded-lg overflow-hidden bg-muted">

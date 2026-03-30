@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { AdminLayout } from '@/components/admin/admin-layout'
+import { ImageUploader } from '@/components/admin/image-uploader'
 import { 
   PropertyType, PropertyStatus, BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
   SleepingSpace, BedType, BED_TYPE_LABELS, BathroomType, BATHROOM_TYPE_LABELS,
@@ -132,6 +133,9 @@ export default function NewPropertyPage() {
     
     // Features
     features: defaultFeatures,
+    
+    // Media
+    images: [] as string[],
     
     // System
     featured: false,
@@ -1185,20 +1189,13 @@ export default function NewPropertyPage() {
                 Media
               </h2>
 
-              <div className="space-y-6">
-                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
-                  <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-sm font-medium mb-2">Upload Property Images</p>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Drag and drop images here, or click to browse
-                  </p>
-                  <Button variant="outline">
-                    Choose Files
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    PNG, JPG up to 10MB each. First image will be the cover.
-                  </p>
-                </div>
+<ImageUploader
+  images={formData.images || []}
+  onChange={(images) => updateField('images', images)}
+  maxImages={20}
+  label="Property Images"
+  description="Upload high-quality photos of the property. First image will be the cover."
+  />
 
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <p className="text-sm text-muted-foreground">
