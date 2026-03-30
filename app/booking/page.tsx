@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
 import { SplitStaySuggestionCard } from '@/components/booking/split-stay-suggestion'
+import { CancellationPolicy } from '@/components/booking/cancellation-policy'
 import { PayPalPayment, PaymentSuccessDetails } from '@/components/payment/paypal-payment'
 import { mockProperties, mockAddons } from '@/lib/data'
 import { 
@@ -32,7 +33,7 @@ import { cn } from '@/lib/utils'
 const trustFeatures = [
   { icon: Shield, text: 'Secure Booking' },
   { icon: Clock, text: 'Here to Help' },
-  { icon: HeartHandshake, text: 'Flexible Cancellation' }
+  { icon: HeartHandshake, text: 'Free Cancellation (15 days)' }
 ]
 
 function BookingContent() {
@@ -825,6 +826,13 @@ function BookingContent() {
                     </div>
                   </div>
 
+                  {/* Cancellation Policy */}
+                  <CancellationPolicy 
+                    nights={nights} 
+                    checkInDate={dates.start}
+                    nightlyRate={selectedProperty?.pricePerNight}
+                  />
+
                   {/* Reassurance */}
                   <div className="bg-gold/10 border border-gold/20 rounded-xl p-6">
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm">
@@ -834,7 +842,7 @@ function BookingContent() {
                       </div>
                       <div className="flex items-center gap-2">
                         <HeartHandshake className="w-5 h-5 text-gold" />
-                        <span>Free Cancellation (48h)</span>
+                        <span>Flexible Cancellation</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-5 h-5 text-gold" />

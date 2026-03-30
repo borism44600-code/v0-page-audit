@@ -1,6 +1,88 @@
 import { Property } from './types'
 
 // ============================================
+// DATE BLOCKING SYSTEM
+// ============================================
+
+export type DateBlockType = 'maintenance' | 'owner_use' | 'booking' | 'other'
+
+export interface DateBlock {
+  id: string
+  propertyId: string
+  startDate: string
+  endDate: string
+  type: DateBlockType
+  reason?: string
+  bookingId?: string // If blocked due to a booking
+  createdBy?: string
+  createdAt: string
+}
+
+// In-memory store for date blocks (would be database in production)
+const dateBlocks: DateBlock[] = []
+
+/**
+ * Add a date block for a property
+ */
+export function addDateBlock(block: Omit<DateBlock, 'id' | 'createdAt'>): DateBlock {
+  const newBlock: DateBlock = {
+    ...block,
+    id: `DB-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: new Date().toISOString()
+  }
+  dateBlocks.push(newBlock)
+  return newBlock
+}
+
+/**
+ * Remove a date block
+ */
+export function removeDateBlock(blockId: string): boolean {
+  const index = dateBlocks.findIndex(b => b.id === blockId)
+  if (index !== -1) {
+    dateBlocks.splice(index, 1)
+    return true
+  }
+  return false
+}
+
+/**
+ * Get all date blocks for a property
+ */
+export function getDateBlocksForProperty(propertyId: string): DateBlock[] {
+  return dateBlocks.filter(b => b.propertyId === propertyId)
+}
+
+/**
+ * Check if a date is blocked for a property
+ */
+export function isDateBlocked(propertyId: string, date: Date): boolean {
+  const dateStr = date.toISOString().split('T')[0]
+  return dateBlocks.some(block => {
+    if (block.propertyId !== propertyId) return false
+    return dateStr >= block.startDate && dateStr < block.endDate
+  })
+}
+
+/**
+ * Get blocked dates within a range for a property
+ */
+export function getBlockedDatesInRange(
+  propertyId: string,
+  startDate: Date,
+  endDate: Date
+): DateBlock[] {
+  const start = startDate.toISOString().split('T')[0]
+  const end = endDate.toISOString().split('T')[0]
+  
+  return dateBlocks.filter(block => {
+    if (block.propertyId !== propertyId) return false
+    // Check if block overlaps with the range
+    return block.startDate < end && block.endDate > start
+  })
+}
+
+// ============================================
 // AVAILABILITY DATA STRUCTURES
 // ============================================
 
@@ -68,16 +150,28 @@ export function calculateNights(start: Date, end: Date): number {
 
 /**
  * Check if a specific date is within availability ranges
+ * Also checks against date blocks if propertyId is provided
  */
 export function isDateAvailable(
   date: Date,
-  availability: { start: string; end: string }[]
+  availability: { start: string; end: string }[],
+  propertyId?: string
 ): boolean {
-  return availability.some(range => {
+  // First check if date is in availability ranges
+  const inAvailabilityRange = availability.some(range => {
     const start = new Date(range.start)
     const end = new Date(range.end)
     return date >= start && date <= end
   })
+  
+  if (!inAvailabilityRange) return false
+  
+  // If propertyId provided, also check date blocks
+  if (propertyId) {
+    return !isDateBlocked(propertyId, date)
+  }
+  
+  return true
 }
 
 /**

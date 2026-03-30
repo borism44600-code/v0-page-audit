@@ -242,8 +242,10 @@ export interface BookingAddon {
 export interface Booking {
   id: string
   propertyId: string
+  propertyTitle?: string
   checkIn: string
   checkOut: string
+  nights: number
   guests: {
     adults: number
     children: number
@@ -253,14 +255,38 @@ export interface Booking {
     quantity: number
     persons?: number
   }[]
-  totalPrice: number
-  status: 'pending' | 'confirmed' | 'cancelled'
+  pricing: {
+    nightlyRate: number
+    subtotal: number
+    cleaningFee: number
+    extras: number
+    total: number
+  }
+  status: 'pending' | 'confirmed' | 'paid' | 'cancelled' | 'refunded' | 'partially_refunded'
+  payment: {
+    method: 'card' | 'paypal' | 'bank_transfer'
+    status: 'pending' | 'paid' | 'refunded' | 'partial_refund'
+    transactionId?: string
+    captureId?: string // PayPal capture ID for refunds
+    paidAt?: string
+  }
+  cancellation?: {
+    cancelledAt: string
+    reason?: string
+    refundStatus: 'not_applicable' | 'pending' | 'completed' | 'refused'
+    refundAmount?: number
+    refundTransactionId?: string
+    processedBy?: string
+  }
   contactInfo: {
     name: string
     email: string
     phone: string
   }
+  source: 'website' | 'airbnb' | 'booking' | 'manual'
+  notes?: string
   createdAt: string
+  updatedAt: string
 }
 
 export interface Service {
@@ -269,6 +295,33 @@ export interface Service {
   description: string
   image: string
   category: 'breakfast' | 'meals' | 'excursion' | 'spa' | 'transport'
+}
+
+// Date blocking types
+export type DateBlockType = 'maintenance' | 'owner_use' | 'booking' | 'other'
+
+export interface DateBlock {
+  id: string
+  propertyId: string
+  startDate: string
+  endDate: string
+  type: DateBlockType
+  reason?: string
+  bookingId?: string
+  createdBy?: string
+  createdAt: string
+}
+
+// Cancellation and refund types
+export type RefundStatus = 'not_applicable' | 'pending' | 'completed' | 'refused'
+
+export interface BookingCancellation {
+  cancelledAt: string
+  reason?: string
+  refundStatus: RefundStatus
+  refundAmount?: number
+  refundTransactionId?: string
+  processedBy?: string
 }
 
 // Location districts

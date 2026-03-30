@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { 
   MoreHorizontal,
   Eye,
@@ -18,13 +18,20 @@ import {
   Clock,
   XCircle,
   RefreshCw,
-  Download
+  Download,
+  AlertTriangle,
+  DollarSign,
+  Ban,
+  Plus,
+  CalendarOff,
+  Undo2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -50,6 +57,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -59,9 +68,29 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
+import { 
+  calculateRefund, 
+  generateCancellationSummary,
+  formatCurrency,
+  formatMarrakechDate,
+  canCancelBooking,
+  RefundCalculation,
+  BookingStatus,
+  RefundStatus
+} from '@/lib/booking-rules'
 
-// Extended booking type for admin
+// Extended booking type for admin with cancellation support
 interface AdminBooking {
   id: string
   guest: {
@@ -96,13 +125,34 @@ interface AdminBooking {
     method: 'card' | 'paypal' | 'bank_transfer'
     status: 'pending' | 'paid' | 'refunded' | 'partial_refund'
     transactionId?: string
+    captureId?: string
     paidAt?: string
   }
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  status: 'pending' | 'confirmed' | 'paid' | 'cancelled' | 'refunded' | 'partially_refunded' | 'completed'
+  cancellation?: {
+    cancelledAt: string
+    reason?: string
+    refundStatus: RefundStatus
+    refundAmount?: number
+    refundTransactionId?: string
+    processedBy?: string
+  }
   source: 'website' | 'airbnb' | 'booking' | 'manual'
   notes?: string
   createdAt: string
   updatedAt: string
+}
+
+// Date block type for manual blocking
+interface DateBlock {
+  id: string
+  propertyId: string
+  propertyName: string
+  startDate: string
+  endDate: string
+  type: 'maintenance' | 'owner_use' | 'other'
+  reason?: string
+  createdAt: string
 }
 
 // Mock bookings data
@@ -115,8 +165,8 @@ const mockBookings: AdminBooking[] = [
       phone: '+33 6 12 34 56 78',
     },
     property: { id: 'p1', name: 'Riad Jardin Secret' },
-    checkIn: '2026-04-01',
-    checkOut: '2026-04-05',
+    checkIn: '2026-04-15',
+    checkOut: '2026-04-19',
     nights: 4,
     guests: { adults: 2, children: 0 },
     extras: [
@@ -131,9 +181,10 @@ const mockBookings: AdminBooking[] = [
       total: 2000,
     },
     payment: {
-      method: 'card',
+      method: 'paypal',
       status: 'paid',
-      transactionId: 'pi_3NxYZ123456789',
+      transactionId: 'PAYID-MXYZ123456789',
+      captureId: 'CAP-123456789',
       paidAt: '2026-03-15T10:30:00Z',
     },
     status: 'confirmed',
@@ -149,8 +200,8 @@ const mockBookings: AdminBooking[] = [
       phone: '+44 7700 900123',
     },
     property: { id: 'p2', name: 'Villa Palmeraie Oasis' },
-    checkIn: '2026-04-03',
-    checkOut: '2026-04-10',
+    checkIn: '2026-04-20',
+    checkOut: '2026-04-27',
     nights: 7,
     guests: { adults: 6, children: 2 },
     extras: [
@@ -228,11 +279,20 @@ const mockBookings: AdminBooking[] = [
       total: 1335,
     },
     payment: {
-      method: 'card',
+      method: 'paypal',
       status: 'refunded',
-      transactionId: 'pi_3NxDEF456789012',
+      transactionId: 'PAYID-NXDEF456789012',
+      captureId: 'CAP-456789012',
     },
     status: 'cancelled',
+    cancellation: {
+      cancelledAt: '2026-03-25T09:00:00Z',
+      reason: 'Travel restrictions',
+      refundStatus: 'completed',
+      refundAmount: 975,
+      refundTransactionId: 'REF-123456789',
+      processedBy: 'Admin'
+    },
     source: 'website',
     notes: 'Cancelled due to travel restrictions',
     createdAt: '2026-03-10T16:20:00Z',
@@ -246,8 +306,8 @@ const mockBookings: AdminBooking[] = [
       phone: '+86 138 1234 5678',
     },
     property: { id: 'p5', name: 'Villa Atlas Retreat' },
-    checkIn: '2026-04-12',
-    checkOut: '2026-04-19',
+    checkIn: '2026-04-25',
+    checkOut: '2026-05-02',
     nights: 7,
     guests: { adults: 4, children: 2 },
     extras: [
@@ -275,33 +335,97 @@ const mockBookings: AdminBooking[] = [
   },
 ]
 
-const statusConfig = {
+// Mock date blocks
+const mockDateBlocks: DateBlock[] = [
+  {
+    id: 'DB001',
+    propertyId: 'p1',
+    propertyName: 'Riad Jardin Secret',
+    startDate: '2026-05-01',
+    endDate: '2026-05-05',
+    type: 'maintenance',
+    reason: 'Annual pool maintenance',
+    createdAt: '2026-03-01T10:00:00Z',
+  },
+  {
+    id: 'DB002',
+    propertyId: 'p2',
+    propertyName: 'Villa Palmeraie Oasis',
+    startDate: '2026-06-15',
+    endDate: '2026-06-22',
+    type: 'owner_use',
+    reason: 'Owner family visit',
+    createdAt: '2026-03-15T14:00:00Z',
+  },
+]
+
+const statusConfig: Record<string, { label: string; color: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pending: { label: 'Pending', color: 'secondary', icon: Clock },
   confirmed: { label: 'Confirmed', color: 'default', icon: CheckCircle2 },
+  paid: { label: 'Paid', color: 'default', icon: CheckCircle2 },
   cancelled: { label: 'Cancelled', color: 'destructive', icon: XCircle },
+  refunded: { label: 'Refunded', color: 'outline', icon: Undo2 },
+  partially_refunded: { label: 'Partial Refund', color: 'outline', icon: Undo2 },
   completed: { label: 'Completed', color: 'outline', icon: CheckCircle2 },
 }
 
-const paymentStatusConfig = {
+const paymentStatusConfig: Record<string, { label: string; color: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   pending: { label: 'Pending', color: 'secondary' },
   paid: { label: 'Paid', color: 'default' },
   refunded: { label: 'Refunded', color: 'destructive' },
   partial_refund: { label: 'Partial Refund', color: 'outline' },
 }
 
-const sourceConfig = {
+const refundStatusConfig: Record<RefundStatus, { label: string; color: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  not_applicable: { label: 'N/A', color: 'outline' },
+  pending: { label: 'Pending', color: 'secondary' },
+  completed: { label: 'Completed', color: 'default' },
+  refused: { label: 'Refused', color: 'destructive' },
+}
+
+const sourceConfig: Record<string, { label: string; color: 'default' | 'secondary' | 'outline' }> = {
   website: { label: 'Website', color: 'default' },
   airbnb: { label: 'Airbnb', color: 'secondary' },
   booking: { label: 'Booking.com', color: 'secondary' },
   manual: { label: 'Manual', color: 'outline' },
 }
 
+const blockTypeConfig: Record<string, { label: string; color: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  maintenance: { label: 'Maintenance', color: 'secondary' },
+  owner_use: { label: 'Owner Use', color: 'default' },
+  other: { label: 'Other', color: 'outline' },
+}
+
 export default function AdminBookingsPage() {
+  const [activeTab, setActiveTab] = useState<'bookings' | 'blocks'>('bookings')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sourceFilter, setSourceFilter] = useState<string>('all')
   const [selectedBooking, setSelectedBooking] = useState<AdminBooking | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  
+  // Cancellation dialog state
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [bookingToCancel, setBookingToCancel] = useState<AdminBooking | null>(null)
+  const [cancellationReason, setCancellationReason] = useState('')
+  const [refundCalculation, setRefundCalculation] = useState<RefundCalculation | null>(null)
+  const [refundOverride, setRefundOverride] = useState(false)
+  const [overrideAmount, setOverrideAmount] = useState('')
+  const [overrideReason, setOverrideReason] = useState('')
+  const [isProcessingCancellation, setIsProcessingCancellation] = useState(false)
+  
+  // Block dates dialog state
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false)
+  const [blockFormData, setBlockFormData] = useState({
+    propertyId: '',
+    startDate: '',
+    endDate: '',
+    type: 'maintenance' as 'maintenance' | 'owner_use' | 'other',
+    reason: ''
+  })
+
+  // Manual booking dialog
+  const [manualBookingOpen, setManualBookingOpen] = useState(false)
 
   // Filter bookings
   const filteredBookings = mockBookings.filter(booking => {
@@ -318,7 +442,7 @@ export default function AdminBookingsPage() {
   })
 
   // Stats
-  const confirmedCount = mockBookings.filter(b => b.status === 'confirmed').length
+  const confirmedCount = mockBookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length
   const pendingCount = mockBookings.filter(b => b.status === 'pending').length
   const cancelledCount = mockBookings.filter(b => b.status === 'cancelled').length
   const totalRevenue = mockBookings
@@ -328,6 +452,87 @@ export default function AdminBookingsPage() {
   const openDetails = (booking: AdminBooking) => {
     setSelectedBooking(booking)
     setDetailsOpen(true)
+  }
+
+  const openCancelDialog = (booking: AdminBooking) => {
+    const canCancel = canCancelBooking({ 
+      status: booking.status as BookingStatus, 
+      checkIn: booking.checkIn 
+    })
+    
+    if (!canCancel.canCancel) {
+      alert(canCancel.reason)
+      return
+    }
+    
+    setBookingToCancel(booking)
+    setCancellationReason('')
+    setRefundOverride(false)
+    setOverrideAmount('')
+    setOverrideReason('')
+    
+    // Calculate refund
+    const calculation = calculateRefund(booking)
+    setRefundCalculation(calculation)
+    
+    setCancelDialogOpen(true)
+  }
+
+  const processCancellation = async () => {
+    if (!bookingToCancel || !refundCalculation) return
+    
+    setIsProcessingCancellation(true)
+    
+    try {
+      // Determine final refund amount
+      const finalRefundAmount = refundOverride && overrideAmount 
+        ? parseFloat(overrideAmount)
+        : refundCalculation.refundableAmount
+      
+      // In production, this would:
+      // 1. Update booking status in database
+      // 2. Call PayPal refund API if payment was via PayPal
+      // 3. Send confirmation emails
+      // 4. Update availability calendar
+      
+      console.log('Processing cancellation:', {
+        bookingId: bookingToCancel.id,
+        reason: cancellationReason,
+        refundAmount: finalRefundAmount,
+        override: refundOverride,
+        overrideReason: overrideReason,
+        paymentMethod: bookingToCancel.payment.method,
+        captureId: bookingToCancel.payment.captureId
+      })
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Close dialogs and refresh
+      setCancelDialogOpen(false)
+      setBookingToCancel(null)
+      setRefundCalculation(null)
+      
+      // Show success message (in production, use toast)
+      alert(`Booking ${bookingToCancel.id} cancelled successfully. Refund of ${formatCurrency(finalRefundAmount)} will be processed.`)
+      
+    } catch (error) {
+      console.error('Cancellation failed:', error)
+      alert('Failed to process cancellation. Please try again.')
+    } finally {
+      setIsProcessingCancellation(false)
+    }
+  }
+
+  const processRefund = async (booking: AdminBooking) => {
+    if (!booking.payment.captureId) {
+      alert('No payment capture ID found. Cannot process refund.')
+      return
+    }
+    
+    // In production, call the refund API
+    console.log('Processing refund for:', booking.id)
+    alert('Refund processing initiated. This would call the PayPal refund API.')
   }
 
   const formatDate = (dateString: string) => {
@@ -371,144 +576,237 @@ export default function AdminBookingsPage() {
           </div>
         </div>
 
-        {/* Header Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search bookings..." 
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="website">Website</SelectItem>
-                <SelectItem value="airbnb">Airbnb</SelectItem>
-                <SelectItem value="booking">Booking.com</SelectItem>
-                <SelectItem value="manual">Manual</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button variant="outline" className="gap-2 w-full sm:w-auto">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-border">
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'bookings' 
+                ? 'border-primary text-primary' 
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Bookings
+          </button>
+          <button
+            onClick={() => setActiveTab('blocks')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'blocks' 
+                ? 'border-primary text-primary' 
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Blocked Dates
+          </button>
         </div>
 
-        {/* Bookings Table */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Booking ID</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead className="hidden md:table-cell">Property</TableHead>
-                  <TableHead className="hidden lg:table-cell">Check In</TableHead>
-                  <TableHead className="hidden lg:table-cell">Check Out</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Payment</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBookings.map((booking) => {
-                  const StatusIcon = statusConfig[booking.status].icon
-                  return (
-                    <TableRow key={booking.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetails(booking)}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {booking.id}
-                          <Badge variant="outline" className="text-[10px] px-1">
-                            {sourceConfig[booking.source].label}
-                          </Badge>
-                        </div>
-                      </TableCell>
+        {activeTab === 'bookings' ? (
+          <>
+            {/* Header Actions */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search bookings..." 
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    <SelectItem value="website">Website</SelectItem>
+                    <SelectItem value="airbnb">Airbnb</SelectItem>
+                    <SelectItem value="booking">Booking.com</SelectItem>
+                    <SelectItem value="manual">Manual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button onClick={() => setManualBookingOpen(true)} className="gap-2 flex-1 sm:flex-none">
+                  <Plus className="w-4 h-4" />
+                  Manual Booking
+                </Button>
+                <Button variant="outline" className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Export
+                </Button>
+              </div>
+            </div>
+
+            {/* Bookings Table */}
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Booking ID</TableHead>
+                      <TableHead>Guest</TableHead>
+                      <TableHead className="hidden md:table-cell">Property</TableHead>
+                      <TableHead className="hidden lg:table-cell">Check In</TableHead>
+                      <TableHead className="hidden lg:table-cell">Nights</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="hidden sm:table-cell">Payment</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredBookings.map((booking) => {
+                      const statusInfo = statusConfig[booking.status] || statusConfig.pending
+                      const StatusIcon = statusInfo.icon
+                      return (
+                        <TableRow key={booking.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetails(booking)}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {booking.id}
+                              <Badge variant="outline" className="text-[10px] px-1">
+                                {sourceConfig[booking.source].label}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{booking.guest.name}</p>
+                              <p className="text-sm text-muted-foreground hidden sm:block">{booking.guest.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">{booking.property.name}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{formatDate(booking.checkIn)}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{booking.nights}</TableCell>
+                          <TableCell>
+                            <Badge variant={statusInfo.color}>
+                              <StatusIcon className="w-3 h-3 mr-1" />
+                              {statusInfo.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant={paymentStatusConfig[booking.payment.status].color}>
+                              {paymentStatusConfig[booking.payment.status].label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">&euro;{booking.pricing.total.toLocaleString()}</TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openDetails(booking)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Booking
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {booking.status === 'pending' && (
+                                  <DropdownMenuItem>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Confirm Booking
+                                  </DropdownMenuItem>
+                                )}
+                                {booking.cancellation?.refundStatus === 'pending' && (
+                                  <DropdownMenuItem onClick={() => processRefund(booking)}>
+                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    Process Refund
+                                  </DropdownMenuItem>
+                                )}
+                                {booking.status !== 'cancelled' && booking.status !== 'refunded' && (
+                                  <DropdownMenuItem 
+                                    className="text-destructive"
+                                    onClick={() => openCancelDialog(booking)}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Cancel Booking
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredBookings.length} of {mockBookings.length} bookings
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Blocked Dates Tab */}
+            <div className="flex justify-between items-center">
+              <p className="text-muted-foreground">
+                Manually blocked dates for properties (maintenance, owner use, etc.)
+              </p>
+              <Button onClick={() => setBlockDialogOpen(true)} className="gap-2">
+                <CalendarOff className="w-4 h-4" />
+                Block Dates
+              </Button>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockDateBlocks.map((block) => (
+                    <TableRow key={block.id}>
+                      <TableCell className="font-medium">{block.propertyName}</TableCell>
+                      <TableCell>{formatDate(block.startDate)}</TableCell>
+                      <TableCell>{formatDate(block.endDate)}</TableCell>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{booking.guest.name}</p>
-                          <p className="text-sm text-muted-foreground hidden sm:block">{booking.guest.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{booking.property.name}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{formatDate(booking.checkIn)}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{formatDate(booking.checkOut)}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusConfig[booking.status].color as 'default' | 'secondary' | 'destructive' | 'outline'}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusConfig[booking.status].label}
+                        <Badge variant={blockTypeConfig[block.type].color}>
+                          {blockTypeConfig[block.type].label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <Badge variant={paymentStatusConfig[booking.payment.status].color as 'default' | 'secondary' | 'destructive' | 'outline'}>
-                          {paymentStatusConfig[booking.payment.status].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">&euro;{booking.pricing.total.toLocaleString()}</TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openDetails(booking)}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit Booking
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {booking.status === 'pending' && (
-                              <DropdownMenuItem>
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Confirm Booking
-                              </DropdownMenuItem>
-                            )}
-                            {booking.status !== 'cancelled' && (
-                              <DropdownMenuItem className="text-destructive">
-                                <XCircle className="w-4 h-4 mr-2" />
-                                Cancel Booking
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <TableCell className="text-muted-foreground">{block.reason || '-'}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                          <X className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="text-sm text-muted-foreground">
-          Showing {filteredBookings.length} of {mockBookings.length} bookings
-        </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Booking Details Sheet */}
@@ -519,13 +817,58 @@ export default function AdminBookingsPage() {
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-3">
                   Booking {selectedBooking.id}
-                  <Badge variant={statusConfig[selectedBooking.status].color as 'default' | 'secondary' | 'destructive' | 'outline'}>
-                    {statusConfig[selectedBooking.status].label}
+                  <Badge variant={statusConfig[selectedBooking.status]?.color || 'secondary'}>
+                    {statusConfig[selectedBooking.status]?.label || selectedBooking.status}
                   </Badge>
                 </SheetTitle>
               </SheetHeader>
 
               <div className="space-y-6 mt-6">
+                {/* Cancellation Info (if cancelled) */}
+                {selectedBooking.cancellation && (
+                  <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold flex items-center gap-2 text-red-800 dark:text-red-200">
+                      <XCircle className="w-4 h-4" />
+                      Cancellation Details
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-red-700 dark:text-red-300">Cancelled At</span>
+                        <span>{formatDateTime(selectedBooking.cancellation.cancelledAt)}</span>
+                      </div>
+                      {selectedBooking.cancellation.reason && (
+                        <div className="flex justify-between">
+                          <span className="text-red-700 dark:text-red-300">Reason</span>
+                          <span>{selectedBooking.cancellation.reason}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-red-700 dark:text-red-300">Refund Status</span>
+                        <Badge variant={refundStatusConfig[selectedBooking.cancellation.refundStatus].color}>
+                          {refundStatusConfig[selectedBooking.cancellation.refundStatus].label}
+                        </Badge>
+                      </div>
+                      {selectedBooking.cancellation.refundAmount !== undefined && (
+                        <div className="flex justify-between">
+                          <span className="text-red-700 dark:text-red-300">Refund Amount</span>
+                          <span className="font-medium">{formatCurrency(selectedBooking.cancellation.refundAmount)}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {selectedBooking.cancellation.refundStatus === 'pending' && (
+                      <Button 
+                        className="w-full mt-2" 
+                        size="sm"
+                        onClick={() => processRefund(selectedBooking)}
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Process Refund
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 {/* Guest Information */}
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
@@ -634,7 +977,7 @@ export default function AdminBookingsPage() {
                     <Separator />
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Payment Status</span>
-                      <Badge variant={paymentStatusConfig[selectedBooking.payment.status].color as 'default' | 'secondary' | 'destructive' | 'outline'}>
+                      <Badge variant={paymentStatusConfig[selectedBooking.payment.status].color}>
                         {paymentStatusConfig[selectedBooking.payment.status].label}
                       </Badge>
                     </div>
@@ -647,6 +990,14 @@ export default function AdminBookingsPage() {
                         <span className="text-muted-foreground">Transaction ID</span>
                         <code className="text-xs bg-muted px-2 py-1 rounded">
                           {selectedBooking.payment.transactionId}
+                        </code>
+                      </div>
+                    )}
+                    {selectedBooking.payment.captureId && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Capture ID</span>
+                        <code className="text-xs bg-muted px-2 py-1 rounded">
+                          {selectedBooking.payment.captureId}
                         </code>
                       </div>
                     )}
@@ -686,14 +1037,20 @@ export default function AdminBookingsPage() {
                       Confirm Booking
                     </Button>
                   )}
-                  {selectedBooking.status !== 'cancelled' && (
+                  {selectedBooking.status !== 'cancelled' && selectedBooking.status !== 'refunded' && (
                     <Button variant="outline" className="flex-1">
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
                   )}
-                  {selectedBooking.status !== 'cancelled' && (
-                    <Button variant="destructive">
+                  {selectedBooking.status !== 'cancelled' && selectedBooking.status !== 'refunded' && (
+                    <Button 
+                      variant="destructive"
+                      onClick={() => {
+                        setDetailsOpen(false)
+                        openCancelDialog(selectedBooking)
+                      }}
+                    >
                       <XCircle className="w-4 h-4 mr-2" />
                       Cancel
                     </Button>
@@ -704,6 +1061,264 @@ export default function AdminBookingsPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Cancellation Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Cancel Booking
+            </DialogTitle>
+            <DialogDescription>
+              {bookingToCancel && (
+                <>Cancel booking {bookingToCancel.id} for {bookingToCancel.guest.name}</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {refundCalculation && (
+            <div className="space-y-4">
+              {/* Refund Calculation Summary */}
+              <div className={`rounded-lg p-4 space-y-2 ${
+                refundCalculation.isWithinFreeCancellation 
+                  ? 'bg-green-50 dark:bg-green-950/20' 
+                  : 'bg-red-50 dark:bg-red-950/20'
+              }`}>
+                <h4 className={`font-medium ${
+                  refundCalculation.isWithinFreeCancellation
+                    ? 'text-green-800 dark:text-green-200'
+                    : 'text-red-800 dark:text-red-200'
+                }`}>
+                  {refundCalculation.isWithinFreeCancellation 
+                    ? 'Partial Refund Available' 
+                    : 'No Refund (Late Cancellation)'}
+                </h4>
+                <div className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span>Days until check-in</span>
+                    <span className="font-medium">{refundCalculation.daysUntilCheckIn}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Nights booked</span>
+                    <span className="font-medium">{refundCalculation.nightsBooked}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Nights retained</span>
+                    <span className="font-medium">{refundCalculation.nightsRetained}</span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between">
+                    <span>Original amount</span>
+                    <span>{formatCurrency(refundCalculation.originalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Amount retained</span>
+                    <span>{formatCurrency(refundCalculation.amountRetained)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-base pt-2">
+                    <span>Refundable amount</span>
+                    <span className="text-primary">{formatCurrency(refundCalculation.refundableAmount)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cancellation Reason */}
+              <div className="space-y-2">
+                <Label>Cancellation Reason</Label>
+                <Textarea
+                  placeholder="Enter reason for cancellation..."
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              {/* Refund Override */}
+              <div className="space-y-3 p-4 border border-border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="refundOverride"
+                    checked={refundOverride}
+                    onChange={(e) => setRefundOverride(e.target.checked)}
+                    className="rounded border-border"
+                  />
+                  <Label htmlFor="refundOverride" className="cursor-pointer">
+                    Override refund amount
+                  </Label>
+                </div>
+
+                {refundOverride && (
+                  <div className="space-y-3 pt-2">
+                    <div className="space-y-2">
+                      <Label>Custom Refund Amount (EUR)</Label>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={overrideAmount}
+                        onChange={(e) => setOverrideAmount(e.target.value)}
+                        min="0"
+                        max={refundCalculation.originalAmount}
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Override Reason</Label>
+                      <Textarea
+                        placeholder="Explain why you're overriding the calculated refund..."
+                        value={overrideReason}
+                        onChange={(e) => setOverrideReason(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={isProcessingCancellation}
+            >
+              Keep Booking
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={processCancellation}
+              disabled={isProcessingCancellation}
+            >
+              {isProcessingCancellation ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Cancel Booking
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block Dates Dialog */}
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Block Dates</DialogTitle>
+            <DialogDescription>
+              Block dates for a property (maintenance, owner use, etc.)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Property</Label>
+              <Select 
+                value={blockFormData.propertyId} 
+                onValueChange={(v) => setBlockFormData(prev => ({ ...prev, propertyId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select property" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="p1">Riad Jardin Secret</SelectItem>
+                  <SelectItem value="p2">Villa Palmeraie Oasis</SelectItem>
+                  <SelectItem value="p3">Riad Ambre & Epices</SelectItem>
+                  <SelectItem value="p4">Apartment Hivernage Elite</SelectItem>
+                  <SelectItem value="p5">Villa Atlas Retreat</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={blockFormData.startDate}
+                  onChange={(e) => setBlockFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Date</Label>
+                <Input
+                  type="date"
+                  value={blockFormData.endDate}
+                  onChange={(e) => setBlockFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Block Type</Label>
+              <Select 
+                value={blockFormData.type} 
+                onValueChange={(v: 'maintenance' | 'owner_use' | 'other') => setBlockFormData(prev => ({ ...prev, type: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="owner_use">Owner Use</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reason (optional)</Label>
+              <Textarea
+                placeholder="Enter reason for blocking..."
+                value={blockFormData.reason}
+                onChange={(e) => setBlockFormData(prev => ({ ...prev, reason: e.target.value }))}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button>
+              <CalendarOff className="w-4 h-4 mr-2" />
+              Block Dates
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Booking Dialog (placeholder) */}
+      <Dialog open={manualBookingOpen} onOpenChange={setManualBookingOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Manual Booking</DialogTitle>
+            <DialogDescription>
+              Create a booking manually for phone reservations or special arrangements
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-8 text-center text-muted-foreground">
+            <p>Manual booking form would go here.</p>
+            <p className="text-sm">This would include guest details, property selection, dates, pricing, etc.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManualBookingOpen(false)}>
+              Cancel
+            </Button>
+            <Button>
+              Create Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   )
 }

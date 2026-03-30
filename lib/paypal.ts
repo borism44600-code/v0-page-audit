@@ -223,3 +223,127 @@ export function isPayPalConfigured(): boolean {
 export function getPayPalClientId(): string {
   return PAYPAL_CLIENT_ID || ''
 }
+
+export interface PayPalRefundData {
+  captureId: string
+  amount: number
+  currency: string
+  reason?: string
+  bookingId?: string
+}
+
+export interface PayPalRefundResult {
+  id: string
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED'
+  amount?: {
+    currency_code: string
+    value: string
+  }
+  seller_payable_breakdown?: {
+    gross_amount: {
+      currency_code: string
+      value: string
+    }
+    paypal_fee: {
+      currency_code: string
+      value: string
+    }
+    net_amount: {
+      currency_code: string
+      value: string
+    }
+  }
+}
+
+/**
+ * Issue a refund for a captured PayPal payment
+ * Called from server-side API route
+ * 
+ * @param captureId - The PayPal capture ID from the original payment
+ * @param amount - The amount to refund (partial or full)
+ * @param currency - Currency code (EUR, USD, etc.)
+ * @param reason - Optional reason for the refund
+ */
+export async function refundPayPalPayment(refundData: PayPalRefundData): Promise<PayPalRefundResult> {
+  const accessToken = await getPayPalAccessToken()
+
+  const payload: {
+    amount?: { value: string; currency_code: string }
+    note_to_payer?: string
+    invoice_id?: string
+  } = {}
+
+  // Add amount for partial refunds
+  if (refundData.amount) {
+    payload.amount = {
+      value: refundData.amount.toFixed(2),
+      currency_code: refundData.currency
+    }
+  }
+
+  // Add note to payer if reason provided
+  if (refundData.reason) {
+    payload.note_to_payer = refundData.reason
+  }
+
+  // Add booking reference
+  if (refundData.bookingId) {
+    payload.invoice_id = refundData.bookingId
+  }
+
+  const response = await fetch(
+    `${PAYPAL_BASE_URL}/v2/payments/captures/${refundData.captureId}/refund`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'PayPal-Request-Id': `refund-${refundData.captureId}-${Date.now()}`, // Idempotency key
+      },
+      body: JSON.stringify(payload),
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Failed to refund PayPal payment: ${error}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get refund details from PayPal
+ */
+export async function getPayPalRefundDetails(refundId: string): Promise<PayPalRefundResult> {
+  const accessToken = await getPayPalAccessToken()
+
+  const response = await fetch(
+    `${PAYPAL_BASE_URL}/v2/payments/refunds/${refundId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Failed to get PayPal refund details: ${error}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Extract capture ID from a PayPal order capture result
+ */
+export function extractCaptureId(captureResult: PayPalCaptureResult): string | null {
+  const captures = captureResult.purchase_units?.[0]?.payments?.captures
+  if (captures && captures.length > 0) {
+    return captures[0].id
+  }
+  return null
+}

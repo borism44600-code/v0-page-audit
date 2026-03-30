@@ -20,7 +20,7 @@ const faqCategories = [
       },
       {
         question: 'What is your cancellation policy?',
-        answer: 'Our standard cancellation policy allows free cancellation up to 30 days before check-in for a full refund. Cancellations between 15-30 days receive a 50% refund. Cancellations less than 15 days before check-in are non-refundable. Some properties may have different policies, which will be clearly stated during booking.'
+        answer: 'Free cancellation is available until 15 days before check-in (3:00 PM Marrakech time). For cancellations made more than 15 days before check-in, a portion of your stay will be retained based on the length of your booking: 1-2 nights are non-refundable, 3-7 nights retain 2 nights, 8-14 nights retain 3 nights, 15-21 nights retain 4 nights, 22-29 nights retain 5 nights, and 30+ nights retain 7 nights. Cancellations made less than 15 days before check-in are non-refundable (100% retained). The full cancellation policy is displayed during booking.'
       },
       {
         question: 'What payment methods do you accept?',
