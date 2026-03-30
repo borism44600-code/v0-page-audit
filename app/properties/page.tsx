@@ -94,7 +94,7 @@ export default function PropertiesPage() {
       }
 
       // Bedrooms filter
-      if (filters.bedrooms.length > 0) {
+      if (filters.bedrooms && filters.bedrooms.length > 0) {
         const matchesBedrooms = filters.bedrooms.some(b => {
           if (b === 7) return property.bedrooms >= 7
           return property.bedrooms === b
@@ -105,14 +105,14 @@ export default function PropertiesPage() {
       }
 
       // Main sleeping capacity filter
-      if (filters.mainSleepingCapacity !== null) {
+      if (filters.mainSleepingCapacity != null && filters.mainSleepingCapacity > 0) {
         if (property.mainSleepingCapacity < filters.mainSleepingCapacity) {
           return false
         }
       }
 
       // Additional sleeping capacity filter
-      if (filters.additionalSleepingCapacity !== null) {
+      if (filters.additionalSleepingCapacity != null) {
         if (filters.additionalSleepingCapacity === 0) {
           // Looking for properties with no extra beds
           if (property.additionalSleepingCapacity > 0) {

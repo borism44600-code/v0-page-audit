@@ -1,5 +1,38 @@
 export type PropertyType = 'riad' | 'villa' | 'apartment'
 
+// Bed types for sleeping arrangements
+export type BedType = 
+  | 'king' 
+  | 'queen' 
+  | 'double' 
+  | 'single' 
+  | 'sofa-bed-double' 
+  | 'sofa-bed-single'
+  | 'bunk-bed'
+  | 'crib'
+
+export const BED_TYPE_LABELS: Record<BedType, string> = {
+  'king': 'King-size bed',
+  'queen': 'Queen-size bed',
+  'double': 'Double bed',
+  'single': 'Single bed',
+  'sofa-bed-double': 'Double sofa bed',
+  'sofa-bed-single': 'Single sofa bed',
+  'bunk-bed': 'Bunk bed',
+  'crib': 'Crib'
+}
+
+export interface SleepingSpace {
+  roomName: string // e.g., "Bedroom 1", "Living room"
+  roomType: 'bedroom' | 'living-room' | 'other'
+  beds: {
+    type: BedType
+    quantity: number
+  }[]
+  ensuite?: boolean // Has private bathroom
+  notes?: string // Additional notes like "with balcony"
+}
+
 export type DistanceFromCenter = 
   | 'walking' 
   | 'less-5-min' 
@@ -61,6 +94,8 @@ export interface Property {
   // Sleeping capacity breakdown
   mainSleepingCapacity: number // Beds in bedrooms
   additionalSleepingCapacity: number // Extra beds, sofa beds, etc.
+  // Detailed sleeping arrangements
+  sleepingArrangements?: SleepingSpace[]
   amenities: string[]
   availability: {
     start: string

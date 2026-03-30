@@ -46,6 +46,58 @@ export const mockProperties: Property[] = [
     maxGuests: 10,
     mainSleepingCapacity: 8,
     additionalSleepingCapacity: 2,
+    sleepingArrangements: [
+      {
+        roomName: 'Bedroom 1',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'king', quantity: 1 },
+          { type: 'single', quantity: 1 }
+        ],
+        ensuite: true
+      },
+      {
+        roomName: 'Bedroom 2',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'single', quantity: 1 },
+          { type: 'sofa-bed-single', quantity: 1 }
+        ],
+        ensuite: true
+      },
+      {
+        roomName: 'Bedroom 3',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'queen', quantity: 1 }
+        ],
+        ensuite: true
+      },
+      {
+        roomName: 'Bedroom 4',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'double', quantity: 1 }
+        ],
+        ensuite: true
+      },
+      {
+        roomName: 'Bedroom 5',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'single', quantity: 1 }
+        ],
+        ensuite: true
+      },
+      {
+        roomName: 'Living Room',
+        roomType: 'living-room',
+        beds: [
+          { type: 'sofa-bed-double', quantity: 1 }
+        ],
+        notes: 'Additional sleeping space'
+      }
+    ],
     amenities: ['WiFi', 'Air Conditioning', 'Daily Housekeeping', 'Concierge Service', 'Airport Transfer Available'],
     availability: [
       { start: '2026-01-01', end: '2026-04-10' },

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Bed, Users, Sofa, Bath, Save, X } from 'lucide-react'
+import { Bed, Users, Sofa, Bath, Save, X, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,7 +20,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Property, PropertyType, BEDROOM_OPTIONS, SLEEPING_CAPACITY_OPTIONS } from '@/lib/types'
+import { 
+  Property, PropertyType, BEDROOM_OPTIONS, SLEEPING_CAPACITY_OPTIONS,
+  SleepingSpace, BedType, BED_TYPE_LABELS
+} from '@/lib/types'
 
 interface PropertyFormProps {
   property?: Property | null
@@ -42,9 +45,67 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
     additionalSleepingCapacity: property?.additionalSleepingCapacity || 0,
   })
 
+  const [sleepingArrangements, setSleepingArrangements] = useState<SleepingSpace[]>(
+    property?.sleepingArrangements || []
+  )
+
+  const addRoom = () => {
+    const newRoom: SleepingSpace = {
+      roomName: `Bedroom ${sleepingArrangements.filter(r => r.roomType === 'bedroom').length + 1}`,
+      roomType: 'bedroom',
+      beds: [{ type: 'double', quantity: 1 }],
+      ensuite: false
+    }
+    setSleepingArrangements([...sleepingArrangements, newRoom])
+  }
+
+  const addLivingRoom = () => {
+    const newRoom: SleepingSpace = {
+      roomName: 'Living Room',
+      roomType: 'living-room',
+      beds: [{ type: 'sofa-bed-double', quantity: 1 }],
+      notes: 'Additional sleeping space'
+    }
+    setSleepingArrangements([...sleepingArrangements, newRoom])
+  }
+
+  const removeRoom = (index: number) => {
+    setSleepingArrangements(sleepingArrangements.filter((_, i) => i !== index))
+  }
+
+  const updateRoom = (index: number, updates: Partial<SleepingSpace>) => {
+    setSleepingArrangements(sleepingArrangements.map((room, i) => 
+      i === index ? { ...room, ...updates } : room
+    ))
+  }
+
+  const addBedToRoom = (roomIndex: number) => {
+    const room = sleepingArrangements[roomIndex]
+    updateRoom(roomIndex, {
+      beds: [...room.beds, { type: 'single', quantity: 1 }]
+    })
+  }
+
+  const removeBedFromRoom = (roomIndex: number, bedIndex: number) => {
+    const room = sleepingArrangements[roomIndex]
+    updateRoom(roomIndex, {
+      beds: room.beds.filter((_, i) => i !== bedIndex)
+    })
+  }
+
+  const updateBed = (roomIndex: number, bedIndex: number, updates: Partial<{ type: BedType; quantity: number }>) => {
+    const room = sleepingArrangements[roomIndex]
+    updateRoom(roomIndex, {
+      beds: room.beds.map((bed, i) => i === bedIndex ? { ...bed, ...updates } : bed)
+    })
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave(formData)
+    onSave({
+      ...formData,
+      sleepingArrangements: sleepingArrangements.length > 0 ? sleepingArrangements : undefined
+    })
     onOpenChange(false)
   }
 
@@ -273,6 +334,162 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Detailed Sleeping Arrangements */}
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  Detailed Sleeping Arrangements
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Specify beds in each room (displayed on property page)
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={addRoom}>
+                  <Plus className="w-3 h-3 mr-1" />
+                  Bedroom
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addLivingRoom}>
+                  <Plus className="w-3 h-3 mr-1" />
+                  Living Room
+                </Button>
+              </div>
+            </div>
+
+            {sleepingArrangements.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                <Bed className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No sleeping arrangements defined yet.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add bedrooms and living rooms to specify beds in each space.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sleepingArrangements.map((room, roomIndex) => (
+                  <div 
+                    key={roomIndex}
+                    className="bg-secondary/30 rounded-xl p-4 border border-border/50"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        {room.roomType === 'bedroom' ? (
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Bed className="w-4 h-4 text-primary" />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <Sofa className="w-4 h-4 text-gold" />
+                          </div>
+                        )}
+                        <div>
+                          <Input
+                            value={room.roomName}
+                            onChange={(e) => updateRoom(roomIndex, { roomName: e.target.value })}
+                            className="h-7 text-sm font-medium bg-transparent border-none px-0 focus-visible:ring-0"
+                            placeholder="Room name"
+                          />
+                          {room.roomType === 'bedroom' && (
+                            <label className="flex items-center gap-2 mt-1">
+                              <input
+                                type="checkbox"
+                                checked={room.ensuite || false}
+                                onChange={(e) => updateRoom(roomIndex, { ensuite: e.target.checked })}
+                                className="rounded border-border"
+                              />
+                              <span className="text-xs text-muted-foreground">Ensuite bathroom</span>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeRoom(roomIndex)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+
+                    {/* Beds */}
+                    <div className="space-y-2 ml-11">
+                      {room.beds.map((bed, bedIndex) => (
+                        <div key={bedIndex} className="flex items-center gap-2">
+                          <Select
+                            value={bed.type}
+                            onValueChange={(value) => updateBed(roomIndex, bedIndex, { type: value as BedType })}
+                          >
+                            <SelectTrigger className="h-8 text-xs flex-1">
+                              <SelectValue placeholder="Bed type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(BED_TYPE_LABELS).map(([value, label]) => (
+                                <SelectItem key={value} value={value} className="text-xs">
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={bed.quantity.toString()}
+                            onValueChange={(value) => updateBed(roomIndex, bedIndex, { quantity: parseInt(value) })}
+                          >
+                            <SelectTrigger className="h-8 text-xs w-16">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1</SelectItem>
+                              <SelectItem value="2">2</SelectItem>
+                              <SelectItem value="3">3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {room.beds.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => removeBedFromRoom(roomIndex, bedIndex)}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-muted-foreground"
+                        onClick={() => addBedToRoom(roomIndex)}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add bed
+                      </Button>
+                    </div>
+
+                    {/* Notes for living room */}
+                    {room.roomType === 'living-room' && (
+                      <div className="ml-11 mt-3">
+                        <Input
+                          value={room.notes || ''}
+                          onChange={(e) => updateRoom(roomIndex, { notes: e.target.value })}
+                          placeholder="Notes (e.g., 'Additional sleeping space')"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <DialogFooter className="pt-4">

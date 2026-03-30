@@ -17,7 +17,7 @@ import { AvailabilityCalendar } from '@/components/properties/availability-calen
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
 import { mockProperties, mockServices, mockAddons } from '@/lib/data'
-import { FEATURE_LABELS, type PropertyFeatures } from '@/lib/types'
+import { FEATURE_LABELS, BED_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const serviceIcons = {
@@ -156,6 +156,53 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   </p>
                 </div>
               </motion.div>
+
+              {/* Sleeping Arrangements */}
+              {property.sleepingArrangements && property.sleepingArrangements.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <h2 className="text-xl font-semibold mb-6">Sleeping Arrangements</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {property.sleepingArrangements.map((space: SleepingSpace, index: number) => (
+                      <div 
+                        key={index}
+                        className="bg-secondary/50 rounded-lg p-4 border border-border/50"
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          {space.roomType === 'bedroom' ? (
+                            <Bed className="w-5 h-5 text-primary" />
+                          ) : (
+                            <Sofa className="w-5 h-5 text-gold" />
+                          )}
+                          <h3 className="font-medium">{space.roomName}</h3>
+                          {space.ensuite && (
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                              Ensuite
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-1.5 text-sm text-muted-foreground">
+                          {space.beds.map((bed, bedIndex) => (
+                            <li key={bedIndex} className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                              {bed.quantity > 1 ? `${bed.quantity}x ` : ''}{BED_TYPE_LABELS[bed.type]}
+                            </li>
+                          ))}
+                        </ul>
+                        {space.notes && (
+                          <p className="text-xs text-muted-foreground mt-2 italic">
+                            {space.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Features */}
               <motion.div
