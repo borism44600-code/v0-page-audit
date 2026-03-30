@@ -368,7 +368,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       <span className="text-3xl font-semibold">{property.pricePerNight}€</span>
                       <span className="text-muted-foreground">/ night</span>
                     </div>
-                    <p className="text-sm text-primary mt-1">Includes breakfast &amp; daily housekeeping</p>
+                    {property.priceDisplayNote && (
+                      <p className="text-sm text-primary mt-1">{property.priceDisplayNote}</p>
+                    )}
                   </div>
 
                   {/* Quick Info */}
