@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { parseICalContent, icsEventsToBookedPeriods, isValidIcalUrl } from '@/lib/ical'
+import { 
+  parseICalContent, 
+  icsEventsToBookedPeriods, 
+  isValidIcalUrl,
+  detectCalendarSource
+} from '@/lib/ical'
+import { CalendarChannel } from '@/lib/types'
 
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
-    const { propertyId, icalUrl } = await request.json()
+    const { propertyId, icalUrl, source } = await request.json() as {
+      propertyId: string
+      icalUrl: string
+      source?: CalendarChannel
+    }
 
     if (!propertyId || !icalUrl) {
       return NextResponse.json(
@@ -17,12 +27,15 @@ export async function POST(request: NextRequest) {
     // Validate URL format
     if (!isValidIcalUrl(icalUrl)) {
       return NextResponse.json(
-        { error: 'Invalid iCal URL. Please provide a valid HTTPS URL ending in .ics' },
+        { error: 'Invalid iCal URL. Please provide a valid HTTPS calendar URL.' },
         { status: 400 }
       )
     }
 
-    // Fetch the iCal content from Airbnb
+    // Detect source from URL if not provided
+    const calendarSource: CalendarChannel = source || detectCalendarSource(icalUrl)
+
+    // Fetch the iCal content
     const response = await fetch(icalUrl, {
       headers: {
         'User-Agent': 'MarrakechRiadsRent/1.0 (Calendar Sync)',
@@ -52,11 +65,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse the ICS content
-    const parseResult = parseICalContent(icsContent)
+    // Parse the ICS content with the detected source
+    const parseResult = parseICalContent(icsContent, calendarSource)
     
     // Convert to booked periods
-    const bookedPeriods = icsEventsToBookedPeriods(parseResult.events, 'airbnb')
+    const bookedPeriods = icsEventsToBookedPeriods(parseResult.events, calendarSource)
 
     // Filter to only future bookings (or current)
     const now = new Date()
@@ -66,6 +79,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       propertyId,
+      source: calendarSource,
       calendarName: parseResult.calendarName,
       syncedAt: parseResult.lastSync.toISOString(),
       totalEvents: parseResult.events.length,

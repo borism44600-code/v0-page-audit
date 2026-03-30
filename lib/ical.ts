@@ -1,4 +1,4 @@
-import { Property } from './types'
+import { Property, CalendarChannel } from './types'
 
 // ============================================
 // iCAL DATA STRUCTURES
@@ -10,7 +10,7 @@ export interface ICalEvent {
   description?: string
   dtstart: Date
   dtend: Date
-  source: 'airbnb' | 'platform' | 'other'
+  source: CalendarChannel
 }
 
 export interface ICalParseResult {
@@ -32,7 +32,7 @@ export interface PropertyCalendarSync {
 export interface BookedPeriod {
   start: Date
   end: Date
-  source: 'airbnb' | 'platform'
+  source: CalendarChannel
   bookingId?: string
   guestName?: string
 }
@@ -107,8 +107,10 @@ function unfoldIcsContent(content: string): string {
 
 /**
  * Parse ICS content and extract VEVENT components
+ * @param icsContent - The raw ICS file content
+ * @param source - The calendar source (airbnb, booking, platform)
  */
-export function parseICalContent(icsContent: string): ICalParseResult {
+export function parseICalContent(icsContent: string, source: CalendarChannel = 'airbnb'): ICalParseResult {
   const unfolded = unfoldIcsContent(icsContent)
   const lines = unfolded.split(/\r?\n/)
   const events: ICalEvent[] = []
@@ -130,7 +132,7 @@ export function parseICalContent(icsContent: string): ICalParseResult {
     if (trimmedLine === 'BEGIN:VEVENT') {
       inVEvent = true
       currentEvent = {
-        source: 'airbnb' // Default, can be overridden
+        source // Use the provided source
       }
       continue
     }
@@ -261,7 +263,7 @@ export function generateICalContent(
  */
 export function icsEventsToBookedPeriods(
   events: ICalEvent[],
-  source: 'airbnb' | 'platform' = 'airbnb'
+  source: CalendarChannel = 'airbnb'
 ): BookedPeriod[] {
   return events.map(event => ({
     start: event.dtstart,
@@ -375,14 +377,191 @@ export function generateInternalIcalUrl(propertyId: string, baseUrl: string): st
 export function isValidIcalUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
-    // Must be https and end with .ics or contain ical
+    // Must be https and end with .ics or contain ical/calendar patterns
     return (
       parsed.protocol === 'https:' &&
       (parsed.pathname.endsWith('.ics') || 
        parsed.pathname.includes('ical') ||
-       parsed.pathname.includes('calendar'))
+       parsed.pathname.includes('calendar') ||
+       parsed.hostname.includes('airbnb') ||
+       parsed.hostname.includes('booking'))
     )
   } catch {
     return false
   }
+}
+
+/**
+ * Detect the calendar source from URL patterns
+ */
+export function detectCalendarSource(url: string): CalendarChannel {
+  const lowerUrl = url.toLowerCase()
+  if (lowerUrl.includes('airbnb')) return 'airbnb'
+  if (lowerUrl.includes('booking.com') || lowerUrl.includes('admin.booking')) return 'booking'
+  return 'platform'
+}
+
+/**
+ * Validate Airbnb iCal URL format
+ */
+export function isValidAirbnbUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return (
+      parsed.protocol === 'https:' &&
+      parsed.hostname.includes('airbnb') &&
+      (parsed.pathname.includes('calendar') || parsed.pathname.includes('ical'))
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Validate Booking.com iCal URL format
+ */
+export function isValidBookingUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return (
+      parsed.protocol === 'https:' &&
+      (parsed.hostname.includes('booking.com') || 
+       parsed.hostname.includes('admin.booking') ||
+       parsed.pathname.includes('ical'))
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Fetch and parse iCal content from a URL
+ */
+export async function fetchAndParseIcal(
+  url: string, 
+  source: CalendarChannel
+): Promise<{ success: true; result: ICalParseResult } | { success: false; error: string }> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'text/calendar, text/plain, */*',
+        'User-Agent': 'MarrakechRiadsRent/1.0'
+      },
+      next: { revalidate: 300 } // Cache for 5 minutes
+    })
+    
+    if (!response.ok) {
+      return { 
+        success: false, 
+        error: `Failed to fetch calendar: ${response.status} ${response.statusText}` 
+      }
+    }
+    
+    const content = await response.text()
+    
+    if (!content.includes('BEGIN:VCALENDAR')) {
+      return { 
+        success: false, 
+        error: 'Invalid iCal format: No VCALENDAR found' 
+      }
+    }
+    
+    const result = parseICalContent(content, source)
+    return { success: true, result }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error fetching calendar' 
+    }
+  }
+}
+
+/**
+ * Sync multiple external calendars for a property
+ */
+export interface MultiChannelSyncResult {
+  airbnb?: {
+    success: boolean
+    eventsCount?: number
+    error?: string
+    lastSyncAt?: Date
+  }
+  booking?: {
+    success: boolean
+    eventsCount?: number
+    error?: string
+    lastSyncAt?: Date
+  }
+  mergedPeriods: BookedPeriod[]
+  overallStatus: 'success' | 'partial' | 'error'
+}
+
+export async function syncExternalCalendars(
+  airbnbUrl?: string,
+  bookingUrl?: string
+): Promise<MultiChannelSyncResult> {
+  const results: MultiChannelSyncResult = {
+    mergedPeriods: [],
+    overallStatus: 'success'
+  }
+  
+  const allPeriods: BookedPeriod[][] = []
+  let hasSuccess = false
+  let hasError = false
+  
+  // Sync Airbnb
+  if (airbnbUrl) {
+    const airbnbResult = await fetchAndParseIcal(airbnbUrl, 'airbnb')
+    if (airbnbResult.success) {
+      const periods = icsEventsToBookedPeriods(airbnbResult.result.events, 'airbnb')
+      allPeriods.push(periods)
+      results.airbnb = {
+        success: true,
+        eventsCount: airbnbResult.result.events.length,
+        lastSyncAt: new Date()
+      }
+      hasSuccess = true
+    } else {
+      results.airbnb = {
+        success: false,
+        error: airbnbResult.error
+      }
+      hasError = true
+    }
+  }
+  
+  // Sync Booking.com
+  if (bookingUrl) {
+    const bookingResult = await fetchAndParseIcal(bookingUrl, 'booking')
+    if (bookingResult.success) {
+      const periods = icsEventsToBookedPeriods(bookingResult.result.events, 'booking')
+      allPeriods.push(periods)
+      results.booking = {
+        success: true,
+        eventsCount: bookingResult.result.events.length,
+        lastSyncAt: new Date()
+      }
+      hasSuccess = true
+    } else {
+      results.booking = {
+        success: false,
+        error: bookingResult.error
+      }
+      hasError = true
+    }
+  }
+  
+  // Merge all booked periods
+  results.mergedPeriods = mergeBookedPeriods(...allPeriods)
+  
+  // Determine overall status
+  if (hasSuccess && hasError) {
+    results.overallStatus = 'partial'
+  } else if (hasError && !hasSuccess) {
+    results.overallStatus = 'error'
+  } else {
+    results.overallStatus = 'success'
+  }
+  
+  return results
 }

@@ -66,11 +66,42 @@ export interface Property {
   featured: boolean
   createdAt: string
   updatedAt: string
-  // iCal synchronization fields
+  // External Calendars Sync fields
   airbnbIcalUrl?: string
+  bookingIcalUrl?: string
   internalIcalUrl?: string
-  lastCalendarSyncAt?: string
-  calendarSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
+  lastExternalSyncAt?: string
+  externalSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
+  externalSyncError?: string
+  // Individual channel status
+  airbnbSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
+  airbnbLastSyncAt?: string
+  airbnbEventsCount?: number
+  bookingSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
+  bookingLastSyncAt?: string
+  bookingEventsCount?: number
+}
+
+// External calendar sync types
+export type CalendarChannel = 'airbnb' | 'booking' | 'platform'
+
+export interface ExternalCalendarConfig {
+  channel: CalendarChannel
+  name: string
+  icalUrl?: string
+  lastSyncAt?: string
+  syncStatus: 'idle' | 'syncing' | 'success' | 'error'
+  eventsCount?: number
+  error?: string
+}
+
+export interface PropertyCalendarSync {
+  propertyId: string
+  propertyTitle: string
+  internalIcalUrl: string
+  channels: ExternalCalendarConfig[]
+  lastExternalSyncAt?: string
+  overallStatus: 'idle' | 'syncing' | 'success' | 'error' | 'partial'
 }
 
 export interface PartnerCategory {
