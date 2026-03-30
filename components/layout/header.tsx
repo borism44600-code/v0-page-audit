@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { Menu, X, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 import { LanguageSelector } from './language-selector'
 
 export function Header() {

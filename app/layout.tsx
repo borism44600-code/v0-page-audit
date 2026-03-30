@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Inter, Noto_Sans_Arabic, Noto_Sans_SC } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { NextIntlClientProvider } from 'next-intl'
-import { getLocale, getMessages } from 'next-intl/server'
-import { getDirection } from '@/i18n/config'
-import type { Locale } from '@/i18n/config'
+import { I18nProvider } from '@/i18n/provider'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({ 
@@ -49,26 +46,23 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const locale = await getLocale() as Locale
-  const messages = await getMessages()
-  const direction = getDirection(locale)
-
   return (
     <html 
-      lang={locale} 
-      dir={direction}
+      lang="en" 
+      dir="ltr"
+      suppressHydrationWarning
       data-scroll-behavior="smooth" 
       className={`${cormorant.variable} ${inter.variable} ${notoArabic.variable} ${notoSC.variable}`}
     >
-      <body className={`font-serif antialiased ${direction === 'rtl' ? 'font-arabic' : ''}`}>
-        <NextIntlClientProvider messages={messages}>
+      <body className="font-serif antialiased">
+        <I18nProvider>
           {children}
-        </NextIntlClientProvider>
+        </I18nProvider>
         <Analytics />
       </body>
     </html>

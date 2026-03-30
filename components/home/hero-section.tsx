@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Star, Shield, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 
 export function HeroSection() {
   const t = useTranslations('hero')

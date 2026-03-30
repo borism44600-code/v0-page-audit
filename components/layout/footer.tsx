@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Mail, Phone, MapPin, Instagram, Facebook } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 
 export function Footer() {
   const t = useTranslations('footer')

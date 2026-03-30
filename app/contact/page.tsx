@@ -29,7 +29,7 @@ import {
   Star,
   HeartHandshake
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 
 export default function ContactPage() {
   const t = useTranslations('contact')

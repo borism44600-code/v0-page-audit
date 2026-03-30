@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { Globe, Check, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,8 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { locales, localeNames, type Locale } from '@/i18n/config'
-import { useLocale } from 'next-intl'
-import { setUserLocale } from '@/lib/locale'
+import { useI18n } from '@/i18n/provider'
 
 interface LanguageSelectorProps {
   variant?: 'default' | 'transparent'
@@ -20,14 +19,11 @@ interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({ variant = 'default', className }: LanguageSelectorProps) {
-  const locale = useLocale() as Locale
-  const [isPending, startTransition] = useTransition()
+  const { locale, setLocale } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleLocaleChange = (newLocale: Locale) => {
-    startTransition(() => {
-      setUserLocale(newLocale)
-    })
+    setLocale(newLocale)
     setIsOpen(false)
   }
 
@@ -40,10 +36,8 @@ export function LanguageSelector({ variant = 'default', className }: LanguageSel
           className={cn(
             'gap-1.5 px-2.5 transition-all duration-300',
             variant === 'transparent' && 'text-white hover:bg-white/10 hover:text-white',
-            isPending && 'opacity-50',
             className
           )}
-          disabled={isPending}
         >
           <Globe className="w-4 h-4" />
           <span className="hidden sm:inline text-sm font-medium">

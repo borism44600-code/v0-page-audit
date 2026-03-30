@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Utensils, Car, Sparkles, Mountain, Users, Gift } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 
 export function ServicesSection() {
   const t = useTranslations('services')

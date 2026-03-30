@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Phone, Mail, Shield, Clock, Star, HeartHandshake } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 
 export function BookingCTA() {
   const t = useTranslations('booking')

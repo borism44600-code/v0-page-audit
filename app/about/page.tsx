@@ -7,7 +7,7 @@ import { Award, Users, Home, Heart, TrendingUp, Building2, Shield, ArrowRight } 
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/i18n/provider'
 
 export default function AboutPage() {
   const t = useTranslations('about')
