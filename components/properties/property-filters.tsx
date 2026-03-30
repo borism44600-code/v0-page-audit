@@ -9,6 +9,7 @@ import { Slider } from '@/components/ui/slider'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -402,9 +403,10 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
-          </SheetHeader>
+<SheetHeader>
+  <SheetTitle>Filters</SheetTitle>
+  <SheetDescription>Refine your property search with the options below.</SheetDescription>
+  </SheetHeader>
           <div className="mt-6">
             <FilterContent />
           </div>

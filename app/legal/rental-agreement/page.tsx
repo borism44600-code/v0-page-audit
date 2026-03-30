@@ -165,7 +165,54 @@ export default function RentalAgreementPage() {
               </section>
 
               <section className="mb-10">
-                <h2 className="font-serif text-2xl mb-4">10. Force Majeure</h2>
+                <h2 className="font-serif text-2xl mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-6 h-6 text-primary" />
+                  10. Occupancy Conditions and Legal Compliance
+                </h2>
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-6 mb-6">
+                  <p className="text-muted-foreground mb-4">
+                    <strong>Important notice regarding Moroccan law:</strong> In accordance with current 
+                    Moroccan legislation, it is strictly prohibited for an unmarried couple, where at least 
+                    one occupant is of Moroccan nationality, to stay together in the same accommodation.
+                  </p>
+                  <p className="text-muted-foreground mb-4">
+                    An official marriage certificate may be required at check-in or at any time during the 
+                    stay if this situation arises. In the absence of this document, access to the accommodation 
+                    may be refused or the stay interrupted without the possibility of a refund.
+                  </p>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  <strong>Prostitution is strictly prohibited</strong> within the establishment.
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  Only persons declared at the time of booking and present at check-in are authorized to 
+                  access and stay in the accommodation. Any invitation or presence of undeclared external 
+                  persons is strictly prohibited.
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  Occupants also undertake to respect all safety rules, good neighborly relations, and, 
+                  where applicable, condominium regulations. Access to common facilities is exclusively 
+                  reserved for authorized occupants.
+                </p>
+                <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 mb-4">
+                  <p className="text-muted-foreground mb-2">
+                    <strong>Any behavior deemed dangerous, illegal, or likely to harm the safety of persons, 
+                    property, or the neighborhood may result in:</strong>
+                  </p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                    <li>Immediate termination of the stay</li>
+                    <li>Expulsion without refund</li>
+                    <li>If necessary, reporting to the competent authorities</li>
+                  </ul>
+                </div>
+                <p className="text-muted-foreground">
+                  Management reserves the right to intervene at any time in case of non-compliance with 
+                  these conditions.
+                </p>
+              </section>
+
+              <section className="mb-10">
+                <h2 className="font-serif text-2xl mb-4">11. Force Majeure</h2>
                 <p className="text-muted-foreground mb-4">
                   Neither party shall be liable for failure to perform obligations due to 
                   circumstances beyond their reasonable control, including natural disasters, 
@@ -176,7 +223,7 @@ export default function RentalAgreementPage() {
               <section className="mb-10">
                 <h2 className="font-serif text-2xl mb-4 flex items-center gap-2">
                   <Scale className="w-6 h-6 text-primary" />
-                  11. Governing Law
+                  12. Governing Law
                 </h2>
                 <p className="text-muted-foreground mb-4">
                   This agreement is governed by the laws of the Kingdom of Morocco. Any disputes 
@@ -185,7 +232,7 @@ export default function RentalAgreementPage() {
               </section>
 
               <section className="mb-10">
-                <h2 className="font-serif text-2xl mb-4">12. Contact</h2>
+                <h2 className="font-serif text-2xl mb-4">13. Contact</h2>
                 <p className="text-muted-foreground mb-4">
                   For questions about this rental agreement, please contact:
                 </p>

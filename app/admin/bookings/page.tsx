@@ -65,6 +65,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -864,6 +865,9 @@ export default function AdminBookingsPage() {
                     {statusConfig[selectedBooking.status]?.label || selectedBooking.status}
                   </Badge>
                 </SheetTitle>
+                <SheetDescription>
+                  View and manage booking details, services, and cancellation options.
+                </SheetDescription>
               </SheetHeader>
 
               <div className="space-y-6 mt-6">
