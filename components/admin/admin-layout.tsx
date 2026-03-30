@@ -7,6 +7,7 @@ import {
   Home, 
   Building2, 
   Calendar, 
+  CalendarSync,
   Users, 
   Settings, 
   LogOut,
@@ -21,6 +22,7 @@ const navItems = [
   { icon: Home, label: 'Dashboard', href: '/admin' },
   { icon: Building2, label: 'Properties', href: '/admin/properties' },
   { icon: Calendar, label: 'Bookings', href: '/admin/bookings' },
+  { icon: CalendarSync, label: 'Calendar Sync', href: '/admin/calendar' },
   { icon: Users, label: 'Partners', href: '/admin/partners' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ]

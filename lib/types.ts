@@ -66,6 +66,11 @@ export interface Property {
   featured: boolean
   createdAt: string
   updatedAt: string
+  // iCal synchronization fields
+  airbnbIcalUrl?: string
+  internalIcalUrl?: string
+  lastCalendarSyncAt?: string
+  calendarSyncStatus?: 'idle' | 'syncing' | 'success' | 'error'
 }
 
 export interface PartnerCategory {
