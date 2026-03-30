@@ -5,19 +5,22 @@ import { useState, useEffect } from 'react'
 import { Menu, X, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/properties', label: 'Properties' },
-  { href: '/about', label: 'About' },
-  { href: '/services', label: 'Services' },
-  { href: '/partners', label: 'Partners' },
-  { href: '/contact', label: 'Contact' },
-]
+import { useTranslations } from 'next-intl'
+import { LanguageSelector } from './language-selector'
 
 export function Header() {
+  const t = useTranslations('header')
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const navLinks = [
+    { href: '/', label: t('home') },
+    { href: '/properties', label: t('properties') },
+    { href: '/about', label: t('about') },
+    { href: '/services', label: t('services') },
+    { href: '/partners', label: t('partners') },
+    { href: '/contact', label: t('contact') },
+  ]
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,8 +72,13 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Booking Button & Mobile Menu Toggle */}
-        <div className="flex items-center gap-4">
+        {/* Language Selector, Booking Button & Mobile Menu Toggle */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Language Selector */}
+          <LanguageSelector 
+            variant={isScrolled ? 'default' : 'transparent'}
+          />
+
           <Link href="/booking" className="hidden sm:block">
             <Button
               variant={isScrolled ? 'default' : 'outline'}
@@ -80,7 +88,7 @@ export function Header() {
               )}
             >
               <Calendar className="w-4 h-4" />
-              <span>Book Now</span>
+              <span>{t('bookNow')}</span>
             </Button>
           </Link>
           
@@ -135,7 +143,7 @@ export function Header() {
           <Link href="/booking" onClick={() => setIsMobileMenuOpen(false)}>
             <Button size="lg" className="mt-6 w-full gap-2">
               <Calendar className="w-5 h-5" />
-              Book Your Stay
+              {t('bookYourStay')}
             </Button>
           </Link>
         </nav>

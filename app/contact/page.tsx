@@ -29,21 +29,24 @@ import {
   Star,
   HeartHandshake
 } from 'lucide-react'
-
-const contactReasons = [
-  { value: 'booking', label: 'Booking Inquiry', icon: Calendar },
-  { value: 'property', label: 'Property Information', icon: Home },
-  { value: 'partnership', label: 'Partnership Opportunity', icon: MessageSquare },
-  { value: 'other', label: 'Other', icon: Mail },
-]
-
-const trustFeatures = [
-  { icon: Clock, title: 'Quick Response', description: 'We aim to reply promptly' },
-  { icon: Shield, title: 'No Obligation', description: 'Just a friendly conversation' },
-  { icon: Star, title: 'Local Knowledge', description: 'We know Marrakech well' }
-]
+import { useTranslations } from 'next-intl'
 
 export default function ContactPage() {
+  const t = useTranslations('contact')
+  const tCommon = useTranslations('common')
+
+  const contactReasons = [
+    { value: 'booking', label: t('subject'), icon: Calendar },
+    { value: 'property', label: t('message'), icon: Home },
+    { value: 'partnership', label: t('name'), icon: MessageSquare },
+    { value: 'other', label: tCommon('more'), icon: Mail },
+  ]
+
+  const trustFeatures = [
+    { icon: Clock, title: t('hours'), description: t('hoursValue') },
+    { icon: Shield, title: t('subtitle'), description: t('description') },
+    { icon: Star, title: t('title'), description: t('description') }
+  ]
   const [submitted, setSubmitted] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -70,13 +73,12 @@ export default function ContactPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-3xl mx-auto text-center"
             >
-              <p className="luxury-subheading text-gold mb-4">Get in Touch</p>
+              <p className="luxury-subheading text-gold mb-4">{t('subtitle')}</p>
               <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-6 text-balance">
-                We Would Love to Hear From You
+                {t('title')}
               </h1>
               <p className="text-lg text-muted-foreground text-pretty mb-8">
-                Have a question about one of our properties? Planning a trip to Marrakech? 
-                We&apos;re happy to help however we can.
+                {t('description')}
               </p>
               
               {/* Trust indicators */}

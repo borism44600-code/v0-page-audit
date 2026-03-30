@@ -5,22 +5,28 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Phone, Mail, Shield, Clock, Star, HeartHandshake } from 'lucide-react'
-
-const guarantees = [
-  { icon: Shield, text: 'Secure Booking' },
-  { icon: Clock, text: 'Flexible Cancellation' },
-  { icon: HeartHandshake, text: 'Personal Service' },
-  { icon: Star, text: 'Quality Properties' }
-]
+import { useTranslations } from 'next-intl'
 
 export function BookingCTA() {
+  const t = useTranslations('booking')
+  const tCommon = useTranslations('common')
+  const tProperties = useTranslations('properties')
+  const tContact = useTranslations('contact')
+
+  const guarantees = [
+    { icon: Shield, textKey: 'securePayment' },
+    { icon: Clock, textKey: 'freeCancellation' },
+    { icon: HeartHandshake, textKey: 'confirmBooking' },
+    { icon: Star, textKey: 'bookingSummary' }
+  ]
+
   return (
     <section className="relative py-32 md:py-48 overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
           src="/images/hero.jpg"
-          alt="Book Your Stay in Marrakech"
+          alt={t('title')}
           fill
           className="object-cover"
           sizes="100vw"
@@ -36,13 +42,12 @@ export function BookingCTA() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <p className="luxury-subheading text-gold mb-4">Start Planning</p>
+          <p className="luxury-subheading text-gold mb-4">{t('step1')}</p>
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold luxury-heading max-w-3xl mx-auto text-balance">
-            We Would Love to Host You
+            {t('title')}
           </h2>
           <p className="mt-6 text-lg text-white/80 max-w-xl mx-auto">
-            Whether you have questions about a property or you&apos;re ready to book, 
-            our team is here to help you plan a memorable stay in Marrakech.
+            {t('confirmationMessage')}
           </p>
         </motion.div>
 
@@ -55,9 +60,9 @@ export function BookingCTA() {
           className="mt-8 flex flex-wrap items-center justify-center gap-6 md:gap-8"
         >
           {guarantees.map((item) => (
-            <div key={item.text} className="flex items-center gap-2">
+            <div key={item.textKey} className="flex items-center gap-2">
               <item.icon className="w-4 h-4 text-gold" />
-              <span className="text-sm text-white/80">{item.text}</span>
+              <span className="text-sm text-white/80">{t(item.textKey as 'securePayment' | 'freeCancellation' | 'confirmBooking' | 'bookingSummary')}</span>
             </div>
           ))}
         </motion.div>
@@ -72,7 +77,7 @@ export function BookingCTA() {
         >
           <Link href="/booking">
             <Button size="lg" className="text-base px-8 gap-2 bg-gold text-black hover:bg-gold/90 font-medium">
-              Book Your Stay
+              {t('confirmBooking')}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -82,7 +87,7 @@ export function BookingCTA() {
               variant="outline"
               className="text-base px-8 border-white/50 text-white hover:bg-white/10 hover:text-white"
             >
-              Explore Properties
+              {tProperties('title')}
             </Button>
           </Link>
         </motion.div>
@@ -95,7 +100,7 @@ export function BookingCTA() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-12"
         >
-          <p className="text-sm text-white/60 mb-4">Prefer to speak with someone?</p>
+          <p className="text-sm text-white/60 mb-4">{tContact('subtitle')}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-white/80">
             <a href="tel:+212500000000" className="flex items-center gap-2 hover:text-gold transition-colors">
               <Phone className="w-4 h-4" />

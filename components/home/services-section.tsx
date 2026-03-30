@@ -5,41 +5,44 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Utensils, Car, Sparkles, Mountain, Users, Gift } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
-const services = [
-  {
-    icon: Utensils,
-    title: 'Gourmet Dining',
-    description: 'Private chefs and traditional Moroccan cuisine delivered to your door.'
-  },
-  {
-    icon: Car,
-    title: 'Transportation',
-    description: 'Airport transfers and private drivers for seamless travel.'
-  },
-  {
-    icon: Sparkles,
-    title: 'Spa & Wellness',
-    description: 'In-property hammam rituals and massage therapies.'
-  },
-  {
-    icon: Mountain,
-    title: 'Excursions',
-    description: 'Curated desert adventures and mountain explorations.'
-  },
-  {
-    icon: Users,
-    title: 'Concierge',
-    description: 'Dedicated support to arrange every detail of your stay.'
-  },
-  {
-    icon: Gift,
-    title: 'Special Events',
-    description: 'Memorable celebrations and private gatherings arranged.'
-  }
-]
+import { useTranslations } from 'next-intl'
 
 export function ServicesSection() {
+  const t = useTranslations('services')
+
+  const services = [
+    {
+      icon: Utensils,
+      titleKey: 'meals',
+      descriptionKey: 'meals'
+    },
+    {
+      icon: Car,
+      titleKey: 'airportTransfer',
+      descriptionKey: 'airportTransfer'
+    },
+    {
+      icon: Sparkles,
+      titleKey: 'spaWellness',
+      descriptionKey: 'spaWellness'
+    },
+    {
+      icon: Mountain,
+      titleKey: 'excursions',
+      descriptionKey: 'excursions'
+    },
+    {
+      icon: Users,
+      titleKey: 'concierge',
+      descriptionKey: 'concierge'
+    },
+    {
+      icon: Gift,
+      titleKey: 'breakfast',
+      descriptionKey: 'breakfast'
+    }
+  ]
+
   return (
     <section className="py-24 md:py-32 bg-background">
       <div className="container mx-auto px-6">
@@ -55,7 +58,7 @@ export function ServicesSection() {
             <div className="relative aspect-[4/5] rounded-lg overflow-hidden">
               <Image
                 src="/images/services/concierge.jpg"
-                alt="Luxury Concierge Service"
+                alt={t('concierge')}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -73,13 +76,12 @@ export function ServicesSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="luxury-subheading text-muted-foreground mb-4">Concierge Services</p>
+              <p className="luxury-subheading text-muted-foreground mb-4">{t('concierge')}</p>
               <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                Services to Enhance Your Stay
+                {t('subtitle')}
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-10">
-                We&apos;re here to help with the details - from restaurant recommendations to 
-                arranging excursions. Just let us know what you need and we&apos;ll take care of it.
+                {t('description')}
               </p>
             </motion.div>
 
@@ -87,7 +89,7 @@ export function ServicesSection() {
             <div className="grid grid-cols-2 gap-6">
               {services.map((service, index) => (
                 <motion.div
-                  key={service.title}
+                  key={service.titleKey}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -98,9 +100,9 @@ export function ServicesSection() {
                     <service.icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">{service.title}</h4>
+                    <h4 className="font-medium text-foreground mb-1">{t(service.titleKey as 'meals' | 'airportTransfer' | 'spaWellness' | 'excursions' | 'concierge' | 'breakfast')}</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {service.description}
+                      {t('description')}
                     </p>
                   </div>
                 </motion.div>
@@ -115,7 +117,7 @@ export function ServicesSection() {
               className="mt-10"
             >
               <Link href="/services">
-                <Button size="lg">Discover Our Services</Button>
+                <Button size="lg">{t('title')}</Button>
               </Link>
             </motion.div>
           </div>

@@ -7,56 +7,60 @@ import { Award, Users, Home, Heart, TrendingUp, Building2, Shield, ArrowRight } 
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-
-const stats = [
-  { number: '30+', label: 'Properties' },
-  { number: '500+', label: 'Guests Welcomed' },
-  { number: '6+', label: 'Years in Marrakech' },
-  { number: '24/7', label: 'Available' },
-]
-
-const values = [
-  {
-    icon: Award,
-    title: 'Quality',
-    description: 'We visit every property ourselves and only work with places we would stay in.'
-  },
-  {
-    icon: Users,
-    title: 'Personal Service',
-    description: 'Our small team means you always speak with someone who knows our properties well.'
-  },
-  {
-    icon: Home,
-    title: 'Authenticity',
-    description: 'We choose properties with character - real Moroccan homes, not cookie-cutter rentals.'
-  },
-  {
-    icon: Heart,
-    title: 'Local Knowledge',
-    description: 'We live here and love sharing our favorite spots with guests.'
-  },
-]
-
-const investmentBenefits = [
-  {
-    icon: TrendingUp,
-    title: 'Growing Market',
-    description: 'Marrakech continues to attract visitors year-round, with steady demand for quality properties.'
-  },
-  {
-    icon: Building2,
-    title: 'Property Selection',
-    description: 'We can help you find riads, villas, or apartments in desirable neighborhoods.'
-  },
-  {
-    icon: Shield,
-    title: 'Local Support',
-    description: 'From purchase guidance to rental management, we can assist at each step.'
-  },
-]
+import { useTranslations } from 'next-intl'
 
 export default function AboutPage() {
+  const t = useTranslations('about')
+  const tProperties = useTranslations('properties')
+  const tContact = useTranslations('contact')
+
+  const stats = [
+    { number: '30+', label: tProperties('title') },
+    { number: '500+', label: tProperties('guests') },
+    { number: '6+', label: t('story') },
+    { number: '24/7', label: t('teamText') },
+  ]
+
+  const values = [
+    {
+      icon: Award,
+      title: t('mission'),
+      description: t('missionText')
+    },
+    {
+      icon: Users,
+      title: t('team'),
+      description: t('teamText')
+    },
+    {
+      icon: Home,
+      title: t('story'),
+      description: t('storyText')
+    },
+    {
+      icon: Heart,
+      title: t('subtitle'),
+      description: t('storyText')
+    },
+  ]
+
+const investmentBenefits = [
+    {
+      icon: TrendingUp,
+      title: t('mission'),
+      description: t('missionText')
+    },
+    {
+      icon: Building2,
+      title: tProperties('title'),
+      description: t('storyText')
+    },
+    {
+      icon: Shield,
+      title: t('team'),
+      description: t('teamText')
+    },
+  ]
   return (
     <>
       <Header />
@@ -74,12 +78,12 @@ export default function AboutPage() {
             <div className="absolute inset-0 bg-black/50" />
           </div>
           <div className="relative z-10 text-center text-white px-6">
-            <p className="luxury-subheading text-white/80 mb-4">Our Story</p>
+            <p className="luxury-subheading text-white/80 mb-4">{t('story')}</p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold luxury-heading">
-              About Us
+              {t('title')}
             </h1>
             <p className="mt-6 text-lg text-white/90 max-w-2xl mx-auto">
-              Helping guests discover quality stays in Marrakech since 2018
+              {t('subtitle')}
             </p>
           </div>
         </section>

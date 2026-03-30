@@ -1,33 +1,38 @@
+'use client'
+
 import Link from 'next/link'
 import { Mail, Phone, MapPin, Instagram, Facebook } from 'lucide-react'
-
-const footerLinks = {
-  properties: [
-    { href: '/properties/riads', label: 'Riads' },
-    { href: '/properties/villas', label: 'Villas' },
-    { href: '/properties/apartments', label: 'Apartments' },
-    { href: '/properties', label: 'All Properties' },
-  ],
-  services: [
-    { href: '/services', label: 'Concierge' },
-    { href: '/partners', label: 'Our Partners' },
-    { href: '/services#experiences', label: 'Experiences' },
-    { href: '/booking', label: 'Book Now' },
-  ],
-  company: [
-    { href: '/about', label: 'About Us' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/faq', label: 'FAQ' },
-    { href: '/about#invest', label: 'Investment' },
-  ],
-  legal: [
-    { href: '/legal/privacy', label: 'Privacy Policy' },
-    { href: '/legal/terms', label: 'Terms of Service' },
-    { href: '/legal/rental-agreement', label: 'Rental Agreement' },
-  ],
-}
+import { useTranslations } from 'next-intl'
 
 export function Footer() {
+  const t = useTranslations('footer')
+  const tProperties = useTranslations('properties')
+
+  const footerLinks = {
+    properties: [
+      { href: '/properties/riads', label: tProperties('riads') },
+      { href: '/properties/villas', label: tProperties('villas') },
+      { href: '/properties/apartments', label: tProperties('apartments') },
+      { href: '/properties', label: tProperties('all') },
+    ],
+    services: [
+      { href: '/services', label: t('services') },
+      { href: '/partners', label: t('about') },
+      { href: '/services#experiences', label: t('services') },
+      { href: '/booking', label: t('subscribe') },
+    ],
+    company: [
+      { href: '/about', label: t('about') },
+      { href: '/contact', label: t('contact') },
+      { href: '/faq', label: 'FAQ' },
+    ],
+    legal: [
+      { href: '/legal/privacy', label: t('privacy') },
+      { href: '/legal/terms', label: t('terms') },
+      { href: '/legal/rental-agreement', label: t('rentalAgreement') },
+    ],
+  }
+
   return (
     <footer className="bg-foreground text-background">
       {/* Main Footer */}
@@ -40,8 +45,7 @@ export function Footer() {
               <p className="text-xs tracking-[0.3em] uppercase text-background/60 mt-1">Rent</p>
             </Link>
             <p className="mt-6 text-background/70 leading-relaxed max-w-sm">
-              Discover the art of Moroccan living with our curated collection of luxury riads, 
-              villas, and apartments in the heart of Marrakech.
+              {t('description')}
             </p>
             
             {/* Contact Info */}
@@ -63,7 +67,7 @@ export function Footer() {
 
           {/* Properties Links */}
           <div>
-            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">Properties</h4>
+            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">{t('properties')}</h4>
             <ul className="space-y-3">
               {footerLinks.properties.map((link) => (
                 <li key={link.href}>
@@ -77,10 +81,10 @@ export function Footer() {
 
           {/* Services Links */}
           <div>
-            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">Services</h4>
+            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">{t('services')}</h4>
             <ul className="space-y-3">
-              {footerLinks.services.map((link) => (
-                <li key={link.href}>
+              {footerLinks.services.map((link, index) => (
+                <li key={`${link.href}-${index}`}>
                   <Link href={link.href} className="text-background/70 hover:text-background transition-colors text-sm">
                     {link.label}
                   </Link>
@@ -91,7 +95,7 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">Company</h4>
+            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">{t('quickLinks')}</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
@@ -105,7 +109,7 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">Legal</h4>
+            <h4 className="text-sm font-medium tracking-wider uppercase mb-6">{t('legal')}</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
@@ -123,7 +127,7 @@ export function Footer() {
       <div className="border-t border-background/10">
         <div className="container mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-background/50">
-            &copy; {new Date().getFullYear()} Marrakech Riads Rent. All rights reserved.
+            &copy; {new Date().getFullYear()} Marrakech Riads Rent. {t('copyright')}
           </p>
           
           {/* Social Links */}
