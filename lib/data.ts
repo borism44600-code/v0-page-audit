@@ -158,6 +158,60 @@ export const mockProperties: Property[] = [
     bedroomGuestCapacity: 10,
     additionalGuestCapacity: 2,
     totalGuestCapacity: 12,
+    sleepingArrangements: [
+      {
+        roomName: 'Master Suite',
+        roomType: 'bedroom',
+        beds: [{ type: 'king', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'both'
+      },
+      {
+        roomName: 'Bedroom 2',
+        roomType: 'bedroom',
+        beds: [{ type: 'king', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Bedroom 3',
+        roomType: 'bedroom',
+        beds: [{ type: 'queen', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Bedroom 4',
+        roomType: 'bedroom',
+        beds: [{ type: 'queen', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'bathtub'
+      },
+      {
+        roomName: 'Bedroom 5',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'single', quantity: 2 }
+        ],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Bedroom 6',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'single', quantity: 2 }
+        ],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Living Room',
+        roomType: 'living-room',
+        beds: [{ type: 'sofa-bed-double', quantity: 1 }],
+        notes: 'Additional sleeping space'
+      }
+    ],
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef Available', 'Tennis Court', 'Daily Housekeeping', 'Security'],
     availability: [
       { start: '2026-01-01', end: '2026-03-31' },
@@ -211,6 +265,27 @@ export const mockProperties: Property[] = [
     bedroomGuestCapacity: 3,
     additionalGuestCapacity: 1,
     totalGuestCapacity: 4,
+    sleepingArrangements: [
+      {
+        roomName: 'Master Bedroom',
+        roomType: 'bedroom',
+        beds: [{ type: 'queen', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Bedroom 2',
+        roomType: 'bedroom',
+        beds: [{ type: 'single', quantity: 1 }],
+        ensuite: false
+      },
+      {
+        roomName: 'Living Room',
+        roomType: 'living-room',
+        beds: [{ type: 'sofa-bed-single', quantity: 1 }],
+        notes: 'Pull-out sofa bed'
+      }
+    ],
     amenities: ['WiFi', 'Air Conditioning', 'Gym Access', 'Concierge', 'Underground Parking'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -263,6 +338,42 @@ export const mockProperties: Property[] = [
     bedroomGuestCapacity: 6,
     additionalGuestCapacity: 2,
     totalGuestCapacity: 8,
+    sleepingArrangements: [
+      {
+        roomName: 'Ambre Suite',
+        roomType: 'bedroom',
+        beds: [{ type: 'king', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'both'
+      },
+      {
+        roomName: 'Épices Suite',
+        roomType: 'bedroom',
+        beds: [{ type: 'queen', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Rose Room',
+        roomType: 'bedroom',
+        beds: [{ type: 'double', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Jasmine Room',
+        roomType: 'bedroom',
+        beds: [{ type: 'single', quantity: 2 }],
+        ensuite: true,
+        bathroomType: 'bathtub'
+      },
+      {
+        roomName: 'Salon',
+        roomType: 'living-room',
+        beds: [{ type: 'sofa-bed-double', quantity: 1 }],
+        notes: 'Traditional Moroccan salon with sofa bed'
+      }
+    ],
     amenities: ['WiFi', 'Air Conditioning', 'Daily Housekeeping', 'Breakfast Included'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -316,6 +427,45 @@ export const mockProperties: Property[] = [
     bedroomGuestCapacity: 7,
     additionalGuestCapacity: 1,
     totalGuestCapacity: 8,
+    sleepingArrangements: [
+      {
+        roomName: 'Master Suite',
+        roomType: 'bedroom',
+        beds: [{ type: 'king', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'both'
+      },
+      {
+        roomName: 'Mountain View Suite',
+        roomType: 'bedroom',
+        beds: [{ type: 'king', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'both'
+      },
+      {
+        roomName: 'Garden Suite',
+        roomType: 'bedroom',
+        beds: [{ type: 'queen', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Pool Suite',
+        roomType: 'bedroom',
+        beds: [
+          { type: 'single', quantity: 1 },
+          { type: 'sofa-bed-single', quantity: 1 }
+        ],
+        ensuite: true,
+        bathroomType: 'shower'
+      },
+      {
+        roomName: 'Living Pavilion',
+        roomType: 'living-room',
+        beds: [{ type: 'sofa-bed-single', quantity: 1 }],
+        notes: 'Day bed that converts to single'
+      }
+    ],
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef', 'Butler Service', 'Helipad', 'Daily Housekeeping'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -367,6 +517,15 @@ export const mockProperties: Property[] = [
     bedroomGuestCapacity: 2,
     additionalGuestCapacity: 0,
     totalGuestCapacity: 2,
+    sleepingArrangements: [
+      {
+        roomName: 'Bedroom',
+        roomType: 'bedroom',
+        beds: [{ type: 'queen', quantity: 1 }],
+        ensuite: true,
+        bathroomType: 'shower'
+      }
+    ],
     amenities: ['WiFi', 'Air Conditioning', 'Smart TV', 'Balcony'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }

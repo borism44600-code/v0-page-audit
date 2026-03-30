@@ -92,9 +92,9 @@ export default function PropertiesPage() {
         return false
       }
 
-      // Number of bedrooms filter
+      // Number of bedrooms filter (numberOfBedrooms array)
       if (filters.numberOfBedrooms && filters.numberOfBedrooms.length > 0) {
-        const matchesBedrooms = filters.numberOfBedrooms.some(b => {
+        const matchesBedrooms = filters.numberOfBedrooms.some((b: number) => {
           if (b === 7) return property.numberOfBedrooms >= 7
           return property.numberOfBedrooms === b
         })
