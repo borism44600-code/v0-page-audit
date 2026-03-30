@@ -1,7 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { locales, defaultLocale, type Locale, getDirection } from './config'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import { locales, defaultLocale, type Locale, getDirection, SUPPORTED_LOCALES } from './config'
+import { MultilingualText, getLocalizedText as getLocalizedTextUtil } from '@/lib/multilingual-content'
 
 // Import messages
 import en from './messages/en.json'
@@ -13,13 +14,13 @@ import zh from './messages/zh.json'
 
 const messages: Record<Locale, typeof en> = { en, fr, es, ar, ma, zh }
 
-type Messages = typeof en
-
 interface I18nContextType {
   locale: Locale
   setLocale: (locale: Locale) => void
   t: (key: string, params?: Record<string, string | number>) => string
   direction: 'ltr' | 'rtl'
+  getLocalizedText: (content: MultilingualText | string | undefined | null, fallback?: string) => string
+  isRTL: boolean
 }
 
 const I18nContext = createContext<I18nContextType | null>(null)
@@ -31,10 +32,32 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
     if (value && typeof value === 'object' && key in value) {
       value = (value as Record<string, unknown>)[key]
     } else {
-      return path // Return key if not found
+      // Fallback to English if key not found in current locale
+      return path
     }
   }
   return typeof value === 'string' ? value : path
+}
+
+function getNestedValueWithFallback(
+  locale: Locale, 
+  path: string, 
+  msgs: Record<Locale, typeof en>
+): string {
+  // Try current locale first
+  let value = getNestedValue(msgs[locale] as unknown as Record<string, unknown>, path)
+  
+  // If not found (returns the path), try English fallback
+  if (value === path && locale !== 'en') {
+    value = getNestedValue(msgs.en as unknown as Record<string, unknown>, path)
+  }
+  
+  // If still not found, try French
+  if (value === path && locale !== 'fr') {
+    value = getNestedValue(msgs.fr as unknown as Record<string, unknown>, path)
+  }
+  
+  return value
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
@@ -60,16 +83,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setMounted(true)
   }, [])
 
-  const setLocale = (newLocale: Locale) => {
+  const setLocale = useCallback((newLocale: Locale) => {
     document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`
     setLocaleState(newLocale)
     // Update document direction
     document.documentElement.dir = getDirection(newLocale)
     document.documentElement.lang = newLocale
-  }
+    // Force re-render by triggering storage event
+    window.dispatchEvent(new Event('languagechange'))
+  }, [])
 
-  const t = (key: string, params?: Record<string, string | number>): string => {
-    let text = getNestedValue(messages[locale] as unknown as Record<string, unknown>, key)
+  const t = useCallback((key: string, params?: Record<string, string | number>): string => {
+    let text = getNestedValueWithFallback(locale, key, messages)
     
     // Replace parameters like {name} with actual values
     if (params) {
@@ -79,20 +104,35 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
     
     return text
-  }
+  }, [locale])
+
+  // Get localized text for dynamic multilingual content
+  const getLocalizedText = useCallback((
+    content: MultilingualText | string | undefined | null, 
+    fallback: string = ''
+  ): string => {
+    return getLocalizedTextUtil(content, locale, fallback)
+  }, [locale])
 
   const direction = getDirection(locale)
+  const isRTL = direction === 'rtl'
 
   // Update document attributes when locale changes
   useEffect(() => {
     if (mounted) {
       document.documentElement.dir = direction
       document.documentElement.lang = locale
+      // Add class for RTL styling
+      if (isRTL) {
+        document.documentElement.classList.add('rtl')
+      } else {
+        document.documentElement.classList.remove('rtl')
+      }
     }
-  }, [locale, direction, mounted])
+  }, [locale, direction, mounted, isRTL])
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t, direction }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, direction, getLocalizedText, isRTL }}>
       {children}
     </I18nContext.Provider>
   )
@@ -113,4 +153,19 @@ export function useTranslations(namespace?: string) {
     const fullKey = namespace ? `${namespace}.${key}` : key
     return t(fullKey, params)
   }
+}
+
+// Hook for getting localized dynamic content
+export function useLocalizedContent() {
+  const { getLocalizedText, locale, isRTL } = useI18n()
+  return { getLocalizedText, locale, isRTL }
+}
+
+// Hook to listen for language changes
+export function useLanguageChange(callback: (locale: Locale) => void) {
+  const { locale } = useI18n()
+  
+  useEffect(() => {
+    callback(locale)
+  }, [locale, callback])
 }

@@ -2,7 +2,14 @@
 export const locales = ['en', 'fr', 'es', 'ar', 'ma', 'zh'] as const
 export type Locale = (typeof locales)[number]
 
+export const SUPPORTED_LOCALES = locales
+export const DEFAULT_LOCALE: Locale = 'en'
 export const defaultLocale: Locale = 'en'
+
+// Check if locale is RTL
+export function isRTL(locale: Locale): boolean {
+  return locale === 'ar' || locale === 'ma'
+}
 
 // RTL languages
 export const rtlLocales: Locale[] = ['ar', 'ma']

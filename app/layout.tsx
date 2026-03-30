@@ -15,14 +15,12 @@ const inter = Inter({
   variable: '--font-sans'
 })
 
-// Arabic font for RTL languages
 const notoArabic = Noto_Sans_Arabic({
   subsets: ['arabic'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-arabic'
 })
 
-// Chinese font
 const notoSC = Noto_Sans_SC({
   subsets: ['latin'],
   weight: ['300', '400', '500', '700'],
@@ -48,15 +46,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
     <html 
       lang="en" 
       dir="ltr"
       suppressHydrationWarning
-      data-scroll-behavior="smooth" 
       className={`${cormorant.variable} ${inter.variable} ${notoArabic.variable} ${notoSC.variable}`}
     >
       <body className="font-serif antialiased">
