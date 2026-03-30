@@ -79,6 +79,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
+import { BookingServicesView } from '@/components/admin/booking-services-view'
 import { 
   calculateRefund, 
   generateCancellationSummary,
@@ -89,6 +90,8 @@ import {
   BookingStatus,
   RefundStatus
 } from '@/lib/booking-rules'
+import type { BookingServices } from '@/lib/service-booking'
+import { createEmptyBookingServices } from '@/lib/service-booking'
 
 // Extended booking type for admin with cancellation support
 interface AdminBooking {
@@ -139,6 +142,7 @@ interface AdminBooking {
   }
   source: 'website' | 'airbnb' | 'booking' | 'manual'
   notes?: string
+  services?: BookingServices // New services booking system
   createdAt: string
   updatedAt: string
 }
@@ -189,6 +193,26 @@ const mockBookings: AdminBooking[] = [
     },
     status: 'confirmed',
     source: 'website',
+    services: {
+      bookingId: 'BK001',
+      breakfasts: [
+        { id: 'BF-001', bookingId: 'BK001', date: '2026-04-15', numberOfGuests: 2, pricePerPerson: 25, total: 50, status: 'confirmed', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+        { id: 'BF-002', bookingId: 'BK001', date: '2026-04-16', numberOfGuests: 2, pricePerPerson: 25, total: 50, status: 'confirmed', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+        { id: 'BF-003', bookingId: 'BK001', date: '2026-04-17', numberOfGuests: 2, pricePerPerson: 25, total: 50, status: 'pending', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+        { id: 'BF-004', bookingId: 'BK001', date: '2026-04-18', numberOfGuests: 2, pricePerPerson: 25, total: 50, status: 'pending', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+      ],
+      meals: [
+        { id: 'ML-001', bookingId: 'BK001', date: '2026-04-16', mealType: 'dinner', numberOfAdults: 2, numberOfChildren: 0, pricePerAdult: 60, pricePerChild: 35, total: 120, status: 'confirmed', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+      ],
+      taxis: [
+        { id: 'TX-001', bookingId: 'BK001', date: '2026-04-15', time: '14:30', direction: 'airport_to_property', numberOfPassengers: 2, flightNumber: 'AT823', price: 25, status: 'confirmed', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+        { id: 'TX-002', bookingId: 'BK001', date: '2026-04-19', time: '10:00', direction: 'property_to_airport', numberOfPassengers: 2, price: 25, status: 'pending', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+      ],
+      otherServices: [
+        { id: 'SP-001', bookingId: 'BK001', serviceType: 'spa', serviceName: 'Traditional Hammam', date: '2026-04-17', time: '15:00', numberOfAdults: 2, duration: '60min', pricePerAdult: 45, total: 90, status: 'pending', createdAt: '2026-03-15T10:30:00Z', updatedAt: '2026-03-15T10:30:00Z' },
+      ],
+      totalServicesAmount: 460
+    },
     createdAt: '2026-03-15T10:25:00Z',
     updatedAt: '2026-03-15T10:30:00Z',
   },
@@ -222,6 +246,25 @@ const mockBookings: AdminBooking[] = [
     status: 'pending',
     source: 'website',
     notes: 'Guest requested late check-out if possible',
+    services: {
+      bookingId: 'BK002',
+      breakfasts: [
+        { id: 'BF-010', bookingId: 'BK002', date: '2026-04-21', numberOfGuests: 8, pricePerPerson: 25, total: 200, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+        { id: 'BF-011', bookingId: 'BK002', date: '2026-04-22', numberOfGuests: 8, pricePerPerson: 25, total: 200, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+      ],
+      meals: [
+        { id: 'ML-010', bookingId: 'BK002', date: '2026-04-21', mealType: 'dinner', numberOfAdults: 6, numberOfChildren: 2, pricePerAdult: 60, pricePerChild: 35, total: 430, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+        { id: 'ML-011', bookingId: 'BK002', date: '2026-04-24', mealType: 'lunch', numberOfAdults: 6, numberOfChildren: 2, pricePerAdult: 45, pricePerChild: 25, total: 320, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+      ],
+      taxis: [
+        { id: 'TX-010', bookingId: 'BK002', date: '2026-04-20', time: '15:00', direction: 'airport_to_property', numberOfPassengers: 8, price: 45, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+      ],
+      otherServices: [
+        { id: 'EX-010', bookingId: 'BK002', serviceType: 'excursion', serviceName: 'Atlas Mountains Day Trip', date: '2026-04-23', time: '08:30', numberOfAdults: 6, numberOfChildren: 2, duration: 'full_day', pricePerAdult: 85, pricePerChild: 45, total: 600, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+        { id: 'DR-010', bookingId: 'BK002', serviceType: 'driver', serviceName: 'Private Driver - Full Day', date: '2026-04-25', numberOfAdults: 8, duration: 'full_day', pricePerAdult: 150, total: 150, status: 'pending', createdAt: '2026-03-20T14:15:00Z', updatedAt: '2026-03-20T14:15:00Z' },
+      ],
+      totalServicesAmount: 1945
+    },
     createdAt: '2026-03-20T14:15:00Z',
     updatedAt: '2026-03-20T14:15:00Z',
   },
@@ -1009,6 +1052,27 @@ export default function AdminBookingsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Booked Services */}
+                {selectedBooking.services && (
+                  selectedBooking.services.breakfasts.length > 0 ||
+                  selectedBooking.services.meals.length > 0 ||
+                  selectedBooking.services.taxis.length > 0 ||
+                  selectedBooking.services.otherServices.length > 0
+                ) && (
+                  <>
+                    <Separator />
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">Booked Services</h3>
+                      <BookingServicesView
+                        services={selectedBooking.services}
+                        checkIn={selectedBooking.checkIn}
+                        checkOut={selectedBooking.checkOut}
+                        readOnly={false}
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Notes */}
                 {selectedBooking.notes && (

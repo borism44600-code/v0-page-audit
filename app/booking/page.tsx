@@ -18,7 +18,9 @@ import { Label } from '@/components/ui/label'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
 import { SplitStaySuggestionCard } from '@/components/booking/split-stay-suggestion'
 import { CancellationPolicy } from '@/components/booking/cancellation-policy'
+import { ServicesSelector } from '@/components/booking/services-selector'
 import { PayPalPayment, PaymentSuccessDetails } from '@/components/payment/paypal-payment'
+import type { BreakfastBooking, MealBooking, TaxiBooking, OtherServiceBooking } from '@/lib/service-booking'
 import { mockProperties, mockAddons } from '@/lib/data'
 import { 
   checkPropertyAvailability, 
@@ -56,6 +58,13 @@ function BookingContent() {
   })
   const [guests, setGuests] = useState({ adults: 2, children: 0 })
   const [selectedAddons, setSelectedAddons] = useState<{ id: string; quantity: number; persons: number }[]>([])
+  const [bookedServices, setBookedServices] = useState<{
+    breakfasts: BreakfastBooking[]
+    meals: MealBooking[]
+    taxis: TaxiBooking[]
+    otherServices: OtherServiceBooking[]
+    total: number
+  }>({ breakfasts: [], meals: [], taxis: [], otherServices: [], total: 0 })
   const [contactInfo, setContactInfo] = useState({ name: '', email: '', phone: '', specialRequests: '' })
   
   // Split-stay state
@@ -111,6 +120,7 @@ function BookingContent() {
       total = selectedProperty.pricePerNight * nights
     }
     
+    // Add legacy addons (kept for backward compatibility)
     selectedAddons.forEach(addon => {
       const addonData = mockAddons.find(a => a.id === addon.id)
       if (addonData) {
@@ -122,10 +132,15 @@ function BookingContent() {
       }
     })
     
+    // Add new services total
+    total += bookedServices.total
+    
     return total
   }
 
   const total = calculateTotal()
+  const servicesTotal = bookedServices.total
+  const accommodationTotal = total - servicesTotal
 
   const toggleAddon = (addonId: string) => {
     setSelectedAddons(prev => {
@@ -519,8 +534,8 @@ function BookingContent() {
                 </motion.div>
               )}
 
-              {/* Step 4: Add-ons */}
-              {step === 4 && (
+              {/* Step 4: Services & Extras */}
+              {step === 4 && dates.start && dates.end && (
                 <motion.div
                   key="step4"
                   initial={{ opacity: 0, x: 20 }}
@@ -528,74 +543,15 @@ function BookingContent() {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-semibold mb-2">Add Optional Services</h2>
-                    <p className="text-muted-foreground">Optional enhancements to make your stay unforgettable</p>
-                  </div>
-                  <div className="space-y-4">
-                    {mockAddons.map((addon) => {
-                      const isSelected = selectedAddons.some(a => a.id === addon.id)
-                      const addonState = selectedAddons.find(a => a.id === addon.id)
-                      
-                      return (
-                        <motion.div 
-                          key={addon.id}
-                          whileHover={{ scale: 1.01 }}
-                          className={cn(
-                            'p-5 rounded-xl border-2 transition-all cursor-pointer',
-                            isSelected ? 'border-gold bg-gold/5' : 'border-border hover:border-gold/50'
-                          )}
-                          onClick={() => toggleAddon(addon.id)}
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className={cn(
-                              'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 mt-0.5',
-                              isSelected ? 'bg-gold border-gold' : 'border-muted-foreground'
-                            )}>
-                              {isSelected && <Check className="w-4 h-4 text-black" />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Sparkles className="w-4 h-4 text-gold" />
-                                <span className="font-medium">{addon.name}</span>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                {addon.description}
-                              </p>
-                              <p className="text-sm font-semibold text-gold">
-                                {addon.pricePerPerson 
-                                  ? `${addon.pricePerPerson}€ per person` 
-                                  : `${addon.priceFlat}€`}
-                              </p>
-                            </div>
-                            {isSelected && (
-                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 rounded-full"
-                                  onClick={() => updateAddonQuantity(addon.id, -1)}
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </Button>
-                                <span className="w-6 text-center font-medium">{addonState?.quantity}</span>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 rounded-full"
-                                  onClick={() => updateAddonQuantity(addon.id, 1)}
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
+                  <ServicesSelector
+                    checkIn={dates.start.toISOString().split('T')[0]}
+                    checkOut={dates.end.toISOString().split('T')[0]}
+                    numberOfAdults={guests.adults}
+                    numberOfChildren={guests.children}
+                    onServicesChange={setBookedServices}
+                  />
                   <p className="text-sm text-center text-muted-foreground">
-                    You can always add experiences later or through your concierge
+                    You can always add or modify services later through your booking portal
                   </p>
                 </motion.div>
               )}
@@ -778,6 +734,32 @@ function BookingContent() {
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">{selectedProperty.pricePerNight}€ x {nights} nights</span>
                           <span>{selectedProperty.pricePerNight * nights}€</span>
+                        </div>
+                      )}
+                      
+                      {/* Services breakdown */}
+                      {bookedServices.breakfasts.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Breakfast ({bookedServices.breakfasts.length} days)</span>
+                          <span>{bookedServices.breakfasts.reduce((s, b) => s + b.total, 0)}€</span>
+                        </div>
+                      )}
+                      {bookedServices.meals.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Meals ({bookedServices.meals.length})</span>
+                          <span>{bookedServices.meals.reduce((s, m) => s + m.total, 0)}€</span>
+                        </div>
+                      )}
+                      {bookedServices.taxis.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Airport Transfers ({bookedServices.taxis.length})</span>
+                          <span>{bookedServices.taxis.reduce((s, t) => s + t.price, 0)}€</span>
+                        </div>
+                      )}
+                      {bookedServices.otherServices.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Experiences & Wellness ({bookedServices.otherServices.length})</span>
+                          <span>{bookedServices.otherServices.reduce((s, o) => s + o.total, 0)}€</span>
                         </div>
                       )}
                       
