@@ -28,14 +28,75 @@ const notoSC = Noto_Sans_SC({
 })
 
 export const metadata: Metadata = {
-  title: 'Marrakech Riads Rent | Stylish Stays in Marrakech',
-  description: 'A carefully selected collection of riads, villas, and apartments in Marrakech. Quality properties, personal service, and a warm welcome in the Red City.',
-  keywords: ['Marrakech', 'Riads', 'Villas', 'Apartments', 'Holiday Rentals', 'Morocco', 'Medina'],
-  openGraph: {
-    title: 'Marrakech Riads Rent | Stylish Stays in Marrakech',
-    description: 'Quality properties and personal service in the Red City.',
-    type: 'website',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://marrakechriadsrent.com'),
+  title: {
+    default: 'Marrakech Riads Rent | Luxury Riads, Villas & Apartments',
+    template: '%s | Marrakech Riads Rent'
   },
+  description: 'Book luxury riads, villas, and apartments in Marrakech. Handpicked properties in the Medina, Palmeraie, and Gueliz. Personal service, competitive rates, and authentic Moroccan hospitality.',
+  keywords: [
+    'riad Marrakech',
+    'riad Marrakech rental',
+    'villa Marrakech rental',
+    'apartment Marrakech rental',
+    'luxury riad Marrakech',
+    'Marrakech vacation rental',
+    'location riad Marrakech',
+    'hébergement Marrakech',
+    'riads medina Marrakech',
+    'villa palmeraie Marrakech'
+  ],
+  authors: [{ name: 'Marrakech Riads Rent' }],
+  creator: 'Marrakech Riads Rent',
+  publisher: 'Marrakech Riads Rent',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en': '/en',
+      'fr': '/fr',
+      'es': '/es',
+      'ar': '/ar',
+      'ar-MA': '/ma',
+      'zh-CN': '/zh',
+    },
+  },
+  openGraph: {
+    title: 'Marrakech Riads Rent | Luxury Riads, Villas & Apartments',
+    description: 'Book luxury riads, villas, and apartments in Marrakech. Handpicked properties with personal service.',
+    url: 'https://marrakechriadsrent.com',
+    siteName: 'Marrakech Riads Rent',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Luxury Riad in Marrakech',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Marrakech Riads Rent | Luxury Riads, Villas & Apartments',
+    description: 'Book luxury riads, villas, and apartments in Marrakech.',
+    images: ['/images/og-image.jpg'],
+  },
+  verification: {
+    google: 'your-google-verification-code',
+  },
+  category: 'travel',
 }
 
 export const viewport: Viewport = {
@@ -54,6 +115,7 @@ export default function RootLayout({
       lang="en" 
       dir="ltr"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${cormorant.variable} ${inter.variable} ${notoArabic.variable} ${notoSC.variable}`}
     >
       <body className="font-serif antialiased">
