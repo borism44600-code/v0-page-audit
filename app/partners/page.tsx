@@ -8,36 +8,40 @@ import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { mockPartners } from '@/lib/data'
-
-const categoryInfo = {
-  restaurant: {
-    icon: Utensils,
-    title: 'Restaurants',
-    description: 'Exceptional dining experiences at Marrakech\'s finest establishments.'
-  },
-  spa: {
-    icon: Sparkles,
-    title: 'Spas & Wellness',
-    description: 'Rejuvenating treatments and traditional hammam experiences.'
-  },
-  tour: {
-    icon: Mountain,
-    title: 'Tour Providers',
-    description: 'Expert guides for desert adventures, mountain treks, and cultural tours.'
-  },
-  activity: {
-    icon: Activity,
-    title: 'Activities',
-    description: 'Unique experiences from cooking classes to camel rides.'
-  },
-  transport: {
-    icon: Car,
-    title: 'Transportation',
-    description: 'Premium transfer services and private drivers.'
-  }
-}
+import { useTranslations } from '@/i18n/provider'
 
 export default function PartnersPage() {
+  const t = useTranslations('partners')
+  const tServices = useTranslations('services')
+  const tContact = useTranslations('contact')
+
+  const categoryInfo = {
+    restaurant: {
+      icon: Utensils,
+      title: tServices('meals'),
+      description: t('description')
+    },
+    spa: {
+      icon: Sparkles,
+      title: tServices('spaWellness'),
+      description: t('description')
+    },
+    tour: {
+      icon: Mountain,
+      title: tServices('excursions'),
+      description: t('description')
+    },
+    activity: {
+      icon: Activity,
+      title: tServices('title'),
+      description: t('description')
+    },
+    transport: {
+      icon: Car,
+      title: tServices('airportTransfer'),
+      description: t('description')
+    }
+  }
   const groupedPartners = mockPartners.reduce((acc, partner) => {
     if (!acc[partner.category]) {
       acc[partner.category] = []
@@ -63,13 +67,12 @@ export default function PartnersPage() {
             <div className="absolute inset-0 bg-black/50" />
           </div>
           <div className="relative z-10 text-center text-white px-6">
-            <p className="luxury-subheading text-white/80 mb-4">Trusted Network</p>
+            <p className="luxury-subheading text-white/80 mb-4">{t('subtitle')}</p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold luxury-heading">
-              Our Partners
+              {t('title')}
             </h1>
             <p className="mt-6 text-lg text-white/90 max-w-2xl mx-auto">
-              We have curated a network of trusted partners to ensure every aspect 
-              of your Marrakech experience is exceptional.
+              {t('description')}
             </p>
           </div>
         </section>
@@ -151,7 +154,7 @@ export default function PartnersPage() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 mt-4 text-primary text-sm hover:underline"
                             >
-                              Visit Website
+                              {tContact('title')}
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           )}
@@ -169,15 +172,14 @@ export default function PartnersPage() {
         <section className="bg-foreground text-background py-16">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold mb-4">
-              Become a Partner
+              {t('subtitle')}
             </h2>
             <p className="text-background/70 mb-8 max-w-xl mx-auto">
-              Are you a premium service provider in Marrakech? Join our network 
-              and connect with discerning travelers.
+              {t('description')}
             </p>
             <Link href="/contact">
               <Button size="lg" className="bg-background text-foreground hover:bg-background/90">
-                Contact Us
+                {tContact('title')}
               </Button>
             </Link>
           </div>

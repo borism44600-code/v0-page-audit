@@ -14,6 +14,7 @@ import { PropertyFeatures } from '@/lib/types'
 import { filterPropertiesByAvailability, PropertyAvailabilityResult } from '@/lib/availability'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/provider'
 
 const defaultFilters: PropertyFiltersState = {
   priceRange: [0, 2000],
@@ -27,6 +28,8 @@ const defaultFilters: PropertyFiltersState = {
 }
 
 export default function PropertiesPage() {
+  const t = useTranslations('properties')
+  const tCommon = useTranslations('common')
   const [filters, setFilters] = useState<PropertyFiltersState>(defaultFilters)
   const [displayMode, setDisplayMode] = useState<DisplayMode>('medium')
   const [checkIn, setCheckIn] = useState<Date | null>(null)
@@ -137,13 +140,12 @@ export default function PropertiesPage() {
         <section className="bg-gradient-to-b from-secondary/50 to-background py-12 mb-4">
           <div className="container mx-auto px-6">
             <div className="text-center mb-8">
-              <p className="luxury-subheading text-gold mb-3">Find Your Stay</p>
+              <p className="luxury-subheading text-gold mb-3">{t('subtitle')}</p>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold luxury-heading mb-4">
-                Our Collection
+                {t('title')}
               </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Browse our selection of riads, villas, and apartments in Marrakech.
-                Select your dates to see what&apos;s available.
+                {t('description')}
               </p>
             </div>
 
@@ -180,18 +182,18 @@ export default function PropertiesPage() {
                     <div className="space-y-1">
                       <p className="text-muted-foreground">
                         <span className="font-medium text-foreground">{available.length}</span>
-                        {' '}available for your dates
+                        {' '}{t('availability')}
                       </p>
                       {partial.length > 0 && (
                         <p className="text-sm text-gold">
-                          {partial.length} partially available (split-stay possible)
+                          {partial.length} {t('availability')}
                         </p>
                       )}
                     </div>
                   ) : (
                     <p className="text-muted-foreground">
                       <span className="font-medium text-foreground">{filteredByStandard.length}</span>
-                      {' '}properties found
+                      {' '}{t('title')}
                     </p>
                   )}
                 </div>
@@ -216,7 +218,7 @@ export default function PropertiesPage() {
                     <section>
                       <div className="flex items-center gap-3 mb-6">
                         <div className="w-3 h-3 rounded-full bg-green-500" />
-                        <h2 className="text-xl font-semibold">Available for Your Dates</h2>
+                        <h2 className="text-xl font-semibold">{t('availability')}</h2>
                       </div>
                       <PropertiesGrid 
                         properties={available} 
@@ -232,7 +234,7 @@ export default function PropertiesPage() {
                     <section>
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-3 h-3 rounded-full bg-gold" />
-                        <h2 className="text-xl font-semibold">Split-Stay Options</h2>
+                        <h2 className="text-xl font-semibold">{t('availability')}</h2>
                       </div>
                       <motion.div 
                         initial={{ opacity: 0, y: 10 }}
@@ -242,10 +244,9 @@ export default function PropertiesPage() {
                         <div className="flex items-start gap-3">
                           <Info className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
                           <div>
-                            <p className="text-sm font-medium">Premium Split-Stay Available</p>
+                            <p className="text-sm font-medium">{t('availability')}</p>
                             <p className="text-sm text-muted-foreground">
-                              These properties are available for part of your stay. 
-                              We can arrange a seamless transition to a similar property for the remaining nights.
+                              {t('description')}
                             </p>
                           </div>
                         </div>
@@ -265,7 +266,7 @@ export default function PropertiesPage() {
                     <section className="opacity-50">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="w-3 h-3 rounded-full bg-muted" />
-                        <h2 className="text-xl font-semibold text-muted-foreground">Unavailable for These Dates</h2>
+                        <h2 className="text-xl font-semibold text-muted-foreground">{t('noResults')}</h2>
                       </div>
                       <PropertiesGrid 
                         properties={unavailable} 
@@ -282,9 +283,9 @@ export default function PropertiesPage() {
                       className="text-center py-16"
                     >
                       <Calendar className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-                      <h3 className="text-xl font-semibold mb-2">No properties available</h3>
+                      <h3 className="text-xl font-semibold mb-2">{t('noResults')}</h3>
                       <p className="text-muted-foreground mb-6">
-                        Try adjusting your dates or filters to find available properties.
+                        {t('noResultsDescription')}
                       </p>
                       <Button 
                         variant="outline"
@@ -293,7 +294,7 @@ export default function PropertiesPage() {
                           setFilters(defaultFilters)
                         }}
                       >
-                        Clear All Filters
+                        {t('clearFilters')}
                       </Button>
                     </motion.div>
                   )}

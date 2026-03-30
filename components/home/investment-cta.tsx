@@ -4,26 +4,29 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { TrendingUp, Building2, Shield, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
-const benefits = [
-  {
-    icon: TrendingUp,
-    title: 'Growing Market',
-    description: 'Steady demand for quality properties in Marrakech'
-  },
-  {
-    icon: Building2,
-    title: 'Property Selection',
-    description: 'Help finding the right property for your goals'
-  },
-  {
-    icon: Shield,
-    title: 'Local Support',
-    description: 'Guidance through the purchase and rental process'
-  }
-]
+import { useTranslations } from '@/i18n/provider'
 
 export function InvestmentCTA() {
+  const t = useTranslations('about')
+  const tProperties = useTranslations('properties')
+
+  const benefits = [
+    {
+      icon: TrendingUp,
+      title: t('mission'),
+      description: t('missionText')
+    },
+    {
+      icon: Building2,
+      title: tProperties('title'),
+      description: tProperties('description')
+    },
+    {
+      icon: Shield,
+      title: t('team'),
+      description: t('teamText')
+    }
+  ]
   return (
     <section className="py-24 md:py-32 bg-background">
       <div className="container mx-auto px-6">
@@ -37,22 +40,20 @@ export function InvestmentCTA() {
               transition={{ duration: 0.6 }}
             >
               <p className="luxury-subheading text-background/60 mb-4">
-                Thinking of Investing?
+                {t('subtitle')}
               </p>
               <h2 className="text-3xl md:text-4xl font-semibold luxury-heading mb-6">
-                Property Opportunities in Marrakech
+                {t('title')}
               </h2>
               <p className="text-background/70 leading-relaxed mb-8">
-                Interested in owning a property in Marrakech? We can help you navigate the market, 
-                find the right property, and manage it as a rental if you choose. We&apos;ve helped 
-                several clients through this process.
+                {t('storyText')}
               </p>
               <Link href="/about#invest">
                 <Button 
                   size="lg" 
                   className="bg-background text-foreground hover:bg-background/90 gap-2"
                 >
-                  Learn More
+                  {t('story')}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>

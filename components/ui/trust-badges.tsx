@@ -3,6 +3,7 @@
 import { Shield, Star, Clock, BadgeCheck, Award, HeartHandshake } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/provider'
 
 interface TrustBadgesProps {
   variant?: 'horizontal' | 'vertical' | 'compact'
@@ -10,37 +11,40 @@ interface TrustBadgesProps {
   theme?: 'light' | 'dark'
 }
 
-const badges = [
-  {
-    icon: Shield,
-    title: 'Carefully Selected',
-    description: 'Each property personally visited'
-  },
-  {
-    icon: Star,
-    title: 'Quality Service',
-    description: 'Attentive Moroccan hospitality'
-  },
-  {
-    icon: Clock,
-    title: 'Always Available',
-    description: 'Our team is here for you'
-  },
-  {
-    icon: BadgeCheck,
-    title: 'Book Direct',
-    description: 'Personal service, no middlemen'
-  }
-]
-
-const compactBadges = [
-  { icon: Shield, label: 'Selected with Care' },
-  { icon: Star, label: 'Quality Service' },
-  { icon: Clock, label: 'Here for You' },
-  { icon: BadgeCheck, label: 'Book Direct' }
-]
-
 export function TrustBadges({ variant = 'horizontal', className, theme = 'light' }: TrustBadgesProps) {
+  const t = useTranslations('properties')
+  const tServices = useTranslations('services')
+  const tBooking = useTranslations('booking')
+
+  const badges = [
+    {
+      icon: Shield,
+      title: t('featured'),
+      description: t('description')
+    },
+    {
+      icon: Star,
+      title: tServices('title'),
+      description: tServices('description')
+    },
+    {
+      icon: Clock,
+      title: tBooking('freeCancellation'),
+      description: tBooking('cancellationPolicy')
+    },
+    {
+      icon: BadgeCheck,
+      title: tBooking('securePayment'),
+      description: tServices('concierge')
+    }
+  ]
+
+  const compactBadges = [
+    { icon: Shield, label: t('featured') },
+    { icon: Star, label: tServices('title') },
+    { icon: Clock, label: tBooking('freeCancellation') },
+    { icon: BadgeCheck, label: tBooking('securePayment') }
+  ]
   const isDark = theme === 'dark'
 
   if (variant === 'compact') {
@@ -128,6 +132,9 @@ export function TrustBadges({ variant = 'horizontal', className, theme = 'light'
 
 // Standalone guarantee banner
 export function GuaranteeBanner({ className }: { className?: string }) {
+  const tBooking = useTranslations('booking')
+  const tServices = useTranslations('services')
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -141,16 +148,16 @@ export function GuaranteeBanner({ className }: { className?: string }) {
       <div className="flex items-center gap-3">
         <Award className="w-8 h-8 text-gold" />
         <div>
-          <p className="font-semibold text-sm">Flexible Booking</p>
-          <p className="text-xs text-muted-foreground">Free cancellation up to 48h before arrival</p>
+          <p className="font-semibold text-sm">{tBooking('freeCancellation')}</p>
+          <p className="text-xs text-muted-foreground">{tBooking('cancellationPolicy')}</p>
         </div>
       </div>
       <div className="hidden sm:block w-px h-10 bg-border" />
       <div className="flex items-center gap-3">
         <HeartHandshake className="w-8 h-8 text-gold" />
         <div>
-          <p className="font-semibold text-sm">Personal Attention</p>
-          <p className="text-xs text-muted-foreground">A dedicated contact for your stay</p>
+          <p className="font-semibold text-sm">{tServices('concierge')}</p>
+          <p className="text-xs text-muted-foreground">{tServices('description')}</p>
         </div>
       </div>
     </motion.div>

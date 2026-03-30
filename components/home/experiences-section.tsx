@@ -4,31 +4,33 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
-
-const experiences = [
-  {
-    title: 'Sunset Rooftop Dining',
-    description: 'Watch the sun set over the Medina while enjoying a private gourmet dinner.',
-    image: '/images/experiences/sunset.jpg'
-  },
-  {
-    title: 'Atlas Mountain Trek',
-    description: 'Explore Berber villages and breathtaking landscapes with expert guides.',
-    image: '/images/categories/villas.jpg'
-  },
-  {
-    title: 'Traditional Hammam',
-    description: 'Indulge in centuries-old bathing rituals at exclusive private spas.',
-    image: '/images/services/concierge.jpg'
-  },
-  {
-    title: 'Souk Discovery',
-    description: 'Navigate the vibrant markets with a local guide and artisan insights.',
-    image: '/images/categories/riads.jpg'
-  }
-]
+import { useTranslations } from '@/i18n/provider'
 
 export function ExperiencesSection() {
+  const t = useTranslations('services')
+
+  const experiences = [
+    {
+      title: t('meals'),
+      description: t('description'),
+      image: '/images/experiences/sunset.jpg'
+    },
+    {
+      title: t('excursions'),
+      description: t('description'),
+      image: '/images/categories/villas.jpg'
+    },
+    {
+      title: t('spaWellness'),
+      description: t('description'),
+      image: '/images/services/concierge.jpg'
+    },
+    {
+      title: t('concierge'),
+      description: t('description'),
+      image: '/images/categories/riads.jpg'
+    }
+  ]
   return (
     <section className="py-24 md:py-32 bg-terracotta text-white">
       <div className="container mx-auto px-6">
@@ -40,9 +42,9 @@ export function ExperiencesSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="luxury-subheading text-white/70 mb-4">Moments to Remember</p>
+          <p className="luxury-subheading text-white/70 mb-4">{t('subtitle')}</p>
           <h2 className="text-3xl md:text-5xl font-semibold luxury-heading">
-            Special Experiences in Marrakech
+            {t('title')}
           </h2>
         </motion.div>
 

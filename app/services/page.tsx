@@ -8,36 +8,40 @@ import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { mockServices } from '@/lib/data'
-
-const categoryInfo = {
-  breakfast: {
-    icon: Utensils,
-    title: 'Breakfast Service',
-    description: 'Start your day with authentic Moroccan flavors delivered to your door.'
-  },
-  meals: {
-    icon: Utensils,
-    title: 'Private Dining',
-    description: 'Experience gourmet meals prepared by expert chefs in your property.'
-  },
-  excursion: {
-    icon: Mountain,
-    title: 'Excursions',
-    description: 'Explore Morocco with curated adventures and expert local guides.'
-  },
-  spa: {
-    icon: Sparkles,
-    title: 'Spa & Wellness',
-    description: 'Indulge in traditional hammam rituals and luxury spa treatments.'
-  },
-  transport: {
-    icon: Car,
-    title: 'Transportation',
-    description: 'Seamless travel with airport transfers and private chauffeur services.'
-  }
-}
+import { useTranslations } from '@/i18n/provider'
 
 export default function ServicesPage() {
+  const t = useTranslations('services')
+  const tHeader = useTranslations('header')
+  const tContact = useTranslations('contact')
+
+  const categoryInfo = {
+    breakfast: {
+      icon: Utensils,
+      title: t('breakfast'),
+      description: t('description')
+    },
+    meals: {
+      icon: Utensils,
+      title: t('meals'),
+      description: t('description')
+    },
+    excursion: {
+      icon: Mountain,
+      title: t('excursions'),
+      description: t('description')
+    },
+    spa: {
+      icon: Sparkles,
+      title: t('spaWellness'),
+      description: t('description')
+    },
+    transport: {
+      icon: Car,
+      title: t('airportTransfer'),
+      description: t('description')
+    }
+  }
   const groupedServices = mockServices.reduce((acc, service) => {
     if (!acc[service.category]) {
       acc[service.category] = []
@@ -63,13 +67,12 @@ export default function ServicesPage() {
             <div className="absolute inset-0 bg-black/50" />
           </div>
           <div className="relative z-10 text-center text-white px-6">
-            <p className="luxury-subheading text-white/80 mb-4">Concierge</p>
+            <p className="luxury-subheading text-white/80 mb-4">{t('concierge')}</p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold luxury-heading">
-              Our Services
+              {t('title')}
             </h1>
             <p className="mt-6 text-lg text-white/90 max-w-2xl mx-auto">
-              We can help arrange a range of services to make your stay more comfortable 
-              and your time in Marrakech more enjoyable.
+              {t('description')}
             </p>
           </div>
         </section>
@@ -140,21 +143,21 @@ export default function ServicesPage() {
         <section className="bg-secondary/30 py-16">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold mb-4">
-              Interested in Any of These Services?
+              {t('subtitle')}
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Get in touch and we&apos;ll help you arrange whatever you need for your stay.
+              {t('description')}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/booking">
                 <Button size="lg" className="gap-2">
-                  Book Your Stay
+                  {tHeader('bookYourStay')}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               <Link href="/contact">
                 <Button size="lg" variant="outline">
-                  Contact Concierge
+                  {tContact('title')}
                 </Button>
               </Link>
             </div>

@@ -6,15 +6,18 @@ import { motion } from 'framer-motion'
 import { PropertyCard } from '@/components/properties/property-card'
 import { mockProperties } from '@/lib/data'
 import { Button } from '@/components/ui/button'
-
-const trustFeatures = [
-  { icon: Shield, text: 'Personally Visited' },
-  { icon: Star, text: 'Chosen for Quality' },
-  { icon: Clock, text: 'Direct Booking' }
-]
+import { useTranslations } from '@/i18n/provider'
 
 export function FeaturedProperties() {
+  const t = useTranslations('properties')
+  const tCommon = useTranslations('common')
   const featured = mockProperties.filter(p => p.featured).slice(0, 3)
+
+  const trustFeatures = [
+    { icon: Shield, text: t('featured') },
+    { icon: Star, text: t('new') },
+    { icon: Clock, text: t('instantBooking') }
+  ]
 
   return (
     <section className="py-24 md:py-32 bg-secondary/30">
@@ -28,12 +31,12 @@ export function FeaturedProperties() {
           className="flex flex-col md:flex-row md:items-end md:justify-between mb-12"
         >
           <div>
-            <p className="luxury-subheading text-gold mb-4">Our Selection</p>
+            <p className="luxury-subheading text-gold mb-4">{t('subtitle')}</p>
             <h2 className="text-3xl md:text-5xl font-semibold luxury-heading mb-4">
-              Featured Properties
+              {t('featured')}
             </h2>
             <p className="text-muted-foreground max-w-xl">
-              We keep our collection intentionally small, focusing only on properties that meet our standards for quality, character, and comfort.
+              {t('description')}
             </p>
             {/* Trust indicators */}
             <div className="flex flex-wrap items-center gap-4 mt-4">
@@ -47,7 +50,7 @@ export function FeaturedProperties() {
           </div>
           <Link href="/properties" className="mt-6 md:mt-0">
             <Button variant="outline" className="gap-2">
-              View All Properties
+              {t('all')}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -89,11 +92,11 @@ export function FeaturedProperties() {
           className="mt-12 text-center"
         >
           <p className="text-muted-foreground mb-4">
-            Looking for something specific?
+            {tCommon('more')}?
           </p>
           <Link href="/contact">
             <Button variant="outline" className="gap-2">
-              Get in Touch
+              {t('viewDetails')}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
