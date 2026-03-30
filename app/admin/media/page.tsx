@@ -33,6 +33,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AdminLayout } from '@/components/admin/admin-layout'
@@ -348,9 +349,10 @@ export default function AdminMediaPage() {
       {/* Upload Dialog */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Upload Files</DialogTitle>
-          </DialogHeader>
+<DialogHeader>
+  <DialogTitle>Upload Files</DialogTitle>
+  <DialogDescription>Upload images and documents to the media library.</DialogDescription>
+  </DialogHeader>
           <div className="space-y-4">
             <div className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer">
               <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />

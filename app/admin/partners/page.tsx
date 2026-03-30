@@ -52,6 +52,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
@@ -432,10 +433,13 @@ export default function AdminPartnersPage() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingPartner ? 'Edit Partner' : 'Add New Partner'}
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle>
+  {editingPartner ? 'Edit Partner' : 'Add New Partner'}
+  </DialogTitle>
+  <DialogDescription>
+  {editingPartner ? 'Update partner information and activities.' : 'Add a new partner and their services.'}
+  </DialogDescription>
+  </DialogHeader>
 
           <div className="space-y-6 py-4">
             {/* Basic Info */}

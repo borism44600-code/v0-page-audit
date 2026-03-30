@@ -38,6 +38,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
@@ -270,9 +271,10 @@ export default function AdminPricingPage() {
       {/* Add Season Dialog */}
       <Dialog open={seasonDialogOpen} onOpenChange={setSeasonDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Seasonal Pricing</DialogTitle>
-          </DialogHeader>
+<DialogHeader>
+  <DialogTitle>Add Seasonal Pricing</DialogTitle>
+  <DialogDescription>Define pricing adjustments for specific date ranges.</DialogDescription>
+  </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Season Name</Label>
@@ -320,9 +322,10 @@ export default function AdminPricingPage() {
       {/* Add Extra Dialog */}
       <Dialog open={extraDialogOpen} onOpenChange={setExtraDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Extra Service</DialogTitle>
-          </DialogHeader>
+<DialogHeader>
+  <DialogTitle>Add Extra Service</DialogTitle>
+  <DialogDescription>Add a new service or extra that guests can book.</DialogDescription>
+  </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Service Name</Label>

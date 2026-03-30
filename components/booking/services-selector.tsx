@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -631,11 +632,14 @@ export function ServicesSelector({
       <Dialog open={showBreakfastDialog} onOpenChange={setShowBreakfastDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Coffee className="w-5 h-5 text-gold" />
-              Add Breakfast
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle className="flex items-center gap-2">
+  <Coffee className="w-5 h-5 text-gold" />
+  Add Breakfast
+  </DialogTitle>
+  <DialogDescription>
+  Select dates and number of guests for daily breakfast service.
+  </DialogDescription>
+  </DialogHeader>
           
           <div className="space-y-6 py-4">
             <p className="text-sm text-muted-foreground">
@@ -735,11 +739,14 @@ export function ServicesSelector({
       <Dialog open={showMealDialog} onOpenChange={setShowMealDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UtensilsCrossed className="w-5 h-5 text-gold" />
-              Add Meal
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle className="flex items-center gap-2">
+  <UtensilsCrossed className="w-5 h-5 text-gold" />
+  Add Meal
+  </DialogTitle>
+  <DialogDescription>
+  Book traditional Moroccan lunch or dinner for your group.
+  </DialogDescription>
+  </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -823,11 +830,14 @@ export function ServicesSelector({
       <Dialog open={showTaxiDialog} onOpenChange={setShowTaxiDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Car className="w-5 h-5 text-gold" />
-              Airport Transfer
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle className="flex items-center gap-2">
+  <Car className="w-5 h-5 text-gold" />
+  Airport Transfer
+  </DialogTitle>
+  <DialogDescription>
+  Private transfer to or from Marrakech Menara Airport.
+  </DialogDescription>
+  </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -914,11 +924,14 @@ export function ServicesSelector({
       <Dialog open={showExcursionDialog} onOpenChange={setShowExcursionDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Mountain className="w-5 h-5 text-gold" />
-              Book an Excursion
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle className="flex items-center gap-2">
+  <Mountain className="w-5 h-5 text-gold" />
+  Book an Excursion
+  </DialogTitle>
+  <DialogDescription>
+  Discover Morocco with our curated day trips and experiences.
+  </DialogDescription>
+  </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1003,11 +1016,14 @@ export function ServicesSelector({
       <Dialog open={showDriverDialog} onOpenChange={setShowDriverDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Car className="w-5 h-5 text-gold" />
-              Private Driver
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle className="flex items-center gap-2">
+  <Car className="w-5 h-5 text-gold" />
+  Private Driver
+  </DialogTitle>
+  <DialogDescription>
+  Hire a private driver for city exploration or day trips.
+  </DialogDescription>
+  </DialogHeader>
           
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
@@ -1062,11 +1078,14 @@ export function ServicesSelector({
       <Dialog open={showSpaDialog} onOpenChange={setShowSpaDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-gold" />
-              Spa & Wellness
-            </DialogTitle>
-          </DialogHeader>
+<DialogTitle className="flex items-center gap-2">
+  <Sparkles className="w-5 h-5 text-gold" />
+  Spa & Wellness
+  </DialogTitle>
+  <DialogDescription>
+  Relax with traditional hammam and massage treatments.
+  </DialogDescription>
+  </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">

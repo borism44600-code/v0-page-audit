@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
@@ -210,9 +211,10 @@ export function ImageUploader({
                 </Button>
               </DialogTrigger>
               <DialogContent onClick={(e) => e.stopPropagation()}>
-                <DialogHeader>
-                  <DialogTitle>Add Image from URL</DialogTitle>
-                </DialogHeader>
+<DialogHeader>
+  <DialogTitle>Add Image from URL</DialogTitle>
+  <DialogDescription>Enter the URL of an image to add to the gallery.</DialogDescription>
+  </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>Image URL</Label>

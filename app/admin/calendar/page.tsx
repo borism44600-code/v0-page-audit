@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { CalendarSync, CalendarSyncStatusBadge } from '@/components/admin/calendar-sync'
@@ -202,10 +203,11 @@ export default function AdminCalendarPage() {
         >
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <RefreshCw className="w-5 h-5" />
-                External Calendars Sync
-              </DialogTitle>
+<DialogTitle className="flex items-center gap-2">
+  <RefreshCw className="w-5 h-5" />
+  External Calendars Sync
+  </DialogTitle>
+  <DialogDescription>Manage calendar synchronization with Airbnb, Booking.com, and other platforms.</DialogDescription>
             </DialogHeader>
             {selectedPropertyData && (
               <CalendarSync 

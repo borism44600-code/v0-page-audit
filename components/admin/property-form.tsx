@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { 
@@ -117,10 +118,13 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            {property ? 'Edit Property' : 'Add New Property'}
-          </DialogTitle>
-        </DialogHeader>
+<DialogTitle className="text-xl font-semibold">
+  {property ? 'Edit Property' : 'Add New Property'}
+  </DialogTitle>
+  <DialogDescription>
+  {property ? 'Update the property details below.' : 'Fill in the property details to add a new listing.'}
+  </DialogDescription>
+  </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
