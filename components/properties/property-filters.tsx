@@ -69,10 +69,11 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
     onFiltersChange({ ...filters, ...updates })
   }
 
-  const toggleArrayItem = <T extends string>(array: T[], item: T): T[] => {
-    return array.includes(item) 
-      ? array.filter(i => i !== item) 
-      : [...array, item]
+  const toggleArrayItem = <T,>(array: T[] | undefined, item: T): T[] => {
+    const arr = array || []
+    return arr.includes(item) 
+      ? arr.filter(i => i !== item) 
+      : [...arr, item]
   }
 
   // Select/Deselect all districts in a group
@@ -101,11 +102,11 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
 
   const activeFiltersCount = 
     (filters.priceRange[0] > 0 || filters.priceRange[1] < 2000 ? 1 : 0) +
-    filters.districts.length +
-    filters.distanceFromCenter.length +
-    filters.features.length +
-    filters.parking.length +
-    filters.bedrooms.length +
+    (filters.districts?.length || 0) +
+    (filters.distanceFromCenter?.length || 0) +
+    (filters.features?.length || 0) +
+    (filters.parking?.length || 0) +
+    (filters.bedrooms?.length || 0) +
     (filters.mainSleepingCapacity ? 1 : 0) +
     (filters.additionalSleepingCapacity ? 1 : 0)
 
@@ -169,7 +170,7 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
         <CollapsibleContent className="pt-4 pb-2">
           <div className="flex flex-wrap gap-2">
             {BEDROOM_OPTIONS.map((option) => {
-              const isSelected = filters.bedrooms.includes(option.value)
+              const isSelected = filters.bedrooms?.includes(option.value) || false
               return (
                 <button
                   key={option.value}

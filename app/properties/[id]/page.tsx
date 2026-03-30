@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 import { 
   Bed, Bath, Users, MapPin, Check, ArrowRight, 
   Utensils, Car, Sparkles, Mountain, Calendar, Shield,
-  Star, Clock, Phone, HeartHandshake, Award, Sofa
+  Star, Clock, Phone, HeartHandshake, Award, Sofa, ShowerHead
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Header } from '@/components/layout/header'
@@ -17,7 +17,7 @@ import { AvailabilityCalendar } from '@/components/properties/availability-calen
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
 import { mockProperties, mockServices, mockAddons } from '@/lib/data'
-import { FEATURE_LABELS, BED_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
+import { FEATURE_LABELS, BED_TYPE_LABELS, BATHROOM_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const serviceIcons = {
@@ -192,6 +192,28 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                               {bed.quantity > 1 ? `${bed.quantity}x ` : ''}{BED_TYPE_LABELS[bed.type]}
                             </li>
                           ))}
+                          {space.ensuite && space.bathroomType && space.bathroomType !== 'none' && (
+                            <li className="flex items-center gap-2 pt-1 border-t border-border/30 mt-2">
+                              {space.bathroomType === 'shower' && (
+                                <>
+                                  <ShowerHead className="w-3.5 h-3.5 text-primary" />
+                                  <span>Shower</span>
+                                </>
+                              )}
+                              {space.bathroomType === 'bathtub' && (
+                                <>
+                                  <Bath className="w-3.5 h-3.5 text-primary" />
+                                  <span>Bathtub</span>
+                                </>
+                              )}
+                              {space.bathroomType === 'both' && (
+                                <>
+                                  <ShowerHead className="w-3.5 h-3.5 text-primary" />
+                                  <span>Shower &amp; Bathtub</span>
+                                </>
+                              )}
+                            </li>
+                          )}
                         </ul>
                         {space.notes && (
                           <p className="text-xs text-muted-foreground mt-2 italic">

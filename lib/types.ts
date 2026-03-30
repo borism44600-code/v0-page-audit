@@ -22,6 +22,16 @@ export const BED_TYPE_LABELS: Record<BedType, string> = {
   'crib': 'Crib'
 }
 
+// Bathroom types for ensuite details
+export type BathroomType = 'shower' | 'bathtub' | 'both' | 'none'
+
+export const BATHROOM_TYPE_LABELS: Record<BathroomType, string> = {
+  'shower': 'Shower',
+  'bathtub': 'Bathtub',
+  'both': 'Shower & Bathtub',
+  'none': 'No bathroom'
+}
+
 export interface SleepingSpace {
   roomName: string // e.g., "Bedroom 1", "Living room"
   roomType: 'bedroom' | 'living-room' | 'other'
@@ -30,6 +40,7 @@ export interface SleepingSpace {
     quantity: number
   }[]
   ensuite?: boolean // Has private bathroom
+  bathroomType?: BathroomType // Type of bathroom facilities
   notes?: string // Additional notes like "with balcony"
 }
 

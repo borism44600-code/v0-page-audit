@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { 
   Property, PropertyType, BEDROOM_OPTIONS, SLEEPING_CAPACITY_OPTIONS,
-  SleepingSpace, BedType, BED_TYPE_LABELS
+  SleepingSpace, BedType, BED_TYPE_LABELS, BathroomType, BATHROOM_TYPE_LABELS
 } from '@/lib/types'
 
 interface PropertyFormProps {
@@ -394,17 +394,39 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
                             className="h-7 text-sm font-medium bg-transparent border-none px-0 focus-visible:ring-0"
                             placeholder="Room name"
                           />
-                          {room.roomType === 'bedroom' && (
-                            <label className="flex items-center gap-2 mt-1">
+{room.roomType === 'bedroom' && (
+                          <div className="flex items-center gap-3 mt-1">
+                            <label className="flex items-center gap-2">
                               <input
                                 type="checkbox"
                                 checked={room.ensuite || false}
-                                onChange={(e) => updateRoom(roomIndex, { ensuite: e.target.checked })}
+                                onChange={(e) => updateRoom(roomIndex, { 
+                                  ensuite: e.target.checked,
+                                  bathroomType: e.target.checked ? 'shower' : undefined
+                                })}
                                 className="rounded border-border"
                               />
-                              <span className="text-xs text-muted-foreground">Ensuite bathroom</span>
+                              <span className="text-xs text-muted-foreground">Ensuite</span>
                             </label>
-                          )}
+                            {room.ensuite && (
+                              <Select
+                                value={room.bathroomType || 'shower'}
+                                onValueChange={(value) => updateRoom(roomIndex, { bathroomType: value as BathroomType })}
+                              >
+                                <SelectTrigger className="h-6 text-xs w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(BATHROOM_TYPE_LABELS).filter(([key]) => key !== 'none').map(([value, label]) => (
+                                    <SelectItem key={value} value={value} className="text-xs">
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                        )}
                         </div>
                       </div>
                       <Button 

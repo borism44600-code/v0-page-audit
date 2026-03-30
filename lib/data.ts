@@ -54,7 +54,8 @@ export const mockProperties: Property[] = [
           { type: 'king', quantity: 1 },
           { type: 'single', quantity: 1 }
         ],
-        ensuite: true
+        ensuite: true,
+        bathroomType: 'both'
       },
       {
         roomName: 'Bedroom 2',
@@ -63,7 +64,8 @@ export const mockProperties: Property[] = [
           { type: 'single', quantity: 1 },
           { type: 'sofa-bed-single', quantity: 1 }
         ],
-        ensuite: true
+        ensuite: true,
+        bathroomType: 'shower'
       },
       {
         roomName: 'Bedroom 3',
@@ -71,7 +73,8 @@ export const mockProperties: Property[] = [
         beds: [
           { type: 'queen', quantity: 1 }
         ],
-        ensuite: true
+        ensuite: true,
+        bathroomType: 'bathtub'
       },
       {
         roomName: 'Bedroom 4',
@@ -79,7 +82,8 @@ export const mockProperties: Property[] = [
         beds: [
           { type: 'double', quantity: 1 }
         ],
-        ensuite: true
+        ensuite: true,
+        bathroomType: 'shower'
       },
       {
         roomName: 'Bedroom 5',
@@ -87,7 +91,8 @@ export const mockProperties: Property[] = [
         beds: [
           { type: 'single', quantity: 1 }
         ],
-        ensuite: true
+        ensuite: true,
+        bathroomType: 'shower'
       },
       {
         roomName: 'Living Room',
