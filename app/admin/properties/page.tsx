@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
@@ -8,7 +9,10 @@ import {
   Eye,
   Edit,
   Trash2,
-  Search
+  Search,
+  Bed,
+  Users,
+  Sofa
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,9 +32,29 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { AdminLayout } from '@/components/admin/admin-layout'
+import { PropertyForm } from '@/components/admin/property-form'
 import { mockProperties } from '@/lib/data'
+import { Property } from '@/lib/types'
 
 export default function AdminPropertiesPage() {
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null)
+
+  const handleAddProperty = () => {
+    setEditingProperty(null)
+    setFormOpen(true)
+  }
+
+  const handleEditProperty = (property: Property) => {
+    setEditingProperty(property)
+    setFormOpen(true)
+  }
+
+  const handleSaveProperty = (data: Partial<Property>) => {
+    // In a real app, this would save to the database
+    console.log('Saving property:', data)
+  }
+
   return (
     <AdminLayout title="Properties">
       <div className="space-y-6">
@@ -43,7 +67,7 @@ export default function AdminPropertiesPage() {
               className="pl-10 w-full sm:w-80"
             />
           </div>
-          <Button className="gap-2 w-full sm:w-auto">
+          <Button className="gap-2 w-full sm:w-auto" onClick={handleAddProperty}>
             <Plus className="w-4 h-4" />
             Add Property
           </Button>
@@ -58,7 +82,8 @@ export default function AdminPropertiesPage() {
                   <TableHead>Property</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="hidden md:table-cell">Location</TableHead>
-                  <TableHead className="hidden lg:table-cell">Bedrooms</TableHead>
+                  <TableHead className="hidden lg:table-cell">Rooms</TableHead>
+                  <TableHead className="hidden xl:table-cell">Capacity</TableHead>
                   <TableHead>Price/Night</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
                   <TableHead className="w-10"></TableHead>
@@ -94,7 +119,24 @@ export default function AdminPropertiesPage() {
                       {property.location.subDistrict || property.location.district}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {property.bedrooms}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Bed className="w-3.5 h-3.5 text-muted-foreground" />
+                        {property.bedrooms}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell">
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="flex items-center gap-1" title="Main beds">
+                          <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                          {property.mainSleepingCapacity}
+                        </span>
+                        {property.additionalSleepingCapacity > 0 && (
+                          <span className="flex items-center gap-1 text-muted-foreground" title="Extra beds">
+                            <Sofa className="w-3.5 h-3.5" />
+                            +{property.additionalSleepingCapacity}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium">
                       &euro;{property.pricePerNight}
@@ -118,7 +160,7 @@ export default function AdminPropertiesPage() {
                               View
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditProperty(property)}>
                             <Edit className="w-4 h-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
@@ -141,6 +183,14 @@ export default function AdminPropertiesPage() {
           Showing {mockProperties.length} properties
         </div>
       </div>
+
+      {/* Property Form Dialog */}
+      <PropertyForm
+        property={editingProperty}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSave={handleSaveProperty}
+      />
     </AdminLayout>
   )
 }

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Bed, Bath, Users, MapPin, ArrowRight, Calendar, Check, Clock } from 'lucide-react'
+import { Bed, Bath, Users, MapPin, ArrowRight, Calendar, Check, Clock, Sofa } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Property } from '@/lib/types'
 import { PropertyAvailabilityResult, calculateNights } from '@/lib/availability'
@@ -126,24 +126,30 @@ export function PropertyCard({
         {/* Features */}
         <div
           className={cn(
-            'flex items-center gap-4 text-muted-foreground',
+            'flex items-center gap-4 text-muted-foreground flex-wrap',
             isLarge && 'mt-6',
             !isLarge && !isSmall && 'mt-3',
-            isSmall && 'mt-2 gap-3'
+            isSmall && 'mt-2 gap-2'
           )}
         >
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" title={`${property.bedrooms} bedrooms`}>
             <Bed className={cn('w-4 h-4', isSmall && 'w-3 h-3')} />
             <span className={cn('text-sm', isSmall && 'text-xs')}>{property.bedrooms}</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" title={`${property.bathrooms} bathrooms`}>
             <Bath className={cn('w-4 h-4', isSmall && 'w-3 h-3')} />
             <span className={cn('text-sm', isSmall && 'text-xs')}>{property.bathrooms}</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" title={`Sleeps ${property.mainSleepingCapacity} in beds`}>
             <Users className={cn('w-4 h-4', isSmall && 'w-3 h-3')} />
-            <span className={cn('text-sm', isSmall && 'text-xs')}>{property.maxGuests}</span>
+            <span className={cn('text-sm', isSmall && 'text-xs')}>{property.mainSleepingCapacity}</span>
           </div>
+          {property.additionalSleepingCapacity > 0 && !isSmall && (
+            <div className="flex items-center gap-1.5" title={`+${property.additionalSleepingCapacity} extra beds`}>
+              <Sofa className="w-4 h-4" />
+              <span className="text-sm">+{property.additionalSleepingCapacity}</span>
+            </div>
+          )}
         </div>
 
         {/* Price & CTA */}

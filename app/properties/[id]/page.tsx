@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 import { 
   Bed, Bath, Users, MapPin, Check, ArrowRight, 
   Utensils, Car, Sparkles, Mountain, Calendar, Shield,
-  Star, Clock, Phone, HeartHandshake, Award
+  Star, Clock, Phone, HeartHandshake, Award, Sofa
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Header } from '@/components/layout/header'
@@ -128,8 +128,14 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-primary" />
-                    <span>Up to {property.maxGuests} Guests</span>
+                    <span>Sleeps {property.mainSleepingCapacity}</span>
                   </div>
+                  {property.additionalSleepingCapacity > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Sofa className="w-5 h-5 text-gold" />
+                      <span>+{property.additionalSleepingCapacity} extra beds</span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
 
@@ -303,6 +309,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       <span className="text-muted-foreground">Bedrooms</span>
                       <span className="font-medium">{property.bedrooms}</span>
                     </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Main Beds</span>
+                      <span className="font-medium">Sleeps {property.mainSleepingCapacity}</span>
+                    </div>
+                    {property.additionalSleepingCapacity > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Extra Beds</span>
+                        <span className="font-medium">+{property.additionalSleepingCapacity}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Max Guests</span>
                       <span className="font-medium">{property.maxGuests}</span>

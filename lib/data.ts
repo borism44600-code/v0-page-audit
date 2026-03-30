@@ -44,6 +44,8 @@ export const mockProperties: Property[] = [
     bedrooms: 5,
     bathrooms: 5,
     maxGuests: 10,
+    mainSleepingCapacity: 8,
+    additionalSleepingCapacity: 2,
     amenities: ['WiFi', 'Air Conditioning', 'Daily Housekeeping', 'Concierge Service', 'Airport Transfer Available'],
     availability: [
       { start: '2026-01-01', end: '2026-04-10' },
@@ -97,6 +99,8 @@ export const mockProperties: Property[] = [
     bedrooms: 6,
     bathrooms: 7,
     maxGuests: 12,
+    mainSleepingCapacity: 10,
+    additionalSleepingCapacity: 2,
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef Available', 'Tennis Court', 'Daily Housekeeping', 'Security'],
     availability: [
       { start: '2026-01-01', end: '2026-03-31' },
@@ -148,6 +152,8 @@ export const mockProperties: Property[] = [
     bedrooms: 2,
     bathrooms: 2,
     maxGuests: 4,
+    mainSleepingCapacity: 3,
+    additionalSleepingCapacity: 1,
     amenities: ['WiFi', 'Air Conditioning', 'Gym Access', 'Concierge', 'Underground Parking'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -198,6 +204,8 @@ export const mockProperties: Property[] = [
     bedrooms: 4,
     bathrooms: 4,
     maxGuests: 8,
+    mainSleepingCapacity: 6,
+    additionalSleepingCapacity: 2,
     amenities: ['WiFi', 'Air Conditioning', 'Daily Housekeeping', 'Breakfast Included'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -249,6 +257,8 @@ export const mockProperties: Property[] = [
     bedrooms: 4,
     bathrooms: 5,
     maxGuests: 8,
+    mainSleepingCapacity: 7,
+    additionalSleepingCapacity: 1,
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef', 'Butler Service', 'Helipad', 'Daily Housekeeping'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -298,6 +308,8 @@ export const mockProperties: Property[] = [
     bedrooms: 1,
     bathrooms: 1,
     maxGuests: 2,
+    mainSleepingCapacity: 2,
+    additionalSleepingCapacity: 0,
     amenities: ['WiFi', 'Air Conditioning', 'Smart TV', 'Balcony'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }

@@ -21,7 +21,10 @@ const defaultFilters: PropertyFiltersState = {
   distanceFromCenter: [],
   features: [],
   parking: [],
-  availability: { start: null, end: null }
+  availability: { start: null, end: null },
+  bedrooms: [],
+  mainSleepingCapacity: null,
+  additionalSleepingCapacity: null
 }
 
 export default function PropertiesPage() {
@@ -88,6 +91,36 @@ export default function PropertiesPage() {
       // Guest capacity filter
       if (property.maxGuests < guests) {
         return false
+      }
+
+      // Bedrooms filter
+      if (filters.bedrooms.length > 0) {
+        const matchesBedrooms = filters.bedrooms.some(b => {
+          if (b === 7) return property.bedrooms >= 7
+          return property.bedrooms === b
+        })
+        if (!matchesBedrooms) {
+          return false
+        }
+      }
+
+      // Main sleeping capacity filter
+      if (filters.mainSleepingCapacity !== null) {
+        if (property.mainSleepingCapacity < filters.mainSleepingCapacity) {
+          return false
+        }
+      }
+
+      // Additional sleeping capacity filter
+      if (filters.additionalSleepingCapacity !== null) {
+        if (filters.additionalSleepingCapacity === 0) {
+          // Looking for properties with no extra beds
+          if (property.additionalSleepingCapacity > 0) {
+            return false
+          }
+        } else if (property.additionalSleepingCapacity < filters.additionalSleepingCapacity) {
+          return false
+        }
       }
 
       return true

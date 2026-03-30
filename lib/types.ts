@@ -58,6 +58,9 @@ export interface Property {
   bedrooms: number
   bathrooms: number
   maxGuests: number
+  // Sleeping capacity breakdown
+  mainSleepingCapacity: number // Beds in bedrooms
+  additionalSleepingCapacity: number // Extra beds, sofa beds, etc.
   amenities: string[]
   availability: {
     start: string
@@ -222,6 +225,28 @@ export const PARKING_OPTIONS = [
   { value: 'walk-3-min', label: '< 3-minute walk' },
   { value: 'walk-5-min', label: '< 5-minute walk' },
   { value: 'less-500m', label: '< 500m' }
+] as const
+
+export const BEDROOM_OPTIONS = [
+  { value: 1, label: '1 bedroom' },
+  { value: 2, label: '2 bedrooms' },
+  { value: 3, label: '3 bedrooms' },
+  { value: 4, label: '4 bedrooms' },
+  { value: 5, label: '5 bedrooms' },
+  { value: 6, label: '6 bedrooms' },
+  { value: 7, label: '7+ bedrooms' }
+] as const
+
+export const SLEEPING_CAPACITY_OPTIONS = [
+  { value: 1, label: '1 person' },
+  { value: 2, label: '2 people' },
+  { value: 3, label: '3 people' },
+  { value: 4, label: '4 people' },
+  { value: 5, label: '5 people' },
+  { value: 6, label: '6 people' },
+  { value: 8, label: '8 people' },
+  { value: 10, label: '10 people' },
+  { value: 12, label: '12+ people' }
 ] as const
 
 export const FEATURE_LABELS: Record<keyof PropertyFeatures, string> = {
