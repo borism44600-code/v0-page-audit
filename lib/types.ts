@@ -99,12 +99,12 @@ export interface Property {
   features: PropertyFeatures
   parking: ParkingType
   images: string[]
-  bedrooms: number
+  // Room and guest capacity
+  numberOfBedrooms: number
   bathrooms: number
-  maxGuests: number
-  // Sleeping capacity breakdown
-  mainSleepingCapacity: number // Beds in bedrooms
-  additionalSleepingCapacity: number // Extra beds, sofa beds, etc.
+  bedroomGuestCapacity: number // Guests who can sleep in bedrooms
+  additionalGuestCapacity: number // Guests in additional spaces (sofa beds, etc.)
+  totalGuestCapacity: number // Total = bedroomGuestCapacity + additionalGuestCapacity
   // Detailed sleeping arrangements
   sleepingArrangements?: SleepingSpace[]
   amenities: string[]
@@ -283,16 +283,16 @@ export const BEDROOM_OPTIONS = [
   { value: 7, label: '7+ bedrooms' }
 ] as const
 
-export const SLEEPING_CAPACITY_OPTIONS = [
-  { value: 1, label: '1 person' },
-  { value: 2, label: '2 people' },
-  { value: 3, label: '3 people' },
-  { value: 4, label: '4 people' },
-  { value: 5, label: '5 people' },
-  { value: 6, label: '6 people' },
-  { value: 8, label: '8 people' },
-  { value: 10, label: '10 people' },
-  { value: 12, label: '12+ people' }
+export const GUEST_CAPACITY_OPTIONS = [
+  { value: 1, label: '1 guest' },
+  { value: 2, label: '2 guests' },
+  { value: 3, label: '3 guests' },
+  { value: 4, label: '4 guests' },
+  { value: 5, label: '5 guests' },
+  { value: 6, label: '6 guests' },
+  { value: 8, label: '8 guests' },
+  { value: 10, label: '10 guests' },
+  { value: 12, label: '12+ guests' }
 ] as const
 
 export const FEATURE_LABELS: Record<keyof PropertyFeatures, string> = {

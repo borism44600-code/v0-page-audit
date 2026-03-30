@@ -260,8 +260,8 @@ export function findAlternativeProperties(
       if (b.pricePerNight >= priceRangeMin && b.pricePerNight <= priceRangeMax) scoreB += 1
       
       // Similar guest capacity +1
-      if (a.maxGuests >= originalProperty.maxGuests) scoreA += 1
-      if (b.maxGuests >= originalProperty.maxGuests) scoreB += 1
+      if (a.totalGuestCapacity >= originalProperty.totalGuestCapacity) scoreA += 1
+      if (b.totalGuestCapacity >= originalProperty.totalGuestCapacity) scoreB += 1
       
       return scoreB - scoreA
     })

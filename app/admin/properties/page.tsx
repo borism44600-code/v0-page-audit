@@ -121,21 +121,24 @@ export default function AdminPropertiesPage() {
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-2 text-sm">
                         <Bed className="w-3.5 h-3.5 text-muted-foreground" />
-                        {property.bedrooms}
+                        {property.numberOfBedrooms}
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-3 text-sm">
-                        <span className="flex items-center gap-1" title="Main beds">
+                        <span className="flex items-center gap-1" title="Bedroom guests">
                           <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                          {property.mainSleepingCapacity}
+                          {property.bedroomGuestCapacity}
                         </span>
-                        {property.additionalSleepingCapacity > 0 && (
-                          <span className="flex items-center gap-1 text-muted-foreground" title="Extra beds">
+                        {property.additionalGuestCapacity > 0 && (
+                          <span className="flex items-center gap-1 text-muted-foreground" title="Additional guests">
                             <Sofa className="w-3.5 h-3.5" />
-                            +{property.additionalSleepingCapacity}
+                            +{property.additionalGuestCapacity}
                           </span>
                         )}
+                        <span className="font-medium text-primary" title="Total capacity">
+                          = {property.totalGuestCapacity}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">

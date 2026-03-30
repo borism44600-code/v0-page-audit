@@ -41,11 +41,11 @@ export const mockProperties: Property[] = [
       '/images/properties/riad-1-3.jpg',
       '/images/properties/riad-1-4.jpg'
     ],
-    bedrooms: 5,
+    numberOfBedrooms: 5,
     bathrooms: 5,
-    maxGuests: 10,
-    mainSleepingCapacity: 8,
-    additionalSleepingCapacity: 2,
+    bedroomGuestCapacity: 8,
+    additionalGuestCapacity: 2,
+    totalGuestCapacity: 10,
     sleepingArrangements: [
       {
         roomName: 'Bedroom 1',
@@ -153,11 +153,11 @@ export const mockProperties: Property[] = [
       '/images/properties/villa-1-3.jpg',
       '/images/properties/villa-1-4.jpg'
     ],
-    bedrooms: 6,
+    numberOfBedrooms: 6,
     bathrooms: 7,
-    maxGuests: 12,
-    mainSleepingCapacity: 10,
-    additionalSleepingCapacity: 2,
+    bedroomGuestCapacity: 10,
+    additionalGuestCapacity: 2,
+    totalGuestCapacity: 12,
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef Available', 'Tennis Court', 'Daily Housekeeping', 'Security'],
     availability: [
       { start: '2026-01-01', end: '2026-03-31' },
@@ -206,11 +206,11 @@ export const mockProperties: Property[] = [
       '/images/properties/apt-1-2.jpg',
       '/images/properties/apt-1-3.jpg'
     ],
-    bedrooms: 2,
+    numberOfBedrooms: 2,
     bathrooms: 2,
-    maxGuests: 4,
-    mainSleepingCapacity: 3,
-    additionalSleepingCapacity: 1,
+    bedroomGuestCapacity: 3,
+    additionalGuestCapacity: 1,
+    totalGuestCapacity: 4,
     amenities: ['WiFi', 'Air Conditioning', 'Gym Access', 'Concierge', 'Underground Parking'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -258,11 +258,11 @@ export const mockProperties: Property[] = [
       '/images/properties/riad-2-2.jpg',
       '/images/properties/riad-2-3.jpg'
     ],
-    bedrooms: 4,
+    numberOfBedrooms: 4,
     bathrooms: 4,
-    maxGuests: 8,
-    mainSleepingCapacity: 6,
-    additionalSleepingCapacity: 2,
+    bedroomGuestCapacity: 6,
+    additionalGuestCapacity: 2,
+    totalGuestCapacity: 8,
     amenities: ['WiFi', 'Air Conditioning', 'Daily Housekeeping', 'Breakfast Included'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -311,11 +311,11 @@ export const mockProperties: Property[] = [
       '/images/properties/villa-2-3.jpg',
       '/images/properties/villa-2-4.jpg'
     ],
-    bedrooms: 4,
+    numberOfBedrooms: 4,
     bathrooms: 5,
-    maxGuests: 8,
-    mainSleepingCapacity: 7,
-    additionalSleepingCapacity: 1,
+    bedroomGuestCapacity: 7,
+    additionalGuestCapacity: 1,
+    totalGuestCapacity: 8,
     amenities: ['WiFi', 'Air Conditioning', 'Private Chef', 'Butler Service', 'Helipad', 'Daily Housekeeping'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }
@@ -362,11 +362,11 @@ export const mockProperties: Property[] = [
       '/images/properties/apt-2-2.jpg',
       '/images/properties/apt-2-3.jpg'
     ],
-    bedrooms: 1,
+    numberOfBedrooms: 1,
     bathrooms: 1,
-    maxGuests: 2,
-    mainSleepingCapacity: 2,
-    additionalSleepingCapacity: 0,
+    bedroomGuestCapacity: 2,
+    additionalGuestCapacity: 0,
+    totalGuestCapacity: 2,
     amenities: ['WiFi', 'Air Conditioning', 'Smart TV', 'Balcony'],
     availability: [
       { start: '2026-01-01', end: '2026-12-31' }

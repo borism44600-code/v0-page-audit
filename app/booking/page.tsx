@@ -333,13 +333,13 @@ function BookingContent() {
                             </p>
                             <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Bed className="w-3 h-3" />{property.bedrooms}
+                                <Bed className="w-3 h-3" />{property.numberOfBedrooms}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Bath className="w-3 h-3" />{property.bathrooms}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />{property.maxGuests}
+                                <Users className="w-3 h-3" />{property.totalGuestCapacity}
                               </span>
                             </div>
                             <p className="mt-2 font-semibold text-lg">{property.pricePerNight}€<span className="text-sm font-normal text-muted-foreground">/night</span></p>
@@ -449,7 +449,7 @@ function BookingContent() {
                     <h2 className="text-2xl font-semibold mb-2">Who&apos;s Joining You?</h2>
                     {bookingProperties.length > 0 && (
                       <p className="text-muted-foreground">
-                        Accommodates up to {Math.min(...bookingProperties.map(p => p.maxGuests))} guests
+                        Accommodates up to {Math.min(...bookingProperties.map(p => p.totalGuestCapacity))} guests
                       </p>
                     )}
                   </div>
@@ -478,7 +478,7 @@ function BookingContent() {
                           size="icon"
                           className="rounded-full"
                           onClick={() => setGuests(g => ({ ...g, adults: g.adults + 1 }))}
-                          disabled={bookingProperties.length > 0 && guests.adults + guests.children >= Math.min(...bookingProperties.map(p => p.maxGuests))}
+                          disabled={bookingProperties.length > 0 && guests.adults + guests.children >= Math.min(...bookingProperties.map(p => p.totalGuestCapacity))}
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
@@ -508,7 +508,7 @@ function BookingContent() {
                           size="icon"
                           className="rounded-full"
                           onClick={() => setGuests(g => ({ ...g, children: g.children + 1 }))}
-                          disabled={bookingProperties.length > 0 && guests.adults + guests.children >= Math.min(...bookingProperties.map(p => p.maxGuests))}
+                          disabled={bookingProperties.length > 0 && guests.adults + guests.children >= Math.min(...bookingProperties.map(p => p.totalGuestCapacity))}
                         >
                           <Plus className="w-4 h-4" />
                         </Button>

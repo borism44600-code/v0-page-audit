@@ -132,22 +132,22 @@ export function PropertyCard({
             isSmall && 'mt-2 gap-2'
           )}
         >
-          <div className="flex items-center gap-1.5" title={`${property.bedrooms} bedrooms`}>
+          <div className="flex items-center gap-1.5" title={`${property.numberOfBedrooms} bedrooms`}>
             <Bed className={cn('w-4 h-4', isSmall && 'w-3 h-3')} />
-            <span className={cn('text-sm', isSmall && 'text-xs')}>{property.bedrooms}</span>
+            <span className={cn('text-sm', isSmall && 'text-xs')}>{property.numberOfBedrooms}</span>
           </div>
           <div className="flex items-center gap-1.5" title={`${property.bathrooms} bathrooms`}>
             <Bath className={cn('w-4 h-4', isSmall && 'w-3 h-3')} />
             <span className={cn('text-sm', isSmall && 'text-xs')}>{property.bathrooms}</span>
           </div>
-          <div className="flex items-center gap-1.5" title={`Sleeps ${property.mainSleepingCapacity} in beds`}>
+          <div className="flex items-center gap-1.5" title={`${property.bedroomGuestCapacity} guests in bedrooms`}>
             <Users className={cn('w-4 h-4', isSmall && 'w-3 h-3')} />
-            <span className={cn('text-sm', isSmall && 'text-xs')}>{property.mainSleepingCapacity}</span>
+            <span className={cn('text-sm', isSmall && 'text-xs')}>{property.bedroomGuestCapacity}</span>
           </div>
-          {property.additionalSleepingCapacity > 0 && !isSmall && (
-            <div className="flex items-center gap-1.5" title={`+${property.additionalSleepingCapacity} extra beds`}>
+          {property.additionalGuestCapacity > 0 && !isSmall && (
+            <div className="flex items-center gap-1.5" title={`+${property.additionalGuestCapacity} additional guests`}>
               <Sofa className="w-4 h-4" />
-              <span className="text-sm">+{property.additionalSleepingCapacity}</span>
+              <span className="text-sm">+{property.additionalGuestCapacity}</span>
             </div>
           )}
         </div>

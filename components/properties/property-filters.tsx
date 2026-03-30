@@ -26,7 +26,7 @@ import {
   PARKING_OPTIONS,
   FEATURE_LABELS,
   BEDROOM_OPTIONS,
-  SLEEPING_CAPACITY_OPTIONS,
+  GUEST_CAPACITY_OPTIONS,
   type PropertyFeatures
 } from '@/lib/types'
 
@@ -40,10 +40,9 @@ export interface PropertyFiltersState {
     start: string | null
     end: string | null
   }
-  // Room and capacity filters
-  bedrooms: number[]
-  mainSleepingCapacity: number | null
-  additionalSleepingCapacity: number | null
+  // Room and guest capacity filters
+  numberOfBedrooms: number[]
+  totalGuestCapacity: number | null
 }
 
 interface PropertyFiltersProps {
@@ -106,9 +105,8 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
     (filters.distanceFromCenter?.length || 0) +
     (filters.features?.length || 0) +
     (filters.parking?.length || 0) +
-    (filters.bedrooms?.length || 0) +
-    (filters.mainSleepingCapacity ? 1 : 0) +
-    (filters.additionalSleepingCapacity ? 1 : 0)
+    (filters.numberOfBedrooms?.length || 0) +
+    (filters.totalGuestCapacity ? 1 : 0)
 
   const SelectAllButton = ({ districtList, label }: { districtList: readonly string[], label: string }) => {
     const allSelected = areAllSelected(districtList)
@@ -161,22 +159,22 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Bedrooms */}
+      {/* Number of Bedrooms */}
       <Collapsible open={openSections.includes('bedrooms')} onOpenChange={() => toggleSection('bedrooms')}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-left">
-          <span className="font-medium">Bedrooms</span>
+          <span className="font-medium">Number of Bedrooms</span>
           <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('bedrooms') ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4 pb-2">
           <div className="flex flex-wrap gap-2">
             {BEDROOM_OPTIONS.map((option) => {
-              const isSelected = filters.bedrooms?.includes(option.value) || false
+              const isSelected = filters.numberOfBedrooms?.includes(option.value) || false
               return (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => updateFilters({ 
-                    bedrooms: toggleArrayItem(filters.bedrooms, option.value) 
+                    numberOfBedrooms: toggleArrayItem(filters.numberOfBedrooms, option.value) 
                   })}
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                     isSelected 
@@ -192,63 +190,34 @@ export function PropertyFilters({ filters, onFiltersChange, onReset }: PropertyF
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Sleeping Capacity */}
-      <Collapsible open={openSections.includes('sleeping')} onOpenChange={() => toggleSection('sleeping')}>
+      {/* Total Guest Capacity */}
+      <Collapsible open={openSections.includes('capacity')} onOpenChange={() => toggleSection('capacity')}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-left">
-          <span className="font-medium">Sleeping Capacity</span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('sleeping') ? 'rotate-180' : ''}`} />
+          <span className="font-medium">Total Guest Capacity</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('capacity') ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
-        <CollapsibleContent className="pt-4 pb-2 space-y-4">
-          {/* Main Sleeping Capacity */}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Main beds (in bedrooms)</Label>
-            <div className="flex flex-wrap gap-2">
-              {SLEEPING_CAPACITY_OPTIONS.map((option) => {
-                const isSelected = filters.mainSleepingCapacity === option.value
-                return (
-                  <button
-                    key={`main-${option.value}`}
-                    type="button"
-                    onClick={() => updateFilters({ 
-                      mainSleepingCapacity: isSelected ? null : option.value 
-                    })}
-                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                      isSelected 
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {option.value}+
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          
-          {/* Additional Sleeping Capacity */}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Extra beds (sofa beds, etc.)</Label>
-            <div className="flex flex-wrap gap-2">
-              {[0, 1, 2, 3, 4].map((value) => {
-                const isSelected = filters.additionalSleepingCapacity === value
-                return (
-                  <button
-                    key={`extra-${value}`}
-                    type="button"
-                    onClick={() => updateFilters({ 
-                      additionalSleepingCapacity: isSelected ? null : value 
-                    })}
-                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                      isSelected 
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {value === 0 ? 'None' : `${value}+`}
-                  </button>
-                )
-              })}
-            </div>
+        <CollapsibleContent className="pt-4 pb-2">
+          <Label className="text-xs text-muted-foreground mb-3 block">Minimum number of guests</Label>
+          <div className="flex flex-wrap gap-2">
+            {GUEST_CAPACITY_OPTIONS.map((option) => {
+              const isSelected = filters.totalGuestCapacity === option.value
+              return (
+                <button
+                  key={`capacity-${option.value}`}
+                  type="button"
+                  onClick={() => updateFilters({ 
+                    totalGuestCapacity: isSelected ? null : option.value 
+                  })}
+                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                    isSelected 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  {option.value}+
+                </button>
+              )
+            })}
           </div>
         </CollapsibleContent>
       </Collapsible>

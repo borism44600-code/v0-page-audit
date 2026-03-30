@@ -22,9 +22,8 @@ const defaultFilters: PropertyFiltersState = {
   features: [],
   parking: [],
   availability: { start: null, end: null },
-  bedrooms: [],
-  mainSleepingCapacity: null,
-  additionalSleepingCapacity: null
+  numberOfBedrooms: [], // Number of bedrooms filter
+  totalGuestCapacity: null // Total guest capacity filter
 }
 
 export default function PropertiesPage() {
@@ -88,37 +87,25 @@ export default function PropertiesPage() {
         }
       }
 
-      // Guest capacity filter
-      if (property.maxGuests < guests) {
+      // Guest capacity filter (from search bar)
+      if (property.totalGuestCapacity < guests) {
         return false
       }
 
-      // Bedrooms filter
-      if (filters.bedrooms && filters.bedrooms.length > 0) {
-        const matchesBedrooms = filters.bedrooms.some(b => {
-          if (b === 7) return property.bedrooms >= 7
-          return property.bedrooms === b
+      // Number of bedrooms filter
+      if (filters.numberOfBedrooms && filters.numberOfBedrooms.length > 0) {
+        const matchesBedrooms = filters.numberOfBedrooms.some(b => {
+          if (b === 7) return property.numberOfBedrooms >= 7
+          return property.numberOfBedrooms === b
         })
         if (!matchesBedrooms) {
           return false
         }
       }
 
-      // Main sleeping capacity filter
-      if (filters.mainSleepingCapacity != null && filters.mainSleepingCapacity > 0) {
-        if (property.mainSleepingCapacity < filters.mainSleepingCapacity) {
-          return false
-        }
-      }
-
-      // Additional sleeping capacity filter
-      if (filters.additionalSleepingCapacity != null) {
-        if (filters.additionalSleepingCapacity === 0) {
-          // Looking for properties with no extra beds
-          if (property.additionalSleepingCapacity > 0) {
-            return false
-          }
-        } else if (property.additionalSleepingCapacity < filters.additionalSleepingCapacity) {
+      // Total guest capacity filter (from filters panel)
+      if (filters.totalGuestCapacity != null && filters.totalGuestCapacity > 0) {
+        if (property.totalGuestCapacity < filters.totalGuestCapacity) {
           return false
         }
       }

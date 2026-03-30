@@ -21,7 +21,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { 
-  Property, PropertyType, BEDROOM_OPTIONS, SLEEPING_CAPACITY_OPTIONS,
+  Property, PropertyType, BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
   SleepingSpace, BedType, BED_TYPE_LABELS, BathroomType, BATHROOM_TYPE_LABELS
 } from '@/lib/types'
 
@@ -38,11 +38,11 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
     type: property?.type || 'riad' as PropertyType,
     shortDescription: property?.shortDescription || '',
     pricePerNight: property?.pricePerNight || 0,
-    bedrooms: property?.bedrooms || 1,
+    numberOfBedrooms: property?.numberOfBedrooms || 1,
     bathrooms: property?.bathrooms || 1,
-    maxGuests: property?.maxGuests || 2,
-    mainSleepingCapacity: property?.mainSleepingCapacity || 2,
-    additionalSleepingCapacity: property?.additionalSleepingCapacity || 0,
+    bedroomGuestCapacity: property?.bedroomGuestCapacity || 2,
+    additionalGuestCapacity: property?.additionalGuestCapacity || 0,
+    totalGuestCapacity: property?.totalGuestCapacity || 2,
   })
 
   const [sleepingArrangements, setSleepingArrangements] = useState<SleepingSpace[]>(
@@ -192,13 +192,13 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="bedrooms" className="flex items-center gap-2">
+                <Label htmlFor="numberOfBedrooms" className="flex items-center gap-2">
                   <Bed className="w-4 h-4 text-primary" />
-                  Bedrooms
+                  Number of Bedrooms
                 </Label>
                 <Select
-                  value={formData.bedrooms.toString()}
-                  onValueChange={(value) => updateField('bedrooms', parseInt(value))}
+                  value={formData.numberOfBedrooms.toString()}
+                  onValueChange={(value) => updateField('numberOfBedrooms', parseInt(value))}
                 >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue placeholder="Select" />
@@ -229,53 +229,42 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
                 />
               </div>
 
-              <div>
-                <Label htmlFor="maxGuests" className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  Max Guests
-                </Label>
-                <Input
-                  id="maxGuests"
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={formData.maxGuests}
-                  onChange={(e) => updateField('maxGuests', parseInt(e.target.value) || 1)}
-                  className="mt-1.5"
-                />
               </div>
-            </div>
           </div>
 
-          {/* Sleeping Capacity */}
+          {/* Guest Capacity */}
           <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Sleeping Capacity
+              Guest Capacity
             </h3>
             <p className="text-sm text-muted-foreground -mt-2">
-              Specify how many guests can sleep in regular beds vs. extra beds
+              Specify how many guests can be accommodated in different sleeping areas
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-secondary/30 rounded-xl p-4">
-                <Label htmlFor="mainSleeping" className="flex items-center gap-2 mb-3">
+                <Label htmlFor="bedroomGuestCapacity" className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Bed className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <span className="block font-medium">Main Beds</span>
-                    <span className="text-xs text-muted-foreground">In bedrooms</span>
+                    <span className="block font-medium">Bedroom Guests</span>
+                    <span className="text-xs text-muted-foreground">In bedrooms only</span>
                   </div>
                 </Label>
                 <Select
-                  value={formData.mainSleepingCapacity.toString()}
-                  onValueChange={(value) => updateField('mainSleepingCapacity', parseInt(value))}
+                  value={formData.bedroomGuestCapacity.toString()}
+                  onValueChange={(value) => {
+                    const bedroomCapacity = parseInt(value)
+                    updateField('bedroomGuestCapacity', bedroomCapacity)
+                    updateField('totalGuestCapacity', bedroomCapacity + formData.additionalGuestCapacity)
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select capacity" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SLEEPING_CAPACITY_OPTIONS.map(opt => (
+                    {GUEST_CAPACITY_OPTIONS.map(opt => (
                       <SelectItem key={opt.value} value={opt.value.toString()}>
                         {opt.label}
                       </SelectItem>
@@ -285,53 +274,54 @@ export function PropertyForm({ property, open, onOpenChange, onSave }: PropertyF
               </div>
 
               <div className="bg-secondary/30 rounded-xl p-4">
-                <Label htmlFor="additionalSleeping" className="flex items-center gap-2 mb-3">
+                <Label htmlFor="additionalGuestCapacity" className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
                     <Sofa className="w-4 h-4 text-gold" />
                   </div>
                   <div>
-                    <span className="block font-medium">Extra Beds</span>
-                    <span className="text-xs text-muted-foreground">Sofa beds, pull-outs, etc.</span>
+                    <span className="block font-medium">Additional Guests</span>
+                    <span className="text-xs text-muted-foreground">Sofa beds, etc.</span>
                   </div>
                 </Label>
                 <Select
-                  value={formData.additionalSleepingCapacity.toString()}
-                  onValueChange={(value) => updateField('additionalSleepingCapacity', parseInt(value))}
+                  value={formData.additionalGuestCapacity.toString()}
+                  onValueChange={(value) => {
+                    const additionalCapacity = parseInt(value)
+                    updateField('additionalGuestCapacity', additionalCapacity)
+                    updateField('totalGuestCapacity', formData.bedroomGuestCapacity + additionalCapacity)
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select capacity" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">None</SelectItem>
-                    <SelectItem value="1">1 extra</SelectItem>
-                    <SelectItem value="2">2 extra</SelectItem>
-                    <SelectItem value="3">3 extra</SelectItem>
-                    <SelectItem value="4">4 extra</SelectItem>
-                    <SelectItem value="5">5+ extra</SelectItem>
+                    <SelectItem value="1">1 guest</SelectItem>
+                    <SelectItem value="2">2 guests</SelectItem>
+                    <SelectItem value="3">3 guests</SelectItem>
+                    <SelectItem value="4">4 guests</SelectItem>
+                    <SelectItem value="5">5 guests</SelectItem>
+                    <SelectItem value="6">6 guests</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            {/* Capacity Summary */}
-            <div className="bg-card border border-border rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total sleeping capacity</span>
-                <span className="font-semibold">
-                  {formData.mainSleepingCapacity + formData.additionalSleepingCapacity} guests
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Bed className="w-3 h-3" />
-                  {formData.mainSleepingCapacity} in beds
-                </span>
-                {formData.additionalSleepingCapacity > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Sofa className="w-3 h-3" />
-                    +{formData.additionalSleepingCapacity} extra
-                  </span>
-                )}
+              <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
+                <Label htmlFor="totalGuestCapacity" className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <span className="block font-medium">Total Capacity</span>
+                    <span className="text-xs text-muted-foreground">Auto-calculated</span>
+                  </div>
+                </Label>
+                <div className="text-2xl font-semibold text-primary">
+                  {formData.totalGuestCapacity} guests
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  = {formData.bedroomGuestCapacity} (bedrooms) + {formData.additionalGuestCapacity} (additional)
+                </p>
               </div>
             </div>
           </div>

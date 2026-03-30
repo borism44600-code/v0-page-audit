@@ -120,7 +120,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Bed className="w-5 h-5 text-primary" />
-                    <span>{property.bedrooms} Bedrooms</span>
+                    <span>{property.numberOfBedrooms} Bedrooms</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Bath className="w-5 h-5 text-primary" />
@@ -128,14 +128,17 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-primary" />
-                    <span>Sleeps {property.mainSleepingCapacity}</span>
+                    <span>{property.bedroomGuestCapacity} guests in bedrooms</span>
                   </div>
-                  {property.additionalSleepingCapacity > 0 && (
+                  {property.additionalGuestCapacity > 0 && (
                     <div className="flex items-center gap-2">
                       <Sofa className="w-5 h-5 text-gold" />
-                      <span>+{property.additionalSleepingCapacity} extra beds</span>
+                      <span>+{property.additionalGuestCapacity} additional</span>
                     </div>
                   )}
+                  <div className="flex items-center gap-2 font-medium text-foreground">
+                    <span>Total: {property.totalGuestCapacity} guests</span>
+                  </div>
                 </div>
               </motion.div>
 
@@ -376,21 +379,21 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Bedrooms</span>
-                      <span className="font-medium">{property.bedrooms}</span>
+                      <span className="font-medium">{property.numberOfBedrooms}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Main Beds</span>
-                      <span className="font-medium">Sleeps {property.mainSleepingCapacity}</span>
+                      <span className="text-muted-foreground">Guests in Bedrooms</span>
+                      <span className="font-medium">{property.bedroomGuestCapacity}</span>
                     </div>
-                    {property.additionalSleepingCapacity > 0 && (
+                    {property.additionalGuestCapacity > 0 && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Extra Beds</span>
-                        <span className="font-medium">+{property.additionalSleepingCapacity}</span>
+                        <span className="text-muted-foreground">Additional Capacity</span>
+                        <span className="font-medium">+{property.additionalGuestCapacity}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Max Guests</span>
-                      <span className="font-medium">{property.maxGuests}</span>
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span className="text-muted-foreground">Total Capacity</span>
+                      <span className="text-primary">{property.totalGuestCapacity} guests</span>
                     </div>
                   </div>
 
