@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ArrowUpRight, Calendar, Moon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,9 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
+// Fixed initial date to avoid hydration mismatch (will be updated on client)
+const INITIAL_DATE = new Date(2024, 0, 1)
+
 export function AvailabilityCalendar({ 
   availability, 
   selectedDates,
@@ -29,11 +32,21 @@ export function AvailabilityCalendar({
   onBookingClick,
   compact = false
 }: AvailabilityCalendarProps) {
-  const today = new Date()
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth())
-  const [currentYear, setCurrentYear] = useState(today.getFullYear())
+  const [mounted, setMounted] = useState(false)
+  const [today, setToday] = useState(INITIAL_DATE)
+  const [currentMonth, setCurrentMonth] = useState(INITIAL_DATE.getMonth())
+  const [currentYear, setCurrentYear] = useState(INITIAL_DATE.getFullYear())
   const [selectingStart, setSelectingStart] = useState(true)
   const [hoverDate, setHoverDate] = useState<Date | null>(null)
+
+  // Initialize date on client side only to avoid hydration mismatch
+  useEffect(() => {
+    const now = new Date()
+    setToday(now)
+    setCurrentMonth(now.getMonth())
+    setCurrentYear(now.getFullYear())
+    setMounted(true)
+  }, [])
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate()
@@ -218,7 +231,10 @@ export function AvailabilityCalendar({
             <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-8 w-8">
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className={cn("font-medium min-w-[120px] text-center", compact ? "text-sm" : "")}>
+            <span 
+              className={cn("font-medium min-w-[120px] text-center", compact ? "text-sm" : "")}
+              suppressHydrationWarning
+            >
               {MONTHS[currentMonth]} {currentYear}
             </span>
             <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
