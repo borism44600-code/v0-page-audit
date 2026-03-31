@@ -74,12 +74,18 @@ Les riads traditionnels comportent plusieurs étages avec des pièces disposées
 export default function RiadsMarrakechPage() {
   const t = useTranslations('properties')
   const tCommon = useTranslations('common')
-  const getLocalized = useLocalizedContent()
+  const { locale } = useLocalizedContent()
+
+  // Get content based on current locale
+  const getContent = <T extends { en: unknown; fr: unknown }>(section: T): T['en'] => {
+    const localeKey = locale as keyof T
+    return (section[localeKey] || section.en) as T['en']
+  }
 
   const content = {
-    whatIsRiad: getLocalized(contentSections.whatIsRiad, 'en'),
-    whyChooseRiad: getLocalized(contentSections.whyChooseRiad, 'en'),
-    bestNeighborhoods: getLocalized(contentSections.bestNeighborhoods, 'en')
+    whatIsRiad: getContent(contentSections.whatIsRiad),
+    whyChooseRiad: getContent(contentSections.whyChooseRiad),
+    bestNeighborhoods: getContent(contentSections.bestNeighborhoods)
   }
 
   return (
