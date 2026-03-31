@@ -341,7 +341,7 @@ export default function NewPropertyPage() {
                     placeholder="riad-jardin-secret"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {'/properties/'}{formData.slug || 'your-slug'}
+                    /properties/{formData.slug || 'your-slug'}
                   </p>
                 </div>
 
@@ -473,7 +473,7 @@ export default function NewPropertyPage() {
 
                 {getSubDistricts().length > 0 && (
                   <div className="space-y-2">
-                    <Label htmlFor="subDistrict">{"Sub-District / Area"}</Label>
+                    <Label htmlFor="subDistrict">Sub-District / Area</Label>
                     <Select
                       value={formData.subDistrict}
                       onValueChange={(value) => updateField('subDistrict', value)}
@@ -506,7 +506,7 @@ export default function NewPropertyPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="mapLocation">{"Map / Location Reference"}</Label>
+                  <Label htmlFor="mapLocation">Map / Location Reference</Label>
                   <Input
                     id="mapLocation"
                     value={formData.mapLocation}
@@ -1089,7 +1089,7 @@ export default function NewPropertyPage() {
             <div className="bg-card rounded-xl border border-border p-6 space-y-6">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <Globe className="w-5 h-5 text-primary" />
-                {"Booking / Calendar Sync"}
+                Booking / Calendar Sync
               </h2>
               <p className="text-sm text-muted-foreground -mt-4">
                 Connect external calendars to sync availability
@@ -1189,7 +1189,7 @@ export default function NewPropertyPage() {
                 Media
               </h2>
 
-              <ImageUploader
+<ImageUploader
                 images={formData.images || []}
                 onChange={(images) => updateField('images', images)}
                 maxImages={20}

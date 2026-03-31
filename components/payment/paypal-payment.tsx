@@ -363,7 +363,7 @@ export function PayPalPayment({
                 <CreditCard className="w-5 h-5 text-background" />
               </div>
               <div>
-                <p className="font-medium">{"Credit / Debit Card"}</p>
+                <p className="font-medium">Credit / Debit Card</p>
                 <p className="text-xs text-muted-foreground">Visa, Mastercard, Amex</p>
               </div>
             </div>
