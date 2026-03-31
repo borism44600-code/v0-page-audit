@@ -341,7 +341,7 @@ export default function NewPropertyPage() {
                     placeholder="riad-jardin-secret"
                   />
                   <p className="text-xs text-muted-foreground">
-                    /properties/{formData.slug || 'your-slug'}
+                    {'/properties/'}{formData.slug || 'your-slug'}
                   </p>
                 </div>
 
