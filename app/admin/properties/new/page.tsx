@@ -1190,18 +1190,17 @@ export default function NewPropertyPage() {
               </h2>
 
 <ImageUploader
-  images={formData.images || []}
-  onChange={(images) => updateField('images', images)}
-  maxImages={20}
-  label="Property Images"
-  description="Upload high-quality photos of the property. First image will be the cover."
-  />
+                images={formData.images || []}
+                onChange={(images) => updateField('images', images)}
+                maxImages={20}
+                label="Property Images"
+                description="Upload high-quality photos of the property. First image will be the cover."
+              />
 
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Image management features (upload, reorder, delete) will be available after saving the property.
-                  </p>
-                </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Image management features (upload, reorder, delete) will be available after saving the property.
+                </p>
               </div>
             </div>
           )}
