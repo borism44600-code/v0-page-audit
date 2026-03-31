@@ -1189,7 +1189,7 @@ export default function NewPropertyPage() {
                 Media
               </h2>
 
-<ImageUploader
+              <ImageUploader
                 images={formData.images || []}
                 onChange={(images) => updateField('images', images)}
                 maxImages={20}
