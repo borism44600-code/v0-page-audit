@@ -21,9 +21,6 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
-// Fixed initial date to avoid hydration mismatch (will be updated on client)
-const INITIAL_DATE = new Date(2024, 0, 1)
-
 export function AvailabilityCalendar({ 
   availability, 
   selectedDates,
@@ -32,21 +29,29 @@ export function AvailabilityCalendar({
   onBookingClick,
   compact = false
 }: AvailabilityCalendarProps) {
-  const [mounted, setMounted] = useState(false)
-  const [today, setToday] = useState(INITIAL_DATE)
-  const [currentMonth, setCurrentMonth] = useState(INITIAL_DATE.getMonth())
-  const [currentYear, setCurrentYear] = useState(INITIAL_DATE.getFullYear())
+  // Use null for initial state to ensure consistent SSR/client rendering
+  const [dateState, setDateState] = useState<{
+    today: Date
+    currentMonth: number
+    currentYear: number
+  } | null>(null)
   const [selectingStart, setSelectingStart] = useState(true)
   const [hoverDate, setHoverDate] = useState<Date | null>(null)
 
   // Initialize date on client side only to avoid hydration mismatch
   useEffect(() => {
     const now = new Date()
-    setToday(now)
-    setCurrentMonth(now.getMonth())
-    setCurrentYear(now.getFullYear())
-    setMounted(true)
+    setDateState({
+      today: now,
+      currentMonth: now.getMonth(),
+      currentYear: now.getFullYear()
+    })
   }, [])
+
+  // Derived state with fallbacks
+  const today = dateState?.today ?? new Date()
+  const currentMonth = dateState?.currentMonth ?? 0
+  const currentYear = dateState?.currentYear ?? 2024
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate()
@@ -123,20 +128,20 @@ export function AvailabilityCalendar({
   }
 
   const goToPreviousMonth = () => {
+    if (!dateState) return
     if (currentMonth === 0) {
-      setCurrentMonth(11)
-      setCurrentYear(currentYear - 1)
+      setDateState({ ...dateState, currentMonth: 11, currentYear: currentYear - 1 })
     } else {
-      setCurrentMonth(currentMonth - 1)
+      setDateState({ ...dateState, currentMonth: currentMonth - 1 })
     }
   }
 
   const goToNextMonth = () => {
+    if (!dateState) return
     if (currentMonth === 11) {
-      setCurrentMonth(0)
-      setCurrentYear(currentYear + 1)
+      setDateState({ ...dateState, currentMonth: 0, currentYear: currentYear + 1 })
     } else {
-      setCurrentMonth(currentMonth + 1)
+      setDateState({ ...dateState, currentMonth: currentMonth + 1 })
     }
   }
 
@@ -203,6 +208,27 @@ export function AvailabilityCalendar({
     if (readOnly && onBookingClick) {
       onBookingClick()
     }
+  }
+
+  // Show skeleton during SSR to avoid hydration mismatch with Date
+  if (!dateState) {
+    return (
+      <div className={cn(
+        "bg-card rounded-2xl border border-border overflow-hidden animate-pulse",
+        compact ? "h-[300px]" : "h-[400px]"
+      )}>
+        <div className="bg-secondary/50 border-b border-border p-6">
+          <div className="h-6 bg-muted rounded w-1/3"></div>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="h-10 bg-muted rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
