@@ -212,7 +212,7 @@ export default function AdminMediaPage() {
             </span>
           </div>
 
-          {/* Grid / List View */}
+          {/* Grid or List View */}
           <div className="flex-1 overflow-y-auto py-4">
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

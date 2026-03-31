@@ -575,7 +575,7 @@ export default function AdminPartnersPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="district">District / Area</Label>
+                  <Label htmlFor="district">{"District / Area"}</Label>
                   <Input
                     id="district"
                     value={formData.district}
@@ -635,7 +635,7 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="bookingCTA">Booking / Contact CTA Text</Label>
+                  <Label htmlFor="bookingCTA">{"Booking / Contact CTA Text"}</Label>
                   <Input
                     id="bookingCTA"
                     value={formData.bookingCTA}
