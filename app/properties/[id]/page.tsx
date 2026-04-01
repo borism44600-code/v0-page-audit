@@ -17,7 +17,7 @@ import { AvailabilityCalendar } from '@/components/properties/availability-calen
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
 import { mockProperties, mockServices, mockAddons } from '@/lib/data'
-import { getPropertyBySlug as fetchPropertyBySlug } from '@/lib/data-fetcher'
+import { getPropertyBySlugClient as fetchPropertyBySlug } from '@/lib/data-fetcher-client'
 import { FEATURE_LABELS, BED_TYPE_LABELS, BATHROOM_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
 import { cn } from '@/lib/utils'
 

@@ -30,14 +30,14 @@ export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
           room_name,
           room_number,
           bed_type,
-          num_beds,
+          bed_count,
+          max_guests,
           has_bathroom,
           has_shower,
-          has_bathtub,
-          equipment
+          has_bathtub
         )
       `)
-      .eq('status', 'published')
+      .eq('is_active', true)
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
     
@@ -80,15 +80,15 @@ export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<U
           room_name,
           room_number,
           bed_type,
-          num_beds,
+          bed_count,
+          max_guests,
           has_bathroom,
           has_shower,
-          has_bathtub,
-          equipment
+          has_bathtub
         )
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .eq('status', 'published')
+      .eq('is_active', true)
       .single()
     
     if (error || !data) {
@@ -114,8 +114,8 @@ export async function fetchPublishedPartnersClient() {
     const { data, error } = await supabase
       .from('partners')
       .select('*')
-      .eq('status', 'published')
-      .order('featured', { ascending: false })
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
       .order('name', { ascending: true })
     
     if (error || !data || data.length === 0) {
@@ -126,11 +126,11 @@ export async function fetchPublishedPartnersClient() {
       id: p.id,
       name: p.name,
       category: p.category,
-      description: p.description_long || p.description_short || '',
-      image: p.image_url || '/placeholder-partner.jpg',
+      description: p.description_en || p.description_fr || '',
+      image: p.image || '/placeholder-partner.jpg',
       website: p.website,
-      discountCode: undefined,
-      bookingProcedure: p.booking_url ? `Book at ${p.booking_url}` : undefined
+      discountCode: p.discount,
+      bookingProcedure: undefined
     }))
   } catch (error) {
     console.error('Error in fetchPublishedPartnersClient:', error)

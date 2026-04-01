@@ -60,7 +60,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
-import { createPartner, updatePartner, deletePartner } from '@/lib/services/partners'
+import { createPartnerAction, updatePartnerAction, deletePartnerAction } from '@/app/admin/actions'
 
 interface Partner {
   id: string
@@ -193,9 +193,9 @@ export function PartnersAdmin({ initialPartners }: PartnersAdminProps) {
     
     try {
       if (editingPartner) {
-        await updatePartner(editingPartner.id, formData)
+        await updatePartnerAction(editingPartner.id, formData)
       } else {
-        await createPartner({
+        await createPartnerAction({
           ...formData,
           status: formData.status as 'draft' | 'published' | 'archived'
         })
@@ -216,7 +216,7 @@ export function PartnersAdmin({ initialPartners }: PartnersAdminProps) {
     
     startTransition(async () => {
       try {
-        await deletePartner(deleteId)
+        await deletePartnerAction(deleteId)
         router.refresh()
       } catch (error) {
         console.error('Failed to delete partner:', error)

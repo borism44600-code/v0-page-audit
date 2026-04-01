@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { ImageUploader } from '@/components/admin/image-uploader'
-import { createProperty } from '@/lib/services/properties'
+import { createPropertyAction } from '@/app/admin/actions'
 import { 
   PropertyType, PropertyStatus, BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
   SleepingSpace, BedType, BED_TYPE_LABELS, BathroomType, BATHROOM_TYPE_LABELS,
@@ -264,7 +264,7 @@ export default function NewPropertyPage() {
       }
 
       // Save to database
-      await createProperty(propertyData)
+      await createPropertyAction(propertyData)
       
       router.push('/admin/properties')
     } catch (error) {

@@ -5,35 +5,49 @@
 
 import { PropertyFeatures, SleepingSpace } from '@/lib/types'
 
-// Database property type
+// Database property type (matches actual Supabase schema)
 export interface DbProperty {
   id: string
-  title: string
+  // Names are multilingual: name_en, name_fr, etc.
+  name_en?: string
+  name_fr?: string
+  name_es?: string
+  name_ar?: string
+  name_ma?: string
+  name_zh?: string
   slug: string
-  type: string
-  description_short?: string
-  description_long?: string
-  city: string
+  category?: string
+  // Descriptions are multilingual
+  description_en?: string
+  description_fr?: string
+  short_description_en?: string
+  short_description_fr?: string
+  location?: string
   district?: string
+  sub_district?: string
   address?: string
-  map_location?: string
+  map_url?: string
   price_per_night: number
   cleaning_fee?: number
-  service_fee?: number
-  num_bedrooms: number
-  num_bathrooms: number
+  security_deposit?: number
+  bedrooms?: number
+  bathrooms?: number
   bedroom_guest_capacity?: number
   additional_guest_capacity?: number
-  total_guest_capacity: number
-  amenities?: string[]
+  max_guests?: number
+  size_sqm?: number
+  minimum_stay?: number
+  amenities?: Record<string, unknown>
+  features?: Record<string, unknown>
   parking_type?: string
   parking_spots?: number
-  parking_notes?: string
-  seo_title?: string
-  seo_description?: string
-  seo_keywords?: string[]
-  status: string
+  meta_title?: string
+  meta_description?: string
+  is_active?: boolean
   featured?: boolean
+  instant_booking?: boolean
+  cover_image?: string
+  images?: string[]
   created_at?: string
   updated_at?: string
   property_images?: {
@@ -48,11 +62,11 @@ export interface DbProperty {
     room_name: string
     room_number?: number
     bed_type?: string
-    num_beds?: number
+    bed_count?: number
+    max_guests?: number
     has_bathroom?: boolean
     has_shower?: boolean
     has_bathtub?: boolean
-    equipment?: string[]
   }[]
 }
 
@@ -149,7 +163,7 @@ function roomsToSleepingArrangements(rooms: DbProperty['property_rooms'] = []): 
     name: room.room_name || `Bedroom ${index + 1}`,
     bedTypes: room.bed_type ? [{
       type: room.bed_type as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
-      quantity: room.num_beds || 1
+      quantity: room.bed_count || 1
     }] : [],
     bathroom: {
       hasPrivate: room.has_bathroom || false,
@@ -175,33 +189,62 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
     ? sortedImages.map(img => img.image_url)
     : ['/placeholder-property.jpg']
 
+  // Get title from multilingual fields, fallback to English
+  const title = dbProperty.name_en || dbProperty.name_fr || 'Untitled Property'
+  const shortDesc = dbProperty.short_description_en || dbProperty.short_description_fr || ''
+  const description = dbProperty.description_en || dbProperty.description_fr || shortDesc
+  
+  // Get images from cover_image or images array
+  let propertyImages: string[] = []
+  if (dbProperty.cover_image) {
+    propertyImages.push(dbProperty.cover_image)
+  }
+  if (dbProperty.images && Array.isArray(dbProperty.images)) {
+    propertyImages = [...propertyImages, ...dbProperty.images]
+  }
+  // Also add from property_images relation
+  if (images.length > 0 && images[0] !== '/placeholder-property.jpg') {
+    propertyImages = [...propertyImages, ...images]
+  }
+  // Dedupe and fallback
+  propertyImages = [...new Set(propertyImages)]
+  if (propertyImages.length === 0) {
+    propertyImages = ['/placeholder-property.jpg']
+  }
+
+  // Convert features/amenities object to PropertyFeatures
+  const featuresObj = typeof dbProperty.features === 'object' ? dbProperty.features : {}
+  const amenitiesObj = typeof dbProperty.amenities === 'object' ? dbProperty.amenities : {}
+  const combinedFeatures = { ...featuresObj, ...amenitiesObj }
+  const featureKeys = Object.keys(combinedFeatures).filter(k => combinedFeatures[k] === true)
+
   return {
     id: dbProperty.id,
-    title: dbProperty.title,
+    title,
     subtitle: '',
-    shortDescription: dbProperty.description_short || '',
-    description: dbProperty.description_long || dbProperty.description_short || '',
-    type: (dbProperty.type || 'riad') as 'riad' | 'villa' | 'apartment',
-    pricePerNight: dbProperty.price_per_night,
-    numberOfBedrooms: dbProperty.num_bedrooms,
-    numberOfBathrooms: dbProperty.num_bathrooms,
-    bedroomGuestCapacity: dbProperty.bedroom_guest_capacity || dbProperty.total_guest_capacity,
+    shortDescription: shortDesc,
+    description,
+    type: (dbProperty.category || 'riad') as 'riad' | 'villa' | 'apartment',
+    pricePerNight: dbProperty.price_per_night || 0,
+    numberOfBedrooms: dbProperty.bedrooms || 1,
+    numberOfBathrooms: dbProperty.bathrooms || 1,
+    bedroomGuestCapacity: dbProperty.bedroom_guest_capacity || dbProperty.max_guests || 2,
     additionalGuestCapacity: dbProperty.additional_guest_capacity || 0,
-    totalGuestCapacity: dbProperty.total_guest_capacity,
-    images,
+    totalGuestCapacity: dbProperty.max_guests || dbProperty.bedroom_guest_capacity || 2,
+    images: propertyImages,
     location: {
-      city: dbProperty.city || 'Marrakech',
+      city: dbProperty.location || 'Marrakech',
       district: dbProperty.district || 'Medina',
+      subDistrict: dbProperty.sub_district,
       address: dbProperty.address,
-      mapLocation: dbProperty.map_location
+      mapLocation: dbProperty.map_url
     },
     sleepingArrangements: roomsToSleepingArrangements(dbProperty.property_rooms),
-    features: amenitiestoFeatures(dbProperty.amenities),
+    features: amenitiestoFeatures(featureKeys),
     parking: {
       available: !!dbProperty.parking_type && dbProperty.parking_type !== 'none',
       type: dbProperty.parking_type,
-      spots: dbProperty.parking_spots,
-      notes: dbProperty.parking_notes
+      spots: dbProperty.parking_spots
     },
     featured: dbProperty.featured || false
   }

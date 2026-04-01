@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { AdminLayout } from '@/components/admin/admin-layout'
-import { updateProperty, addPropertyImage, deletePropertyImage, setCoverImage } from '@/lib/services/properties'
+import { updatePropertyAction, addPropertyImageAction, deletePropertyImageAction, setCoverImageAction } from '@/app/admin/actions'
 
 interface PropertyEditFormProps {
   property: {
@@ -176,7 +176,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         internal_ical_url: formData.internalIcalUrl
       }
 
-      await updateProperty(property.id, propertyData)
+      await updatePropertyAction(property.id, propertyData)
       setSaveSuccess(true)
       router.refresh()
     } catch (error) {
@@ -189,7 +189,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
 
   const handleSetCover = async (imageId: string) => {
     try {
-      await setCoverImage(property.id, imageId)
+      await setCoverImageAction(imageId, property.id)
       router.refresh()
     } catch (error) {
       console.error('Error setting cover image:', error)
@@ -199,7 +199,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
   const handleDeleteImage = async (imageId: string) => {
     if (!confirm('Delete this image?')) return
     try {
-      await deletePropertyImage(imageId, property.id)
+      await deletePropertyImageAction(imageId, property.id)
       router.refresh()
     } catch (error) {
       console.error('Error deleting image:', error)

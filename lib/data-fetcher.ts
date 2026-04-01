@@ -1,6 +1,9 @@
+import 'server-only'
 /**
- * Data fetching utilities for public pages
+ * Data fetching utilities for public pages (SERVER-ONLY)
  * Fetches from database and falls back to mock data if needed
+ * 
+ * For client components, use @/lib/data-fetcher-client instead
  */
 
 import { createClient } from '@/lib/supabase/server'
@@ -30,14 +33,14 @@ export async function fetchPublishedProperties(): Promise<UiProperty[]> {
           room_name,
           room_number,
           bed_type,
-          num_beds,
+          bed_count,
+          max_guests,
           has_bathroom,
           has_shower,
-          has_bathtub,
-          equipment
+          has_bathtub
         )
       `)
-      .eq('status', 'published')
+      .eq('is_active', true)
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
     
@@ -83,15 +86,15 @@ export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiPrope
           room_name,
           room_number,
           bed_type,
-          num_beds,
+          bed_count,
+          max_guests,
           has_bathroom,
           has_shower,
-          has_bathtub,
-          equipment
+          has_bathtub
         )
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .eq('status', 'published')
+      .eq('is_active', true)
       .single()
     
     if (error || !data) {
@@ -118,8 +121,8 @@ export async function fetchPublishedPartners() {
     const { data, error } = await supabase
       .from('partners')
       .select('*')
-      .eq('status', 'published')
-      .order('featured', { ascending: false })
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
       .order('name', { ascending: true })
     
     if (error || !data || data.length === 0) {
@@ -131,11 +134,11 @@ export async function fetchPublishedPartners() {
       id: p.id,
       name: p.name,
       category: p.category,
-      description: p.description_long || p.description_short || '',
-      image: p.image_url || '/placeholder-partner.jpg',
+      description: p.description_en || p.description_fr || '',
+      image: p.image || '/placeholder-partner.jpg',
       website: p.website,
-      discountCode: undefined,
-      bookingProcedure: p.booking_url ? `Book at ${p.booking_url}` : undefined
+      discountCode: p.discount,
+      bookingProcedure: undefined
     }))
   } catch (error) {
     console.error('Error in fetchPublishedPartners:', error)
@@ -154,9 +157,8 @@ export async function fetchServices() {
       .from('services')
       .select('*')
       .eq('is_active', true)
-      .is('property_id', null)
       .order('category', { ascending: true })
-      .order('display_order', { ascending: true })
+      .order('sort_order', { ascending: true })
     
     if (error || !data || data.length === 0) {
       return mockServices
@@ -165,11 +167,11 @@ export async function fetchServices() {
     // Adapt to expected format
     return data.map(s => ({
       id: s.id,
-      name: s.name,
+      name: s.name_en || s.name_fr || s.name,
       category: s.category,
-      description: s.description || '',
+      description: s.description_en || s.description_fr || '',
       price: s.price,
-      priceType: s.price_type
+      priceType: s.price_unit
     }))
   } catch (error) {
     console.error('Error in fetchServices:', error)

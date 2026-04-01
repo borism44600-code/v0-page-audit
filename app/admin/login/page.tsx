@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { adminLogin } from '@/lib/services/auth'
+import { adminLoginAction } from '@/app/admin/actions'
 import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await adminLogin(email, password)
+      const result = await adminLoginAction(email, password)
 
       if (result.error) {
         setError(result.error)

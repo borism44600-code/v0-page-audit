@@ -45,7 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { deleteProperty } from '@/lib/services/properties'
+import { deletePropertyAction } from '@/app/admin/actions'
 
 interface Property {
   id: string
@@ -95,7 +95,7 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
     
     startTransition(async () => {
       try {
-        await deleteProperty(deleteId)
+        await deletePropertyAction(deleteId)
         router.refresh()
       } catch (error) {
         console.error('Failed to delete property:', error)
