@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { ImageUploader } from '@/components/admin/image-uploader'
+import { createProperty } from '@/lib/services/properties'
 import { 
   PropertyType, PropertyStatus, BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
   SleepingSpace, BedType, BED_TYPE_LABELS, BathroomType, BATHROOM_TYPE_LABELS,
@@ -226,29 +227,52 @@ export default function NewPropertyPage() {
   const handleSave = async (publish = false) => {
     setIsSaving(true)
     
-    const propertyData = {
-      ...formData,
-      status: publish ? 'published' : formData.status,
-      sleepingArrangements,
-      slug: formData.slug || generateSlug(formData.title),
-      seoKeywords: formData.seoKeywords.split(',').map(k => k.trim()).filter(Boolean),
-      location: {
+    try {
+      // Prepare data for database
+      const propertyData = {
+        title: formData.title,
+        slug: formData.slug || generateSlug(formData.title),
+        type: formData.type as 'riad' | 'villa' | 'apartment' | 'house',
+        description_short: formData.shortDescription,
+        description_long: formData.description,
         city: formData.city,
         district: formData.district,
-        subDistrict: formData.subDistrict,
         address: formData.address,
-        mapLocation: formData.mapLocation,
-        nearbyInfo: formData.nearbyInfo,
+        map_location: formData.mapLocation,
+        price_per_night: formData.pricePerNight || 0,
+        cleaning_fee: formData.cleaningFee || 0,
+        service_fee: formData.serviceFee || 0,
+        num_bedrooms: formData.numberOfBedrooms || 1,
+        num_bathrooms: formData.numberOfBathrooms || 1,
+        bedroom_guest_capacity: formData.bedroomGuestCapacity || 2,
+        additional_guest_capacity: formData.additionalGuestCapacity || 0,
+        total_guest_capacity: formData.totalGuestCapacity || formData.bedroomGuestCapacity || 2,
+        amenities: Object.entries(formData.features || {})
+          .filter(([_, value]) => value)
+          .map(([key]) => key),
+        parking_type: formData.parkingType,
+        parking_spots: formData.parkingSpots || 0,
+        parking_notes: formData.parkingNotes,
+        seo_title: formData.seoTitle,
+        seo_description: formData.seoDescription,
+        seo_keywords: formData.seoKeywords ? formData.seoKeywords.split(',').map(k => k.trim()).filter(Boolean) : [],
+        status: publish ? 'published' : formData.status,
+        featured: formData.featured || false,
+        airbnb_ical_url: formData.airbnbIcalUrl,
+        booking_ical_url: formData.bookingIcalUrl,
+        internal_ical_url: formData.internalIcalUrl
       }
-    }
 
-    // In production, this would save to database
-    console.log('Saving property:', propertyData)
-    
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    router.push('/admin/properties')
+      // Save to database
+      await createProperty(propertyData)
+      
+      router.push('/admin/properties')
+    } catch (error) {
+      console.error('Error saving property:', error)
+      alert('Failed to save property. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (

@@ -1,29 +1,29 @@
-'use client'
+import { notFound } from 'next/navigation'
+import { getPropertyById } from '@/lib/services/properties'
+import { requireAdmin } from '@/lib/services/auth'
+import { PropertyEditForm } from '@/components/admin/property-edit-form'
 
-import { useParams } from 'next/navigation'
-import { mockProperties } from '@/lib/data'
-import NewPropertyPage from '../../new/page'
+interface EditPropertyPageProps {
+  params: Promise<{ id: string }>
+}
 
-// This page reuses the new property form but loads existing data
-// In production, this would fetch the property from the database
-export default function EditPropertyPage() {
-  const params = useParams()
-  const propertyId = params.id as string
+export default async function EditPropertyPage({ params }: EditPropertyPageProps) {
+  // Require admin authentication
+  await requireAdmin()
   
-  // Find existing property
-  const property = mockProperties.find(p => p.id === propertyId)
+  const { id } = await params
+  
+  // Fetch property data
+  let property
+  try {
+    property = await getPropertyById(id)
+  } catch {
+    notFound()
+  }
   
   if (!property) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-2">Property Not Found</h1>
-          <p className="text-muted-foreground">The property you are looking for does not exist.</p>
-        </div>
-      </div>
-    )
+    notFound()
   }
 
-  // For now, redirect to new property page - in production this would load existing data
-  return <NewPropertyPage />
+  return <PropertyEditForm property={property} />
 }
