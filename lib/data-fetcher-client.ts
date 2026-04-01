@@ -1,18 +1,18 @@
 /**
- * Data fetching utilities for public pages
- * Fetches from database and falls back to mock data if needed
+ * Client-safe data fetching utilities
+ * Uses the browser Supabase client instead of server client
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { adaptPropertiesToUi, adaptPropertyToUi, type DbProperty, type UiProperty } from '@/lib/adapters/property-adapter'
-import { mockProperties, mockPartners, mockServices, mockAddons } from '@/lib/data'
+import { mockProperties, mockPartners } from '@/lib/data'
 
 /**
- * Fetch all published properties for public pages
+ * Fetch all published properties (client-safe)
  */
-export async function fetchPublishedProperties(): Promise<UiProperty[]> {
+export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
   try {
-    const supabase = await createClient()
+    const supabase = createClient()
     
     const { data, error } = await supabase
       .from('properties')
@@ -43,31 +43,28 @@ export async function fetchPublishedProperties(): Promise<UiProperty[]> {
     
     if (error) {
       console.error('Error fetching properties:', error)
-      // Fall back to mock data
       return mockProperties
     }
     
     if (!data || data.length === 0) {
-      // No database properties yet, use mock data
       return mockProperties
     }
     
     return adaptPropertiesToUi(data as DbProperty[])
   } catch (error) {
-    console.error('Error in fetchPublishedProperties:', error)
+    console.error('Error in fetchPublishedPropertiesClient:', error)
     return mockProperties
   }
 }
 
 /**
- * Fetch a single property by ID or slug
+ * Fetch a single property by ID or slug (client-safe)
  */
-export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiProperty | null> {
+export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<UiProperty | null> {
   try {
-    const supabase = await createClient()
+    const supabase = createClient()
     
-    // Try to fetch by ID first
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from('properties')
       .select(`
         *,
@@ -95,25 +92,24 @@ export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiPrope
       .single()
     
     if (error || !data) {
-      // Try mock data
-      const mockProperty = mockProperties.find(p => p.id === idOrSlug)
+      const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
       return mockProperty || null
     }
     
     return adaptPropertyToUi(data as DbProperty)
   } catch (error) {
-    console.error('Error in fetchPropertyByIdOrSlug:', error)
-    const mockProperty = mockProperties.find(p => p.id === idOrSlug)
+    console.error('Error in fetchPropertyByIdOrSlugClient:', error)
+    const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
     return mockProperty || null
   }
 }
 
 /**
- * Fetch all published partners
+ * Fetch all published partners (client-safe)
  */
-export async function fetchPublishedPartners() {
+export async function fetchPublishedPartnersClient() {
   try {
-    const supabase = await createClient()
+    const supabase = createClient()
     
     const { data, error } = await supabase
       .from('partners')
@@ -126,7 +122,6 @@ export async function fetchPublishedPartners() {
       return mockPartners
     }
     
-    // Adapt to expected format
     return data.map(p => ({
       id: p.id,
       name: p.name,
@@ -138,54 +133,11 @@ export async function fetchPublishedPartners() {
       bookingProcedure: p.booking_url ? `Book at ${p.booking_url}` : undefined
     }))
   } catch (error) {
-    console.error('Error in fetchPublishedPartners:', error)
+    console.error('Error in fetchPublishedPartnersClient:', error)
     return mockPartners
   }
 }
 
-/**
- * Fetch services
- */
-export async function fetchServices() {
-  try {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .eq('is_active', true)
-      .is('property_id', null)
-      .order('category', { ascending: true })
-      .order('display_order', { ascending: true })
-    
-    if (error || !data || data.length === 0) {
-      return mockServices
-    }
-    
-    // Adapt to expected format
-    return data.map(s => ({
-      id: s.id,
-      name: s.name,
-      category: s.category,
-      description: s.description || '',
-      price: s.price,
-      priceType: s.price_type
-    }))
-  } catch (error) {
-    console.error('Error in fetchServices:', error)
-    return mockServices
-  }
-}
-
-/**
- * Fetch add-ons
- */
-export async function fetchAddons() {
-  return mockAddons
-}
-
-// Aliases for backward compatibility
-export const getPublicProperties = fetchPublishedProperties
-export const getPublicPropertyBySlug = fetchPropertyByIdOrSlug
-export const getPropertyBySlug = fetchPropertyByIdOrSlug
-export const getPublishedPartners = fetchPublishedPartners
+// Aliases for convenience
+export const getPublicPropertiesClient = fetchPublishedPropertiesClient
+export const getPropertyBySlugClient = fetchPropertyByIdOrSlugClient
