@@ -1,5 +1,5 @@
 'use client'
-
+// v6 - Uses mock data only, no database fetching
 import Link from 'next/link'
 import { ArrowRight, Shield, Star, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
