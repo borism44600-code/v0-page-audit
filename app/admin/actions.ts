@@ -193,53 +193,30 @@ export async function deletePartnerAction(id: string) {
 // ============================================================================
 
 export async function adminLoginAction(email: string, password: string) {
-  // DEV MODE: Allow direct admin access with specific credentials
-  // In production, replace with proper Supabase Auth
-  const DEV_ADMIN_EMAIL = 'borism44600@hotmail.fr'
-  const DEV_ADMIN_PASSWORD = 'Gimli2025&'
+  const supabase = await createClient()
   
-  if (email === DEV_ADMIN_EMAIL && password === DEV_ADMIN_PASSWORD) {
-    // Set a cookie to indicate admin is logged in (simple dev mode)
-    const { cookies } = await import('next/headers')
-    const cookieStore = await cookies()
-    cookieStore.set('admin_session', 'dev_admin_authenticated', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
-    })
-    return { success: true }
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+  
+  if (error) {
+    return { error: error.message }
   }
   
-  // Try Supabase Auth as fallback
-  try {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    
-    if (error) {
-      return { error: 'Invalid login credentials' }
-    }
-    
-    // Check if user is admin
-    const { data: adminUser } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('user_id', data.user.id)
-      .single()
-    
-    if (!adminUser) {
-      await supabase.auth.signOut()
-      return { error: 'Not authorized as admin' }
-    }
-    
-    return { success: true }
-  } catch {
-    return { error: 'Invalid login credentials' }
+  // Check if user is admin
+  const { data: adminUser } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('user_id', data.user.id)
+    .single()
+  
+  if (!adminUser) {
+    await supabase.auth.signOut()
+    return { error: 'Not authorized as admin' }
   }
+  
+  return { success: true }
 }
 
 export async function adminLogoutAction() {
