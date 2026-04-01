@@ -76,15 +76,14 @@ export default function RiadsMarrakechPage() {
   const tCommon = useTranslations('common')
   const { locale } = useLocalizedContent()
 
-  // Helper to get content in current locale with English fallback
-  const getLocalizedContent = <T extends Record<string, unknown>>(content: T): T[keyof T] => {
-    return (content[locale as keyof T] || content['en' as keyof T]) as T[keyof T]
-  }
-
+  // Get content for the current locale with English fallback
+  // Using direct property access with fallback to avoid type issues
+  const currentLocale = (locale === 'en' || locale === 'fr') ? locale : 'en'
+  
   const content = {
-    whatIsRiad: getLocalizedContent(contentSections.whatIsRiad),
-    whyChooseRiad: getLocalizedContent(contentSections.whyChooseRiad),
-    bestNeighborhoods: getLocalizedContent(contentSections.bestNeighborhoods)
+    whatIsRiad: contentSections.whatIsRiad[currentLocale] || contentSections.whatIsRiad.en,
+    whyChooseRiad: contentSections.whyChooseRiad[currentLocale] || contentSections.whyChooseRiad.en,
+    bestNeighborhoods: contentSections.bestNeighborhoods[currentLocale] || contentSections.bestNeighborhoods.en
   }
 
   return (
