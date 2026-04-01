@@ -1,127 +1,65 @@
-/**
- * Client-safe data fetching utilities
- * Uses the browser Supabase client instead of server client
- */
-
 import { createClient } from '@/lib/supabase/client'
 import { adaptPropertiesToUi, adaptPropertyToUi, type DbProperty, type UiProperty } from '@/lib/adapters/property-adapter'
 import { mockProperties, mockPartners } from '@/lib/data'
 
-/**
- * Fetch all published properties (client-safe)
- */
 export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
   try {
     const supabase = createClient()
-    
     const { data, error } = await supabase
       .from('properties')
       .select(`
         *,
-        property_images (
-          id,
-          image_url,
-          alt_text,
-          display_order,
-          is_cover
-        ),
-        property_rooms (
-          id,
-          room_name,
-          room_number,
-          bed_type,
-          bed_count,
-          max_guests,
-          has_bathroom,
-          has_shower,
-          has_bathtub
-        )
+        property_images (id, image_url, alt_text, display_order, is_cover),
+        property_rooms (id, room_name, room_number, bed_type, bed_count, max_guests, has_bathroom, has_shower, has_bathtub)
       `)
       .eq('is_active', true)
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
     
-    if (error) {
-      console.error('Error fetching properties:', error)
+    if (error || !data || data.length === 0) {
       return mockProperties
     }
-    
-    if (!data || data.length === 0) {
-      return mockProperties
-    }
-    
     return adaptPropertiesToUi(data as DbProperty[])
-  } catch (error) {
-    console.error('Error in fetchPublishedPropertiesClient:', error)
+  } catch {
     return mockProperties
   }
 }
 
-/**
- * Fetch a single property by ID or slug (client-safe)
- */
 export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<UiProperty | null> {
   try {
     const supabase = createClient()
-    
     const { data, error } = await supabase
       .from('properties')
       .select(`
         *,
-        property_images (
-          id,
-          image_url,
-          alt_text,
-          display_order,
-          is_cover
-        ),
-        property_rooms (
-          id,
-          room_name,
-          room_number,
-          bed_type,
-          bed_count,
-          max_guests,
-          has_bathroom,
-          has_shower,
-          has_bathtub
-        )
+        property_images (id, image_url, alt_text, display_order, is_cover),
+        property_rooms (id, room_name, room_number, bed_type, bed_count, max_guests, has_bathroom, has_shower, has_bathtub)
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
       .eq('is_active', true)
       .single()
     
     if (error || !data) {
-      const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
-      return mockProperty || null
+      return mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug) || null
     }
-    
     return adaptPropertyToUi(data as DbProperty)
-  } catch (error) {
-    console.error('Error in fetchPropertyByIdOrSlugClient:', error)
-    const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
-    return mockProperty || null
+  } catch {
+    return mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug) || null
   }
 }
 
-/**
- * Fetch all published partners (client-safe)
- */
 export async function fetchPublishedPartnersClient() {
   try {
     const supabase = createClient()
-    
     const { data, error } = await supabase
       .from('partners')
       .select('*')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
-      .order('name', { ascending: true })
     
     if (error || !data || data.length === 0) {
       return mockPartners
     }
-    
     return data.map(p => ({
       id: p.id,
       name: p.name,
@@ -132,12 +70,10 @@ export async function fetchPublishedPartnersClient() {
       discountCode: p.discount,
       bookingProcedure: undefined
     }))
-  } catch (error) {
-    console.error('Error in fetchPublishedPartnersClient:', error)
+  } catch {
     return mockPartners
   }
 }
 
-// Aliases for convenience
 export const getPublicPropertiesClient = fetchPublishedPropertiesClient
 export const getPropertyBySlugClient = fetchPropertyByIdOrSlugClient

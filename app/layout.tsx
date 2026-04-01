@@ -1,3 +1,4 @@
+// Root layout - cache invalidation v4
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Inter, Noto_Sans_Arabic, Noto_Sans_SC } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'

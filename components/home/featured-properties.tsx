@@ -1,5 +1,4 @@
 'use client'
-// v2 - simplified to use mock data only, no async fetching
 
 import Link from 'next/link'
 import { ArrowRight, Shield, Star, Clock } from 'lucide-react'
@@ -12,7 +11,6 @@ import { useTranslations } from '@/i18n/provider'
 export function FeaturedProperties() {
   const t = useTranslations('properties')
   const tCommon = useTranslations('common')
-  // Use mock data directly - database fetching happens on the properties page
   const featured = mockProperties.filter(p => p.featured).slice(0, 3)
 
   const trustFeatures = [
@@ -24,7 +22,6 @@ export function FeaturedProperties() {
   return (
     <section className="py-24 md:py-32 bg-secondary/30">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -40,7 +37,6 @@ export function FeaturedProperties() {
             <p className="text-muted-foreground max-w-xl">
               {t('description')}
             </p>
-            {/* Trust indicators */}
             <div className="flex flex-wrap items-center gap-4 mt-4">
               {trustFeatures.map((feature) => (
                 <div key={feature.text} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -58,9 +54,7 @@ export function FeaturedProperties() {
           </Link>
         </motion.div>
 
-        {/* Featured Properties Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Large Featured Card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -71,7 +65,6 @@ export function FeaturedProperties() {
             <PropertyCard property={featured[0]} variant="large" />
           </motion.div>
 
-          {/* Smaller Cards */}
           {featured.slice(1).map((property, index) => (
             <motion.div
               key={property.id}
@@ -85,7 +78,6 @@ export function FeaturedProperties() {
           ))}
         </div>
 
-        {/* Bottom CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
