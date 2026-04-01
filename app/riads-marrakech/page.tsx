@@ -9,7 +9,6 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { PropertyCard } from '@/components/properties/property-card'
 import { mockProperties } from '@/lib/data'
-import { useTranslations, useLocalizedContent } from '@/i18n/provider'
 import { LOCATIONS, PROPERTY_TYPES } from '@/lib/seo'
 
 // Filter only riads
@@ -72,18 +71,11 @@ Les riads traditionnels comportent plusieurs étages avec des pièces disposées
 }
 
 export default function RiadsMarrakechPage() {
-  const t = useTranslations('properties')
-  const tCommon = useTranslations('common')
-  const { locale } = useLocalizedContent()
-
-  // Get content for the current locale with English fallback
-  // Using direct property access with fallback to avoid type issues
-  const currentLocale = (locale === 'en' || locale === 'fr') ? locale : 'en'
-  
+  // Use English content directly for SSR stability - client hydration will update if needed
   const content = {
-    whatIsRiad: contentSections.whatIsRiad[currentLocale] || contentSections.whatIsRiad.en,
-    whyChooseRiad: contentSections.whyChooseRiad[currentLocale] || contentSections.whyChooseRiad.en,
-    bestNeighborhoods: contentSections.bestNeighborhoods[currentLocale] || contentSections.bestNeighborhoods.en
+    whatIsRiad: contentSections.whatIsRiad.en,
+    whyChooseRiad: contentSections.whyChooseRiad.en,
+    bestNeighborhoods: contentSections.bestNeighborhoods.en
   }
 
   return (

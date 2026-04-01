@@ -9,7 +9,6 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { PropertyCard } from '@/components/properties/property-card'
 import { mockProperties } from '@/lib/data'
-import { useTranslations, useLocalizedContent } from '@/i18n/provider'
 import { LOCATIONS } from '@/lib/seo'
 
 const villas = mockProperties.filter(p => p.type === 'villa')
@@ -24,7 +23,6 @@ const villaFeatures = [
 ]
 
 export default function VillasMarrakechPage() {
-  const t = useTranslations('properties')
 
   return (
     <>

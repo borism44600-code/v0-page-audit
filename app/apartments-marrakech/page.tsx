@@ -9,8 +9,6 @@ import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { PropertyCard } from '@/components/properties/property-card'
 import { mockProperties } from '@/lib/data'
-import { useTranslations } from '@/i18n/provider'
-
 const apartments = mockProperties.filter(p => p.type === 'apartment')
 
 const apartmentFeatures = [
@@ -23,7 +21,6 @@ const apartmentFeatures = [
 ]
 
 export default function ApartmentsMarrakechPage() {
-  const t = useTranslations('properties')
 
   return (
     <>
