@@ -1,37 +1,19 @@
 'use client'
+// v2 - simplified to use mock data only, no async fetching
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Shield, Star, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { PropertyCard } from '@/components/properties/property-card'
-import { mockProperties, type Property } from '@/lib/data'
+import { mockProperties } from '@/lib/data'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from '@/i18n/provider'
-import { getPublicPropertiesClient } from '@/lib/data-fetcher-client'
 
 export function FeaturedProperties() {
   const t = useTranslations('properties')
   const tCommon = useTranslations('common')
-  const [featured, setFeatured] = useState<Property[]>(() => 
-    mockProperties.filter(p => p.featured).slice(0, 3)
-  )
-
-  useEffect(() => {
-    async function loadFeatured() {
-      try {
-        const properties = await getPublicPropertiesClient()
-        const featuredProps = properties.filter(p => p.featured).slice(0, 3)
-        if (featuredProps.length > 0) {
-          setFeatured(featuredProps)
-        }
-      } catch (error) {
-        // Keep mock data on error
-        console.error('Error loading featured properties:', error)
-      }
-    }
-    loadFeatured()
-  }, [])
+  // Use mock data directly - database fetching happens on the properties page
+  const featured = mockProperties.filter(p => p.featured).slice(0, 3)
 
   const trustFeatures = [
     { icon: Shield, text: t('featured') },

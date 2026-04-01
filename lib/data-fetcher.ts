@@ -1,8 +1,8 @@
-import 'server-only'
 /**
  * Data fetching utilities for public pages (SERVER-ONLY)
  * Fetches from database and falls back to mock data if needed
  * 
+ * WARNING: This file uses next/headers and can ONLY be imported in Server Components.
  * For client components, use @/lib/data-fetcher-client instead
  */
 

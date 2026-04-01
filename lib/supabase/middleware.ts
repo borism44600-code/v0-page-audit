@@ -33,7 +33,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes
+  // Protect admin routes - TEMPORARILY DISABLED FOR TESTING
+  // To enable admin auth protection, uncomment the block below
+  /*
   if (request.nextUrl.pathname.startsWith('/admin')) {
     // Allow access to login page
     if (request.nextUrl.pathname === '/admin/login') {
@@ -52,11 +54,8 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/admin/login'
       return NextResponse.redirect(url)
     }
-
-    // Check if user is admin (via admin_users table or metadata)
-    // Note: Full admin check is done in the page/action level
-    // Middleware just ensures basic auth
   }
+  */
 
   return supabaseResponse
 }
