@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
-  ArrowLeft, Save, Eye, Bed, Users, Sofa, Bath, Plus, Trash2,
-  MapPin, DollarSign, Image as ImageIcon, Globe, Settings2, Car, Loader2, X
+  ArrowLeft, Save, Eye, Bed, Trash2,
+  MapPin, DollarSign, Image as ImageIcon, Globe, Settings2, Car, Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,58 +24,11 @@ import {
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { updatePropertyAction, addPropertyImageAction, deletePropertyImageAction, setCoverImageAction } from '@/app/admin/actions'
 
+// Import the AdminFormProperty type from the adapter
+import type { AdminFormProperty } from '@/lib/adapters/admin-property-adapter'
+
 interface PropertyEditFormProps {
-  property: {
-    id: string
-    title: string
-    slug: string
-    type: string
-    description_short?: string
-    description_long?: string
-    city: string
-    district?: string
-    address?: string
-    map_location?: string
-    price_per_night: number
-    cleaning_fee?: number
-    service_fee?: number
-    num_bedrooms: number
-    num_bathrooms: number
-    bedroom_guest_capacity?: number
-    additional_guest_capacity?: number
-    total_guest_capacity: number
-    amenities?: string[]
-    parking_type?: string
-    parking_spots?: number
-    parking_notes?: string
-    seo_title?: string
-    seo_description?: string
-    seo_keywords?: string[]
-    status: string
-    featured?: boolean
-    property_images?: {
-      id: string
-      image_url: string
-      alt_text?: string
-      is_cover: boolean
-      display_order: number
-    }[]
-    property_rooms?: {
-      id: string
-      room_name: string
-      room_number?: number
-      bed_type?: string
-      num_beds?: number
-      has_bathroom?: boolean
-      has_shower?: boolean
-      has_bathtub?: boolean
-    }[]
-    availability_sync?: {
-      airbnb_ical_url?: string
-      booking_ical_url?: string
-      internal_ical_url?: string
-    }[]
-  }
+  property: AdminFormProperty
 }
 
 interface FormSection {
@@ -102,10 +55,11 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Form state initialized from property
+  // Form state initialized from property (using AdminFormProperty from adapter)
   const syncData = property.availability_sync?.[0] || {}
   
   const [formData, setFormData] = useState({
+    // Basic info
     title: property.title || '',
     slug: property.slug || '',
     type: property.type || 'riad',
@@ -113,27 +67,36 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
     description: property.description_long || '',
     status: property.status || 'draft',
     featured: property.featured || false,
+    // Location
     city: property.city || 'Marrakech',
     district: property.district || '',
     address: property.address || '',
     mapLocation: property.map_location || '',
+    // Capacity
     numberOfBedrooms: property.num_bedrooms || 1,
     numberOfBathrooms: property.num_bathrooms || 1,
     bedroomGuestCapacity: property.bedroom_guest_capacity || 2,
     additionalGuestCapacity: property.additional_guest_capacity || 0,
     totalGuestCapacity: property.total_guest_capacity || 2,
+    // Pricing
     pricePerNight: property.price_per_night || 0,
     cleaningFee: property.cleaning_fee || 0,
-    serviceFee: property.service_fee || 0,
+    securityDeposit: property.security_deposit || 0,
+    // Parking
     parkingType: property.parking_type || 'none',
     parkingSpots: property.parking_spots || 0,
-    parkingNotes: property.parking_notes || '',
+    // SEO
     seoTitle: property.seo_title || '',
     seoDescription: property.seo_description || '',
-    seoKeywords: (property.seo_keywords || []).join(', '),
+    // Sync URLs
     airbnbIcalUrl: syncData.airbnb_ical_url || '',
     bookingIcalUrl: syncData.booking_ical_url || '',
     internalIcalUrl: syncData.internal_ical_url || '',
+    // === NON-PERSISTED FIELDS (kept for UI but not saved to DB) ===
+    // These are marked in UI with a visual indicator
+    serviceFee: 0,        // NOT IN DB SCHEMA
+    parkingNotes: '',     // NOT IN DB SCHEMA
+    seoKeywords: '',      // NOT IN DB SCHEMA
   })
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -155,6 +118,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
     
     try {
       // Prepare data - aligned with Supabase schema via actions.ts mapping
+      // NOTE: serviceFee, parkingNotes, seoKeywords are NOT included (not in DB schema)
       const propertyData = {
         title: formData.title,
         slug: formData.slug,
@@ -167,6 +131,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         map_location: formData.mapLocation,
         price_per_night: formData.pricePerNight,
         cleaning_fee: formData.cleaningFee,
+        security_deposit: formData.securityDeposit,
         num_bedrooms: formData.numberOfBedrooms,
         num_bathrooms: formData.numberOfBathrooms,
         bedroom_guest_capacity: formData.bedroomGuestCapacity,
@@ -525,6 +490,24 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                 </div>
 
                 <div className="grid gap-2">
+                  <Label htmlFor="securityDeposit">Security Deposit (EUR)</Label>
+                  <Input
+                    id="securityDeposit"
+                    type="number"
+                    min="0"
+                    value={formData.securityDeposit}
+                    onChange={(e) => handleInputChange('securityDeposit', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
+
+              {/* Non-persisted field - kept for future use */}
+              <div className="border-t border-border pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <h4 className="text-sm font-medium text-muted-foreground">Additional (not saved to database)</h4>
+                  <Badge variant="outline" className="text-xs">UI Only</Badge>
+                </div>
+                <div className="grid gap-2 opacity-60">
                   <Label htmlFor="serviceFee">Service Fee (EUR)</Label>
                   <Input
                     id="serviceFee"
@@ -532,7 +515,9 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                     min="0"
                     value={formData.serviceFee}
                     onChange={(e) => handleInputChange('serviceFee', parseFloat(e.target.value) || 0)}
+                    className="max-w-xs"
                   />
+                  <p className="text-xs text-muted-foreground">This field is not yet connected to the database.</p>
                 </div>
               </div>
             </div>
@@ -571,15 +556,23 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                   />
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="parkingNotes">Parking Notes</Label>
-                  <Textarea
-                    id="parkingNotes"
-                    value={formData.parkingNotes}
-                    onChange={(e) => handleInputChange('parkingNotes', e.target.value)}
-                    placeholder="Additional parking information..."
-                    rows={3}
-                  />
+                {/* Non-persisted field - kept for future use */}
+                <div className="border-t border-border pt-4 mt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h4 className="text-sm font-medium text-muted-foreground">Additional (not saved to database)</h4>
+                    <Badge variant="outline" className="text-xs">UI Only</Badge>
+                  </div>
+                  <div className="grid gap-2 opacity-60">
+                    <Label htmlFor="parkingNotes">Parking Notes</Label>
+                    <Textarea
+                      id="parkingNotes"
+                      value={formData.parkingNotes}
+                      onChange={(e) => handleInputChange('parkingNotes', e.target.value)}
+                      placeholder="Additional parking information..."
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">This field is not yet connected to the database.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -651,15 +644,22 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                   />
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="seoKeywords">SEO Keywords</Label>
-                  <Input
-                    id="seoKeywords"
-                    value={formData.seoKeywords}
-                    onChange={(e) => handleInputChange('seoKeywords', e.target.value)}
-                    placeholder="keyword1, keyword2, keyword3"
-                  />
-                  <p className="text-sm text-muted-foreground">Comma-separated keywords</p>
+                {/* Non-persisted field - kept for future use */}
+                <div className="border-t border-border pt-4 mt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h4 className="text-sm font-medium text-muted-foreground">Additional (not saved to database)</h4>
+                    <Badge variant="outline" className="text-xs">UI Only</Badge>
+                  </div>
+                  <div className="grid gap-2 opacity-60">
+                    <Label htmlFor="seoKeywords">SEO Keywords</Label>
+                    <Input
+                      id="seoKeywords"
+                      value={formData.seoKeywords}
+                      onChange={(e) => handleInputChange('seoKeywords', e.target.value)}
+                      placeholder="keyword1, keyword2, keyword3"
+                    />
+                    <p className="text-xs text-muted-foreground">This field is not yet connected to the database.</p>
+                  </div>
                 </div>
               </div>
             </div>

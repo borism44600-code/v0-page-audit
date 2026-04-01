@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { dbToAdminForm, type DbPropertyRaw } from '@/lib/adapters/admin-property-adapter'
 
 export interface PropertyFormData {
   title: string
@@ -85,7 +86,8 @@ export async function getProperties() {
   return data
 }
 
-// Get single property by ID
+// Get single property by ID (for admin edit form)
+// Returns data adapted to admin form field names
 export async function getPropertyById(id: string) {
   const supabase = await createClient()
   
@@ -106,12 +108,11 @@ export async function getPropertyById(id: string) {
         room_name,
         room_number,
         bed_type,
-        num_beds,
+        bed_count,
+        max_guests,
         has_bathroom,
         has_shower,
-        has_bathtub,
-        equipment,
-        notes
+        has_bathtub
       ),
       availability_sync (
         id,
@@ -130,7 +131,8 @@ export async function getPropertyById(id: string) {
     throw new Error('Failed to fetch property')
   }
   
-  return data
+  // Adapt DB columns to admin form field names
+  return dbToAdminForm(data as DbPropertyRaw)
 }
 
 // Get property by slug (for public pages)
