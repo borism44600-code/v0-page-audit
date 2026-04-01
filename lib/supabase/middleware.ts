@@ -33,29 +33,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes - TEMPORARILY DISABLED FOR TESTING
-  // To enable admin auth protection, uncomment the block below
-  /*
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Allow access to login page
-    if (request.nextUrl.pathname === '/admin/login') {
-      // If already logged in, redirect to admin dashboard
-      if (user) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/admin'
-        return NextResponse.redirect(url)
-      }
-      return supabaseResponse
-    }
-
-    // For all other admin routes, require authentication
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin/login'
-      return NextResponse.redirect(url)
-    }
+  // ADMIN AUTH DISABLED FOR DEVELOPMENT
+  // Redirect /admin/login directly to /admin dashboard (no login required)
+  if (request.nextUrl.pathname === '/admin/login') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin'
+    return NextResponse.redirect(url)
   }
-  */
+  
+  // All /admin/* routes are now accessible without authentication
 
   return supabaseResponse
 }
