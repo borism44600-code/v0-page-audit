@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
@@ -17,6 +17,7 @@ import { AvailabilityCalendar } from '@/components/properties/availability-calen
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
 import { mockProperties, mockServices, mockAddons } from '@/lib/data'
+import { getPropertyBySlug as fetchPropertyBySlug } from '@/lib/data-fetcher'
 import { FEATURE_LABELS, BED_TYPE_LABELS, BATHROOM_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -46,7 +47,53 @@ const propertyStories = {
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const property = mockProperties.find(p => p.id === id)
+  const [property, setProperty] = useState<typeof mockProperties[0] | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadProperty() {
+      try {
+        // Try to fetch from database first
+        const dbProperty = await fetchPropertyBySlug(id)
+        if (dbProperty) {
+          setProperty(dbProperty)
+        } else {
+          // Fallback to mock data for demo
+          const mockProperty = mockProperties.find(p => p.id === id || p.slug === id)
+          if (mockProperty) {
+            setProperty(mockProperty)
+          }
+        }
+      } catch (error) {
+        // Fallback to mock data on error
+        const mockProperty = mockProperties.find(p => p.id === id || p.slug === id)
+        if (mockProperty) {
+          setProperty(mockProperty)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProperty()
+  }, [id])
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="pt-20 pb-16 min-h-screen bg-background">
+          <div className="container mx-auto px-6 py-12">
+            <div className="animate-pulse space-y-8">
+              <div className="h-96 bg-muted rounded-xl" />
+              <div className="h-8 bg-muted rounded w-1/3" />
+              <div className="h-4 bg-muted rounded w-2/3" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   if (!property) {
     notFound()
