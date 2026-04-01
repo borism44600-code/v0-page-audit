@@ -55,15 +55,17 @@ export function FeaturedProperties() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="lg:row-span-2"
-          >
-            <PropertyCard property={featured[0]} variant="large" />
-          </motion.div>
+          {featured[0] && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:row-span-2"
+            >
+              <PropertyCard property={featured[0]} variant="large" />
+            </motion.div>
+          )}
 
           {featured.slice(1).map((property, index) => (
             <motion.div
