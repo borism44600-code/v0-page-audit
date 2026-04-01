@@ -85,6 +85,7 @@ export default function NewPropertyPage() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState('general')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -226,9 +227,17 @@ export default function NewPropertyPage() {
 
   const handleSave = async (publish = false) => {
     setIsSaving(true)
+    setSaveError(null)
+    
+    // Validation
+    if (!formData.title.trim()) {
+      setSaveError('Property title is required')
+      setIsSaving(false)
+      return
+    }
     
     try {
-      // Prepare data for database
+      // Prepare data for database - aligned with Supabase schema
       const propertyData = {
         title: formData.title,
         slug: formData.slug || generateSlug(formData.title),
@@ -241,35 +250,40 @@ export default function NewPropertyPage() {
         map_location: formData.mapLocation,
         price_per_night: formData.pricePerNight || 0,
         cleaning_fee: formData.cleaningFee || 0,
-        service_fee: formData.serviceFee || 0,
+        security_deposit: formData.securityDeposit || 0,
         num_bedrooms: formData.numberOfBedrooms || 1,
-        num_bathrooms: formData.numberOfBathrooms || 1,
+        num_bathrooms: formData.bathrooms || 1,
         bedroom_guest_capacity: formData.bedroomGuestCapacity || 2,
         additional_guest_capacity: formData.additionalGuestCapacity || 0,
         total_guest_capacity: formData.totalGuestCapacity || formData.bedroomGuestCapacity || 2,
         amenities: Object.entries(formData.features || {})
           .filter(([_, value]) => value)
           .map(([key]) => key),
-        parking_type: formData.parkingType,
-        parking_spots: formData.parkingSpots || 0,
-        parking_notes: formData.parkingNotes,
-        seo_title: formData.seoTitle,
-        seo_description: formData.seoDescription,
-        seo_keywords: formData.seoKeywords ? formData.seoKeywords.split(',').map(k => k.trim()).filter(Boolean) : [],
+        features: formData.features,
+        parking_type: formData.parking,
+        parking_spots: 0,
+        seo_title: formData.metaTitle,
+        seo_description: formData.metaDescription,
         status: publish ? 'published' : formData.status,
         featured: formData.featured || false,
         airbnb_ical_url: formData.airbnbIcalUrl,
         booking_ical_url: formData.bookingIcalUrl,
-        internal_ical_url: formData.internalIcalUrl
       }
 
-      // Save to database
-      await createPropertyAction(propertyData)
+      // Save to database and CHECK the result
+      const result = await createPropertyAction(propertyData)
       
+      // Check if there was an error
+      if (result.error) {
+        setSaveError(result.error)
+        return // Don't redirect on error
+      }
+      
+      // Only redirect on success
       router.push('/admin/properties')
     } catch (error) {
       console.error('Error saving property:', error)
-      alert('Failed to save property. Please try again.')
+      setSaveError(error instanceof Error ? error.message : 'Failed to save property. Please try again.')
     } finally {
       setIsSaving(false)
     }
@@ -310,6 +324,24 @@ export default function NewPropertyPage() {
 
         {/* Form Content */}
         <div className="flex-1 space-y-6">
+          {/* Error Alert */}
+          {saveError && (
+            <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-medium">Save Error</p>
+                <p className="text-sm opacity-90">{saveError}</p>
+              </div>
+              <button onClick={() => setSaveError(null)} className="ml-auto text-destructive/70 hover:text-destructive">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Header Actions */}
           <div className="flex items-center justify-between">
             <div>

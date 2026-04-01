@@ -100,6 +100,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
   const [activeSection, setActiveSection] = useState('general')
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Form state initialized from property
   const syncData = property.availability_sync?.[0] || {}
@@ -143,8 +144,17 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
   const handleSave = async (publish = false) => {
     setIsSaving(true)
     setSaveSuccess(false)
+    setSaveError(null)
+    
+    // Validation
+    if (!formData.title.trim()) {
+      setSaveError('Property title is required')
+      setIsSaving(false)
+      return
+    }
     
     try {
+      // Prepare data - aligned with Supabase schema via actions.ts mapping
       const propertyData = {
         title: formData.title,
         slug: formData.slug,
@@ -157,7 +167,6 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         map_location: formData.mapLocation,
         price_per_night: formData.pricePerNight,
         cleaning_fee: formData.cleaningFee,
-        service_fee: formData.serviceFee,
         num_bedrooms: formData.numberOfBedrooms,
         num_bathrooms: formData.numberOfBathrooms,
         bedroom_guest_capacity: formData.bedroomGuestCapacity,
@@ -165,10 +174,8 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         total_guest_capacity: formData.totalGuestCapacity,
         parking_type: formData.parkingType,
         parking_spots: formData.parkingSpots,
-        parking_notes: formData.parkingNotes,
         seo_title: formData.seoTitle,
         seo_description: formData.seoDescription,
-        seo_keywords: formData.seoKeywords ? formData.seoKeywords.split(',').map(k => k.trim()).filter(Boolean) : [],
         status: publish ? 'published' : formData.status,
         featured: formData.featured,
         airbnb_ical_url: formData.airbnbIcalUrl,
@@ -176,12 +183,21 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         internal_ical_url: formData.internalIcalUrl
       }
 
-      await updatePropertyAction(property.id, propertyData)
+      // Call action and CHECK the result
+      const result = await updatePropertyAction(property.id, propertyData)
+      
+      // Check if there was an error
+      if (result.error) {
+        setSaveError(result.error)
+        return // Don't show success on error
+      }
+      
+      // Only show success if no error
       setSaveSuccess(true)
       router.refresh()
     } catch (error) {
       console.error('Error updating property:', error)
-      alert('Failed to save property. Please try again.')
+      setSaveError(error instanceof Error ? error.message : 'Failed to save property. Please try again.')
     } finally {
       setIsSaving(false)
     }
@@ -241,6 +257,24 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
 
         {/* Form Content */}
         <div className="flex-1 space-y-6">
+          {/* Error Alert */}
+          {saveError && (
+            <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-medium">Save Error</p>
+                <p className="text-sm opacity-90">{saveError}</p>
+              </div>
+              <button onClick={() => setSaveError(null)} className="ml-auto text-destructive/70 hover:text-destructive">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Header Actions */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
