@@ -33,14 +33,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes - TEMPORARILY DISABLED FOR TESTING
-  // To enable admin auth protection, uncomment the block below
-  /*
+  // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Allow access to login page
+    // Allow access to login page without auth
     if (request.nextUrl.pathname === '/admin/login') {
-      // If already logged in, redirect to admin dashboard
-      if (user) {
+      // If already logged in (dev session or Supabase), redirect to admin dashboard
+      const devAdminSession = request.cookies.get('admin_session')?.value
+      if (devAdminSession === 'dev_admin_authenticated' || user) {
         const url = request.nextUrl.clone()
         url.pathname = '/admin'
         return NextResponse.redirect(url)
@@ -48,14 +47,16 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse
     }
 
-    // For all other admin routes, require authentication
-    if (!user) {
+    // For all other admin routes, check dev session cookie OR Supabase user
+    const devAdminSession = request.cookies.get('admin_session')?.value
+    const isDevAdmin = devAdminSession === 'dev_admin_authenticated'
+    
+    if (!isDevAdmin && !user) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
       return NextResponse.redirect(url)
     }
   }
-  */
 
   return supabaseResponse
 }
