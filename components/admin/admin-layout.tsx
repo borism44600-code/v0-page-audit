@@ -19,7 +19,8 @@ import {
   Image as ImageIcon,
   DollarSign,
   Shield,
-  Loader2
+  Loader2,
+  Briefcase
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ const navItems = [
   { icon: Home, label: 'Dashboard', href: '/admin' },
   { icon: Building2, label: 'Properties', href: '/admin/properties' },
   { icon: Calendar, label: 'Bookings', href: '/admin/bookings' },
+  { icon: Briefcase, label: 'Services', href: '/admin/services' },
   { icon: Users, label: 'Partners', href: '/admin/partners' },
   { icon: FileText, label: 'Content', href: '/admin/content' },
   { icon: ImageIcon, label: 'Media', href: '/admin/media' },

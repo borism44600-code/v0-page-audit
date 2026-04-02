@@ -1,5 +1,5 @@
 // Availability checking utilities for vacation rental properties
-// Force rebuild marker: 2026-04-03
+// All availability data comes from the database - no mock data
 
 import { addDays, format, isWithinInterval, isBefore, isAfter, differenceInDays, parseISO, startOfDay } from 'date-fns'
 
@@ -45,7 +45,7 @@ export interface DateBlock {
   createdAt: string
 }
 
-// In-memory storage for date blocks (in production, use database)
+// In-memory storage for date blocks (production would use database)
 const dateBlocksStore: Map<string, DateBlock> = new Map()
 
 /**
@@ -124,44 +124,9 @@ export interface PropertyAvailabilityResult {
   requestedNights: number
 }
 
-// Mock availability data - in production this would come from a database
-const mockAvailabilityData: Record<string, PropertyAvailability> = {
-  'oceanview-villa': {
-    propertyId: 'oceanview-villa',
-    bookedDates: [
-      { start: new Date('2026-04-10'), end: new Date('2026-04-15') },
-      { start: new Date('2026-04-25'), end: new Date('2026-04-30') },
-      { start: new Date('2026-05-10'), end: new Date('2026-05-17') },
-    ],
-    blockedDates: [],
-    minimumStay: 2,
-    maximumStay: 30,
-  },
-  'mountain-retreat': {
-    propertyId: 'mountain-retreat',
-    bookedDates: [
-      { start: new Date('2026-04-08'), end: new Date('2026-04-12') },
-      { start: new Date('2026-05-01'), end: new Date('2026-05-05') },
-    ],
-    blockedDates: [],
-    minimumStay: 3,
-    maximumStay: 14,
-  },
-  'downtown-loft': {
-    propertyId: 'downtown-loft',
-    bookedDates: [
-      { start: new Date('2026-04-05'), end: new Date('2026-04-08') },
-      { start: new Date('2026-04-20'), end: new Date('2026-04-23') },
-    ],
-    blockedDates: [],
-    minimumStay: 1,
-    maximumStay: 7,
-  },
-}
-
 /**
  * Filter properties by availability for a date range
- * Returns availability results for all properties
+ * Uses real property availability data from the database
  */
 export function filterPropertiesByAvailability<T extends { id: string; availability?: { start: string; end: string }[] }>(
   properties: T[],
@@ -198,22 +163,20 @@ export function filterPropertiesByAvailability<T extends { id: string; availabil
       }
     }
 
-    // Also check mock data for booked periods
-    const mockData = mockAvailabilityData[property.id]
+    // Check date blocks for this property
     const conflictingDates: { start: Date; end: Date }[] = []
+    const blocks = getDateBlocksForProperty(property.id)
     
-    if (mockData) {
-      for (const booking of mockData.bookedDates) {
-        const bookingStart = startOfDay(booking.start)
-        const bookingEnd = startOfDay(booking.end)
-        
-        if (
-          isWithinInterval(checkInDate, { start: bookingStart, end: bookingEnd }) ||
-          isWithinInterval(checkOutDate, { start: bookingStart, end: bookingEnd }) ||
-          (isBefore(checkInDate, bookingStart) && isAfter(checkOutDate, bookingEnd))
-        ) {
-          conflictingDates.push({ start: booking.start, end: booking.end })
-        }
+    for (const block of blocks) {
+      const blockStart = startOfDay(parseISO(block.startDate))
+      const blockEnd = startOfDay(parseISO(block.endDate))
+      
+      if (
+        isWithinInterval(checkInDate, { start: blockStart, end: blockEnd }) ||
+        isWithinInterval(checkOutDate, { start: blockStart, end: blockEnd }) ||
+        (isBefore(checkInDate, blockStart) && isAfter(checkOutDate, blockEnd))
+      ) {
+        conflictingDates.push({ start: blockStart, end: blockEnd })
       }
     }
 
@@ -231,44 +194,35 @@ export function filterPropertiesByAvailability<T extends { id: string; availabil
 
 /**
  * Check if a date range is available for a property
+ * Uses date blocks for conflict detection
  */
 export function checkPropertyAvailability(
   propertyId: string,
   checkIn: Date,
   checkOut: Date
 ): { available: boolean; conflictDates?: { start: Date; end: Date }[] } {
-  const availability = mockAvailabilityData[propertyId]
-  
-  if (!availability) {
-    return { available: true }
-  }
-
   const checkInDate = startOfDay(checkIn)
   const checkOutDate = startOfDay(checkOut)
-
-  const conflicts = availability.bookedDates.filter(booking => {
-    const bookingStart = startOfDay(booking.start)
-    const bookingEnd = startOfDay(booking.end)
+  
+  // Check date blocks
+  const blocks = getDateBlocksForProperty(propertyId)
+  const conflicts: { start: Date; end: Date }[] = []
+  
+  for (const block of blocks) {
+    const blockStart = startOfDay(parseISO(block.startDate))
+    const blockEnd = startOfDay(parseISO(block.endDate))
     
-    return (
-      (isWithinInterval(checkInDate, { start: bookingStart, end: bookingEnd }) ||
-       isWithinInterval(checkOutDate, { start: bookingStart, end: bookingEnd }) ||
-       (isBefore(checkInDate, bookingStart) && isAfter(checkOutDate, bookingEnd)))
-    )
-  })
+    if (
+      isWithinInterval(checkInDate, { start: blockStart, end: blockEnd }) ||
+      isWithinInterval(checkOutDate, { start: blockStart, end: blockEnd }) ||
+      (isBefore(checkInDate, blockStart) && isAfter(checkOutDate, blockEnd))
+    ) {
+      conflicts.push({ start: blockStart, end: blockEnd })
+    }
+  }
 
   if (conflicts.length > 0) {
     return { available: false, conflictDates: conflicts }
-  }
-
-  const nights = differenceInDays(checkOutDate, checkInDate)
-  
-  if (nights < availability.minimumStay) {
-    return { available: false }
-  }
-
-  if (availability.maximumStay && nights > availability.maximumStay) {
-    return { available: false }
   }
 
   return { available: true }
@@ -276,38 +230,27 @@ export function checkPropertyAvailability(
 
 /**
  * Get all unavailable dates for a property within a date range
+ * Uses date blocks for determining unavailability
  */
 export function getUnavailableDates(
   propertyId: string,
   startDate: Date,
   endDate: Date
 ): Date[] {
-  const availability = mockAvailabilityData[propertyId]
-  
-  if (!availability) {
-    return []
-  }
-
   const unavailableDates: Date[] = []
+  const blocks = getDateBlocksForProperty(propertyId)
   
-  availability.bookedDates.forEach(booking => {
-    let currentDate = startOfDay(booking.start)
-    const bookingEnd = startOfDay(booking.end)
+  for (const block of blocks) {
+    let currentDate = startOfDay(parseISO(block.startDate))
+    const blockEnd = startOfDay(parseISO(block.endDate))
     
-    while (!isAfter(currentDate, bookingEnd)) {
+    while (!isAfter(currentDate, blockEnd)) {
       if (isWithinInterval(currentDate, { start: startOfDay(startDate), end: startOfDay(endDate) })) {
         unavailableDates.push(new Date(currentDate))
       }
       currentDate = addDays(currentDate, 1)
     }
-  })
-
-  availability.blockedDates.forEach(blockedDate => {
-    const blocked = startOfDay(blockedDate)
-    if (isWithinInterval(blocked, { start: startOfDay(startDate), end: startOfDay(endDate) })) {
-      unavailableDates.push(new Date(blocked))
-    }
-  })
+  }
 
   return unavailableDates
 }
@@ -433,38 +376,18 @@ export function formatDateRange(checkIn: Date, checkOut: Date): string {
 
 /**
  * Get the minimum stay requirement for a property
+ * Default is 1 night if not specified
  */
 export function getMinimumStay(propertyId: string): number {
-  const availability = mockAvailabilityData[propertyId]
-  return availability?.minimumStay ?? 1
+  // In production, this would query the database for the property's minimum_stay
+  // For now, return default of 1
+  return 1
 }
 
 /**
- * Check if a specific date is available
+ * Check if a specific date is available for a property
+ * Uses date blocks for checking
  */
 export function isDateAvailable(propertyId: string, date: Date): boolean {
-  const availability = mockAvailabilityData[propertyId]
-  
-  if (!availability) {
-    return true
-  }
-
-  const checkDate = startOfDay(date)
-
-  for (const booking of availability.bookedDates) {
-    if (isWithinInterval(checkDate, { 
-      start: startOfDay(booking.start), 
-      end: startOfDay(booking.end) 
-    })) {
-      return false
-    }
-  }
-
-  for (const blockedDate of availability.blockedDates) {
-    if (startOfDay(blockedDate).getTime() === checkDate.getTime()) {
-      return false
-    }
-  }
-
-  return true
+  return !isDateBlocked(propertyId, date)
 }

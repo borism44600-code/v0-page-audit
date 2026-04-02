@@ -296,6 +296,96 @@ export async function deletePartnerAction(id: string) {
 }
 
 // ============================================================================
+// SERVICE ACTIONS
+// ============================================================================
+
+export async function createServiceAction(data: {
+  name_en: string
+  name_fr?: string
+  description_en?: string
+  description_fr?: string
+  category: string
+  price?: number
+  price_unit?: string
+  image?: string
+  slug?: string
+  is_active?: boolean
+  sort_order?: number
+}) {
+  const supabase = await createClient()
+  
+  // Generate slug from name if not provided
+  const slug = data.slug || data.name_en
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+  
+  const { data: service, error } = await supabase
+    .from('services')
+    .insert({
+      ...data,
+      slug,
+      is_active: data.is_active ?? true,
+      sort_order: data.sort_order ?? 0
+    })
+    .select()
+    .single()
+  
+  if (error) {
+    console.error('Error creating service:', error)
+    return { error: error.message }
+  }
+  
+  revalidatePath('/admin/services')
+  revalidatePath('/services')
+  
+  return { data: service }
+}
+
+export async function updateServiceAction(id: string, data: Record<string, unknown>) {
+  const supabase = await createClient()
+  
+  const { data: service, error } = await supabase
+    .from('services')
+    .update({
+      ...data,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) {
+    console.error('Error updating service:', error)
+    return { error: error.message }
+  }
+  
+  revalidatePath('/admin/services')
+  revalidatePath('/services')
+  
+  return { data: service }
+}
+
+export async function deleteServiceAction(id: string) {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('services')
+    .delete()
+    .eq('id', id)
+  
+  if (error) {
+    console.error('Error deleting service:', error)
+    return { error: error.message }
+  }
+  
+  revalidatePath('/admin/services')
+  revalidatePath('/services')
+  
+  return { success: true }
+}
+
+// ============================================================================
 // AUTH ACTIONS
 // ============================================================================
 
