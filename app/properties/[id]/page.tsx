@@ -293,27 +293,33 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </motion.div>
 
-              {/* Additional Amenities - render only when amenities array exists and has items */}
-              {property.amenities && Array.isArray(property.amenities) && property.amenities.length > 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {property.amenities.map((amenity) => (
-                      <span 
-                        key={amenity}
-                        className="px-4 py-2 bg-secondary rounded-full text-sm"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              ) : null}
+              {/* Additional Amenities - only render when amenities exist */}
+              {(() => {
+                const amenitiesList = property.amenities
+                if (!amenitiesList || !Array.isArray(amenitiesList) || amenitiesList.length === 0) {
+                  return null
+                }
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {amenitiesList.map((amenity) => (
+                        <span 
+                          key={amenity}
+                          className="px-4 py-2 bg-secondary rounded-full text-sm"
+                        >
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+                )
+              })()}
 
               {/* Location */}
               <motion.div

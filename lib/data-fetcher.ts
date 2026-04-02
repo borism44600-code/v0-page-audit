@@ -16,7 +16,8 @@ import { mockProperties, mockPartners, mockServices, mockAddons } from '@/lib/da
  */
 /**
  * Convert mock property to canonical UiProperty format.
- * GUARANTEES all fields have safe defaults matching UiProperty contract.
+ * GUARANTEES all fields have TRUTHFUL safe defaults - no fake content.
+ * Empty arrays mean "no data" - UI shows premium empty states.
  */
 function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
   return {
@@ -32,7 +33,7 @@ function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
     bedroomGuestCapacity: mock.bedroomGuestCapacity || mock.numberOfBedrooms * 2,
     additionalGuestCapacity: mock.additionalGuestCapacity || 0,
     totalGuestCapacity: mock.totalGuestCapacity || mock.numberOfBedrooms * 2,
-    images: mock.images || ['/placeholder-property.jpg'],  // GUARANTEED: array
+    images: mock.images || [],  // GUARANTEED: array (may be empty - no fake images)
     location: {  // GUARANTEED: object with all fields
       city: 'Marrakech',
       district: mock.location?.district || 'Medina',

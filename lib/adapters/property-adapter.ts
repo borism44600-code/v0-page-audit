@@ -74,19 +74,22 @@ export interface DbProperty {
 /**
  * Canonical Public Property Type
  * 
- * ALL fields are guaranteed to exist with safe defaults.
- * The adapter layer MUST ensure these values are never undefined.
+ * ALL fields are guaranteed to exist with TRUTHFUL safe defaults.
+ * The adapter layer ensures these values are never undefined.
  * UI components should NOT need defensive null checks for these fields.
  * 
- * GUARANTEED ARRAYS (always [] if no data):
- * - images
- * - sleepingArrangements
- * - amenities
+ * IMPORTANT: No fake/invented content is injected as defaults.
+ * Empty arrays mean "no data" - UI should show premium empty states.
  * 
- * GUARANTEED OBJECTS (always present with defaults):
- * - location
- * - features
- * - parking
+ * GUARANTEED ARRAYS (always [] if no data - never fake content):
+ * - images: [] (UI shows "photos coming soon" state)
+ * - sleepingArrangements: [] (UI hides section if empty)
+ * - amenities: [] (UI hides section if empty)
+ * 
+ * GUARANTEED OBJECTS (always present with neutral defaults):
+ * - location: { city: 'Marrakech', district: 'Medina', ... }
+ * - features: { wifi: false, pool: false, ... }
+ * - parking: { available: false, ... }
  */
 export interface UiProperty {
   id: string
@@ -227,9 +230,7 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
   }
   // Dedupe and fallback
   propertyImages = [...new Set(propertyImages)]
-  if (propertyImages.length === 0) {
-    propertyImages = ['/placeholder-property.jpg']
-  }
+  // No fake images - empty array is truthful when property has no images
 
   // Convert features/amenities object to PropertyFeatures
   const featuresObj = typeof dbProperty.features === 'object' ? dbProperty.features : {}
@@ -251,7 +252,7 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
     bedroomGuestCapacity: dbProperty.bedroom_guest_capacity || dbProperty.max_guests || 2,
     additionalGuestCapacity: dbProperty.additional_guest_capacity || 0,
     totalGuestCapacity: dbProperty.max_guests || dbProperty.bedroom_guest_capacity || 2,
-    images: propertyImages,  // GUARANTEED: Always array with at least placeholder
+    images: propertyImages,  // GUARANTEED: Always array (may be empty)
     location: {  // GUARANTEED: Always object with all fields
       city: dbProperty.location || 'Marrakech',
       district: dbProperty.district || 'Medina',
@@ -264,7 +265,7 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
     },
     sleepingArrangements: roomsToSleepingArrangements(dbProperty.property_rooms),  // GUARANTEED: Always array
     features: amenitiestoFeatures(featureKeys),  // GUARANTEED: Always object
-    amenities: featureKeys.length > 0 ? featureKeys : ['WiFi', 'Air Conditioning'],  // GUARANTEED: Always array
+    amenities: featureKeys,  // GUARANTEED: Always array (may be empty - no fake amenities)
     parking: {  // GUARANTEED: Always object with all fields
       available: !!dbProperty.parking_type && dbProperty.parking_type !== 'none',
       type: dbProperty.parking_type || '',
