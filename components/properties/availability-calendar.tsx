@@ -22,13 +22,15 @@ const MONTHS = [
 ]
 
 export function AvailabilityCalendar({ 
-  availability, 
+  availability = [], 
   selectedDates,
   onDateSelect,
   readOnly = false,
   onBookingClick,
   compact = false
 }: AvailabilityCalendarProps) {
+  // Ensure availability is always an array
+  const safeAvailability = Array.isArray(availability) ? availability : []
   // Use null for initial state to ensure consistent SSR/client rendering
   const [dateState, setDateState] = useState<{
     today: Date
@@ -62,7 +64,8 @@ export function AvailabilityCalendar({
   }
 
   const isDateAvailable = (date: Date) => {
-    return availability.some(range => {
+    if (safeAvailability.length === 0) return true  // If no availability data, assume all dates available
+    return safeAvailability.some(range => {
       const start = new Date(range.start)
       const end = new Date(range.end)
       return date >= start && date <= end
