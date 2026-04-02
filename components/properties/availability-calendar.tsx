@@ -1,362 +1,223 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, ArrowUpRight, Calendar, Moon } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import * as React from 'react'
+import { useState, useMemo } from 'react'
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isSameMonth, 
+  isSameDay, 
+  addMonths, 
+  subMonths,
+  isToday,
+  isBefore,
+  startOfDay,
+  getDay
+} from 'date-fns'
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getUnavailableDates, isDateAvailable } from '@/lib/availability'
 
 interface AvailabilityCalendarProps {
-  availability?: { start: string; end: string }[] | null | undefined
-  selectedDates?: { start: Date | null; end: Date | null }
-  onDateSelect?: (dates: { start: Date | null; end: Date | null }) => void
-  readOnly?: boolean
-  onBookingClick?: () => void
+  propertyId: string
+  selectedCheckIn?: Date | null
+  selectedCheckOut?: Date | null
+  onDateSelect?: (checkIn: Date | null, checkOut: Date | null) => void
+  className?: string
   compact?: boolean
 }
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-]
-
-export function AvailabilityCalendar({ 
-  availability, 
-  selectedDates,
+export function AvailabilityCalendar({
+  propertyId,
+  selectedCheckIn,
+  selectedCheckOut,
   onDateSelect,
-  readOnly = false,
-  onBookingClick,
-  compact = false
+  className,
+  compact = false,
 }: AvailabilityCalendarProps) {
-  const [dateState, setDateState] = useState<{
-    today: Date
-    currentMonth: number
-    currentYear: number
-  } | null>(null)
-  const [selectingStart, setSelectingStart] = useState(true)
-  const [hoverDate, setHoverDate] = useState<Date | null>(null)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectingCheckOut, setSelectingCheckOut] = useState(false)
 
-  useEffect(() => {
-    const now = new Date()
-    setDateState({
-      today: now,
-      currentMonth: now.getMonth(),
-      currentYear: now.getFullYear()
-    })
-  }, [])
+  // Get unavailable dates for the visible months
+  const unavailableDates = useMemo(() => {
+    const start = startOfMonth(currentMonth)
+    const end = endOfMonth(addMonths(currentMonth, compact ? 0 : 1))
+    return getUnavailableDates(propertyId, start, end)
+  }, [propertyId, currentMonth, compact])
 
-  const today = dateState?.today ?? new Date()
-  const currentMonth = dateState?.currentMonth ?? 0
-  const currentYear = dateState?.currentYear ?? 2024
-
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate()
-  }
-
-  const getFirstDayOfMonth = (month: number, year: number) => {
-    return new Date(year, month, 1).getDay()
-  }
-
-  const checkDateInAvailability = (date: Date): boolean => {
-    if (!availability) return true
-    if (!Array.isArray(availability)) return true
-    if (availability.length === 0) return true
-    
-    for (let i = 0; i < availability.length; i++) {
-      const range = availability[i]
-      if (!range || !range.start || !range.end) continue
-      const start = new Date(range.start)
-      const end = new Date(range.end)
-      if (date >= start && date <= end) {
-        return true
-      }
-    }
-    return false
-  }
-
-  const isDateInPast = (date: Date) => {
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-    return date < todayStart
-  }
-
-  const isDateSelected = (date: Date) => {
-    if (!selectedDates?.start) return false
-    const dateTime = date.getTime()
-    const startTime = selectedDates.start.getTime()
-    if (!selectedDates.end) {
-      return dateTime === startTime
-    }
-    const endTime = selectedDates.end.getTime()
-    return dateTime >= startTime && dateTime <= endTime
-  }
-
-  const isInHoverRange = (date: Date) => {
-    if (!selectedDates?.start || selectedDates.end || !hoverDate) return false
-    const dateTime = date.getTime()
-    const startTime = selectedDates.start.getTime()
-    const hoverTime = hoverDate.getTime()
-    if (hoverTime > startTime) {
-      return dateTime > startTime && dateTime <= hoverTime
-    } else {
-      return dateTime >= hoverTime && dateTime < startTime
-    }
-  }
-
-  const isStartDate = (date: Date) => {
-    if (!selectedDates?.start) return false
-    return date.getTime() === selectedDates.start.getTime()
-  }
-
-  const isEndDate = (date: Date) => {
-    if (!selectedDates?.end) return false
-    return date.getTime() === selectedDates.end.getTime()
-  }
-
-  const handleDateClick = (date: Date) => {
-    const isAvailable = checkDateInAvailability(date)
-    if (readOnly || !onDateSelect || isDateInPast(date) || !isAvailable) return
-    if (selectingStart) {
-      onDateSelect({ start: date, end: null })
-      setSelectingStart(false)
-    } else {
-      if (selectedDates?.start && date < selectedDates.start) {
-        onDateSelect({ start: date, end: selectedDates.start })
-      } else {
-        onDateSelect({ start: selectedDates?.start || null, end: date })
-      }
-      setSelectingStart(true)
-    }
-  }
-
-  const goToPreviousMonth = () => {
-    if (!dateState) return
-    if (currentMonth === 0) {
-      setDateState({ ...dateState, currentMonth: 11, currentYear: currentYear - 1 })
-    } else {
-      setDateState({ ...dateState, currentMonth: currentMonth - 1 })
-    }
-  }
-
-  const goToNextMonth = () => {
-    if (!dateState) return
-    if (currentMonth === 11) {
-      setDateState({ ...dateState, currentMonth: 0, currentYear: currentYear + 1 })
-    } else {
-      setDateState({ ...dateState, currentMonth: currentMonth + 1 })
-    }
-  }
-
-  const calculateNights = () => {
-    if (!selectedDates?.start || !selectedDates?.end) return 0
-    const diff = selectedDates.end.getTime() - selectedDates.start.getTime()
-    return Math.ceil(diff / (1000 * 60 * 60 * 24))
-  }
-
-  const nights = calculateNights()
-  const daysInMonth = getDaysInMonth(currentMonth, currentYear)
-  const firstDay = getFirstDayOfMonth(currentMonth, currentYear)
-
-  const days = []
-  for (let i = 0; i < firstDay; i++) {
-    days.push(<div key={`empty-${i}`} className={cn(compact ? 'h-8' : 'h-10')} />)
-  }
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(currentYear, currentMonth, day)
-    const isPast = isDateInPast(date)
-    const isAvailable = checkDateInAvailability(date)
-    const isSelected = isDateSelected(date)
-    const isStart = isStartDate(date)
-    const isEnd = isEndDate(date)
-    const isHoverRange = isInHoverRange(date)
-    
-    days.push(
-      <motion.button
-        key={day}
-        onClick={() => handleDateClick(date)}
-        onMouseEnter={() => setHoverDate(date)}
-        onMouseLeave={() => setHoverDate(null)}
-        disabled={readOnly || isPast || !isAvailable}
-        whileHover={!readOnly && !isPast && isAvailable ? { scale: 1.1 } : {}}
-        whileTap={!readOnly && !isPast && isAvailable ? { scale: 0.95 } : {}}
-        className={cn(
-          compact ? 'h-8 text-xs' : 'h-10 text-sm',
-          'rounded-full font-medium transition-all relative flex items-center justify-center',
-          isPast && 'text-muted-foreground/30 cursor-not-allowed',
-          !isPast && !isAvailable && 'text-muted-foreground/40 cursor-not-allowed',
-          !isPast && isAvailable && !readOnly && 'hover:bg-gold/20 cursor-pointer',
-          !isPast && isAvailable && 'text-foreground',
-          (isSelected || isHoverRange) && !isStart && !isEnd && 'bg-gold/10',
-          isHoverRange && 'bg-gold/20',
-          (isStart || isEnd) && 'bg-gold text-black font-semibold shadow-md shadow-gold/30'
-        )}
-      >
-        {day}
-        {!isPast && !isAvailable && (
-          <span className="absolute inset-0 flex items-center justify-center">
-            <span className="w-full h-px bg-muted-foreground/30 rotate-45 absolute" />
-          </span>
-        )}
-      </motion.button>
+  const isDateUnavailable = (date: Date) => {
+    return unavailableDates.some(unavailableDate => 
+      isSameDay(unavailableDate, date)
     )
   }
 
-  const handleDoubleClick = () => {
-    if (readOnly && onBookingClick) {
-      onBookingClick()
+  const handleDateClick = (date: Date) => {
+    if (isDateUnavailable(date) || isBefore(date, startOfDay(new Date()))) {
+      return
+    }
+
+    if (!selectingCheckOut || !selectedCheckIn) {
+      // Selecting check-in date
+      onDateSelect?.(date, null)
+      setSelectingCheckOut(true)
+    } else {
+      // Selecting check-out date
+      if (isBefore(date, selectedCheckIn)) {
+        // If selected date is before check-in, make it the new check-in
+        onDateSelect?.(date, null)
+      } else {
+        onDateSelect?.(selectedCheckIn, date)
+        setSelectingCheckOut(false)
+      }
     }
   }
 
-  if (!dateState) {
+  const isInRange = (date: Date) => {
+    if (!selectedCheckIn || !selectedCheckOut) return false
+    return date > selectedCheckIn && date < selectedCheckOut
+  }
+
+  const renderMonth = (monthDate: Date) => {
+    const monthStart = startOfMonth(monthDate)
+    const monthEnd = endOfMonth(monthDate)
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
+    const startDayOfWeek = getDay(monthStart)
+
     return (
-      <div className={cn(
-        "bg-card rounded-2xl border border-border overflow-hidden animate-pulse",
-        compact ? "h-[300px]" : "h-[400px]"
-      )}>
-        <div className="bg-secondary/50 border-b border-border p-6">
-          <div className="h-6 bg-muted rounded w-1/3"></div>
+      <div className="flex-1">
+        <h3 className="text-center font-semibold text-foreground mb-4">
+          {format(monthDate, 'MMMM yyyy')}
+        </h3>
+        
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+            <div 
+              key={day} 
+              className="text-center text-xs font-medium text-muted-foreground py-1"
+            >
+              {day}
+            </div>
+          ))}
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-7 gap-2">
-            {Array.from({ length: 35 }).map((_, i) => (
-              <div key={i} className="h-10 bg-muted rounded"></div>
-            ))}
-          </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {/* Empty cells for days before month starts */}
+          {Array.from({ length: startDayOfWeek }).map((_, i) => (
+            <div key={`empty-${i}`} className="aspect-square" />
+          ))}
+          
+          {/* Day cells */}
+          {days.map((day) => {
+            const unavailable = isDateUnavailable(day)
+            const isPast = isBefore(day, startOfDay(new Date()))
+            const isCheckIn = selectedCheckIn && isSameDay(day, selectedCheckIn)
+            const isCheckOut = selectedCheckOut && isSameDay(day, selectedCheckOut)
+            const inRange = isInRange(day)
+            const isCurrentDay = isToday(day)
+
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => handleDateClick(day)}
+                disabled={unavailable || isPast}
+                className={cn(
+                  'aspect-square flex items-center justify-center text-sm rounded-md transition-colors',
+                  'hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+                  unavailable && 'bg-muted text-muted-foreground line-through cursor-not-allowed hover:bg-muted',
+                  isPast && 'text-muted-foreground cursor-not-allowed hover:bg-transparent',
+                  isCheckIn && 'bg-primary text-primary-foreground hover:bg-primary',
+                  isCheckOut && 'bg-primary text-primary-foreground hover:bg-primary',
+                  inRange && 'bg-primary/20',
+                  isCurrentDay && !isCheckIn && !isCheckOut && 'ring-1 ring-primary',
+                )}
+              >
+                {format(day, 'd')}
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        "bg-card rounded-2xl border border-border overflow-hidden",
-        readOnly && onBookingClick && "cursor-pointer"
+    <div className={cn('bg-card rounded-lg border p-4', className)}>
+      {/* Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>
+            {selectingCheckOut && selectedCheckIn 
+              ? 'Select check-out date' 
+              : 'Select check-in date'}
+          </span>
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
+          aria-label="Next month"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Calendar months */}
+      <div className={cn('flex gap-8', compact && 'gap-0')}>
+        {renderMonth(currentMonth)}
+        {!compact && renderMonth(addMonths(currentMonth, 1))}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-muted" />
+          <span>Unavailable</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-primary" />
+          <span>Selected</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-primary/20" />
+          <span>Your stay</span>
+        </div>
+      </div>
+
+      {/* Selection summary */}
+      {(selectedCheckIn || selectedCheckOut) && (
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex items-center justify-between text-sm">
+            <div>
+              <span className="text-muted-foreground">Check-in: </span>
+              <span className="font-medium">
+                {selectedCheckIn ? format(selectedCheckIn, 'MMM d, yyyy') : '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Check-out: </span>
+              <span className="font-medium">
+                {selectedCheckOut ? format(selectedCheckOut, 'MMM d, yyyy') : '—'}
+              </span>
+            </div>
+          </div>
+        </div>
       )}
-      onDoubleClick={handleDoubleClick}
-    >
-      <div className={cn(
-        "bg-secondary/50 border-b border-border",
-        compact ? "p-4" : "p-6"
-      )}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calendar className={cn("text-gold", compact ? "w-4 h-4" : "w-5 h-5")} />
-            <h3 className={cn("font-semibold", compact ? "text-base" : "text-lg")}>
-              {readOnly ? 'Availability' : 'Select Your Dates'}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-8 w-8">
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span 
-              className={cn("font-medium min-w-[120px] text-center", compact ? "text-sm" : "")}
-              suppressHydrationWarning
-            >
-              {MONTHS[currentMonth]} {currentYear}
-            </span>
-            <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {!readOnly && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-3 flex items-center justify-center gap-2"
-          >
-            <span className={cn(
-              "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-              selectingStart ? "bg-gold text-black" : "bg-muted text-muted-foreground"
-            )}>
-              Check-in
-            </span>
-            <ArrowUpRight className="w-3 h-3 text-muted-foreground rotate-45" />
-            <span className={cn(
-              "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-              !selectingStart ? "bg-gold text-black" : "bg-muted text-muted-foreground"
-            )}>
-              Check-out
-            </span>
-          </motion.div>
-        )}
-
-        {readOnly && onBookingClick && (
-          <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-            This calendar shows availability. To book, use the 
-            <button 
-              onClick={onBookingClick}
-              className="inline-flex items-center gap-0.5 text-gold hover:underline font-medium"
-            >
-              Reserve Your Dates
-              <ArrowUpRight className="w-3 h-3" />
-            </button>
-            button.
-          </p>
-        )}
-      </div>
-
-      <div className={cn(compact ? "p-4" : "p-6")}>
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {DAYS.map(day => (
-            <div key={day} className={cn(
-              "flex items-center justify-center text-muted-foreground font-medium",
-              compact ? "h-6 text-[10px]" : "h-8 text-xs"
-            )}>
-              {compact ? day.charAt(0) : day}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1">
-          {days}
-        </div>
-
-        <AnimatePresence>
-          {selectedDates?.start && selectedDates?.end && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 pt-4 border-t border-border"
-            >
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Moon className="w-4 h-4 text-gold" />
-                  <span>Your stay</span>
-                </div>
-                <span className="font-semibold text-gold">{nights} nights</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className={cn(
-          "flex items-center gap-4 mt-4 pt-4 border-t border-border text-xs",
-          compact && "gap-3"
-        )}>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-gold shadow-sm shadow-gold/30" />
-            <span className="text-muted-foreground">Selected</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-background border border-border" />
-            <span className="text-muted-foreground">Available</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-muted relative overflow-hidden">
-              <span className="w-full h-px bg-muted-foreground/50 rotate-45 absolute top-1/2 left-0" />
-            </div>
-            <span className="text-muted-foreground">Booked</span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
+    </div>
   )
 }

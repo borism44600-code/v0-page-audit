@@ -795,19 +795,7 @@ function BookingContent() {
                         </div>
                       )}
                       
-                      {selectedAddons.map(addon => {
-                        const addonData = mockAddons.find(a => a.id === addon.id)
-                        if (!addonData) return null
-                        const price = addonData.pricePerPerson 
-                          ? addonData.pricePerPerson * addon.persons * addon.quantity
-                          : (addonData.priceFlat || 0) * addon.quantity
-                        return (
-                          <div key={addon.id} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">{addonData.name} x{addon.quantity}</span>
-                            <span>{price}€</span>
-                          </div>
-                        )
-                      })}
+{/* Addons section - will be enabled when addons table is populated */}
                       <div className="flex justify-between font-semibold text-xl pt-3 border-t border-border">
                         <span>Total</span>
                         <span className="text-gold">{total}€</span>

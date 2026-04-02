@@ -1,19 +1,70 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Utensils, Sparkles, Mountain, Activity, Car, ExternalLink, Tag } from 'lucide-react'
+import { Utensils, Sparkles, Mountain, Activity, Car, ExternalLink, Tag, Loader2 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { mockPartners } from '@/lib/data'
+import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from '@/i18n/provider'
+
+interface Partner {
+  id: string
+  name: string
+  category: string
+  description: string
+  image: string
+  website?: string
+  discountCode?: string
+  bookingProcedure?: string
+}
 
 export default function PartnersPage() {
   const t = useTranslations('partners')
   const tServices = useTranslations('services')
   const tContact = useTranslations('contact')
+  
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchPartners() {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('partners')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true })
+          .order('name', { ascending: true })
+        
+        if (error) {
+          console.error('Error fetching partners:', error)
+          setPartners([])
+        } else if (data) {
+          setPartners(data.map(p => ({
+            id: p.id,
+            name: p.name || 'Partner',
+            category: p.category || 'other',
+            description: p.description_en || p.description_fr || '',
+            image: p.image || '/images/partners/default.jpg',
+            website: p.website,
+            discountCode: p.discount,
+            bookingProcedure: undefined
+          })))
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        setPartners([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchPartners()
+  }, [])
 
   const categoryInfo = {
     restaurant: {
@@ -42,13 +93,14 @@ export default function PartnersPage() {
       description: t('description')
     }
   }
-  const groupedPartners = mockPartners.reduce((acc, partner) => {
+
+  const groupedPartners = partners.reduce((acc, partner) => {
     if (!acc[partner.category]) {
       acc[partner.category] = []
     }
     acc[partner.category].push(partner)
     return acc
-  }, {} as Record<string, typeof mockPartners>)
+  }, {} as Record<string, Partner[]>)
 
   return (
     <>
@@ -80,91 +132,110 @@ export default function PartnersPage() {
         {/* Partners by Category */}
         <section className="py-24">
           <div className="container mx-auto px-6 space-y-20">
-            {Object.entries(groupedPartners).map(([category, partners]) => {
-              const info = categoryInfo[category as keyof typeof categoryInfo]
-              const IconComponent = info?.icon || Activity
-              
-              return (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                >
-                  {/* Category Header */}
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                      <IconComponent className="w-7 h-7 text-primary" />
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : partners.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-secondary/50 flex items-center justify-center">
+                  <Activity className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h2 className="text-2xl font-semibold mb-3">Partners Coming Soon</h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  We are building relationships with the finest local partners. Contact us for personalized recommendations.
+                </p>
+                <Link href="/contact" className="inline-block mt-6">
+                  <Button>{tContact('title')}</Button>
+                </Link>
+              </div>
+            ) : (
+              Object.entries(groupedPartners).map(([category, categoryPartners]) => {
+                const info = categoryInfo[category as keyof typeof categoryInfo]
+                const IconComponent = info?.icon || Activity
+                
+                return (
+                  <motion.div
+                    key={category}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    {/* Category Header */}
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                        <IconComponent className="w-7 h-7 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl md:text-3xl font-semibold">{info?.title || category}</h2>
+                        <p className="text-muted-foreground">{info?.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-semibold">{info?.title || category}</h2>
-                      <p className="text-muted-foreground">{info?.description}</p>
-                    </div>
-                  </div>
 
-                  {/* Partners Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {partners.map((partner, index) => (
-                      <motion.article
-                        key={partner.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        className="bg-card rounded-lg overflow-hidden border border-border flex flex-col md:flex-row"
-                      >
-                        <div className="relative md:w-48 aspect-video md:aspect-auto flex-shrink-0">
-                          <Image
-                            src={partner.image}
-                            alt={partner.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, 200px"
-                          />
-                        </div>
-                        <div className="p-6 flex-1 flex flex-col">
-                          <h3 className="font-semibold text-lg mb-2">{partner.name}</h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed flex-1">
-                            {partner.description}
-                          </p>
-                          
-                          {/* Discount Code */}
-                          {partner.discountCode && (
-                            <div className="flex items-center gap-2 mt-4 p-3 bg-gold/10 rounded-lg">
-                              <Tag className="w-4 h-4 text-gold" />
-                              <span className="text-sm">
-                                Use code: <span className="font-mono font-semibold">{partner.discountCode}</span>
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Booking Procedure */}
-                          {partner.bookingProcedure && (
-                            <p className="mt-4 text-sm text-muted-foreground italic">
-                              {partner.bookingProcedure}
+                    {/* Partners Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {categoryPartners.map((partner, index) => (
+                        <motion.article
+                          key={partner.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className="bg-card rounded-lg overflow-hidden border border-border flex flex-col md:flex-row"
+                        >
+                          <div className="relative md:w-48 aspect-video md:aspect-auto flex-shrink-0">
+                            <Image
+                              src={partner.image}
+                              alt={partner.name}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, 200px"
+                            />
+                          </div>
+                          <div className="p-6 flex-1 flex flex-col">
+                            <h3 className="font-semibold text-lg mb-2">{partner.name}</h3>
+                            <p className="text-muted-foreground text-sm leading-relaxed flex-1">
+                              {partner.description}
                             </p>
-                          )}
-                          
-                          {/* Website Link */}
-                          {partner.website && (
-                            <a
-                              href={partner.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 mt-4 text-primary text-sm hover:underline"
-                            >
-                              {tContact('title')}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
-                      </motion.article>
-                    ))}
-                  </div>
-                </motion.div>
-              )
-            })}
+                            
+                            {/* Discount Code */}
+                            {partner.discountCode && (
+                              <div className="flex items-center gap-2 mt-4 p-3 bg-gold/10 rounded-lg">
+                                <Tag className="w-4 h-4 text-gold" />
+                                <span className="text-sm">
+                                  Use code: <span className="font-mono font-semibold">{partner.discountCode}</span>
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Booking Procedure */}
+                            {partner.bookingProcedure && (
+                              <p className="mt-4 text-sm text-muted-foreground italic">
+                                {partner.bookingProcedure}
+                              </p>
+                            )}
+                            
+                            {/* Website Link */}
+                            {partner.website && (
+                              <a
+                                href={partner.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 mt-4 text-primary text-sm hover:underline"
+                              >
+                                {tContact('title')}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        </motion.article>
+                      ))}
+                    </div>
+                  </motion.div>
+                )
+              })
+            )}
           </div>
         </section>
 
