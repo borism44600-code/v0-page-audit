@@ -1,6 +1,6 @@
-// BUILD_MARKER_2026_04_02_SAFETY_FIX_V2 - Forces recompile with safety checks
 import { Property } from './types'
 
+// Availability utilities for property date management
 // ============================================
 // DATE BLOCKING SYSTEM
 // ============================================

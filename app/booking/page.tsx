@@ -1,5 +1,4 @@
 'use client'
-// BUILD_MARKER_2026_04_02_SAFETY_FIX_V2 - Forces recompile with safety checks
 
 import { useState, useMemo, Suspense, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'

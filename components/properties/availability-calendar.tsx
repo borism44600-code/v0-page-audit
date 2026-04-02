@@ -1,6 +1,6 @@
 'use client'
-// BUILD_MARKER_2026_04_02_SAFETY_FIX_V2 - Forces recompile with safety checks
 
+// Calendar component for property availability display and date selection
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ArrowUpRight, Calendar, Moon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'

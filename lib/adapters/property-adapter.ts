@@ -211,7 +211,7 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
   
   const images = sortedImages.length > 0 
     ? sortedImages.map(img => img.image_url)
-    : ['/placeholder-property.jpg']
+    : []  // Empty array - UI handles empty state gracefully
 
   // Get title from multilingual fields, fallback to English
   const title = dbProperty.name_en || dbProperty.name_fr || 'Untitled Property'
