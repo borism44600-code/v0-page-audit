@@ -1,6 +1,5 @@
 'use client'
 
-// Calendar component for property availability display and date selection
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ArrowUpRight, Calendar, Moon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface AvailabilityCalendarProps {
-  // SAFETY: availability is optional - may be undefined for new properties
   availability?: { start: string; end: string }[] | null | undefined
   selectedDates?: { start: Date | null; end: Date | null }
   onDateSelect?: (dates: { start: Date | null; end: Date | null }) => void
@@ -24,14 +22,13 @@ const MONTHS = [
 ]
 
 export function AvailabilityCalendar({ 
-  availability = [], 
+  availability, 
   selectedDates,
   onDateSelect,
   readOnly = false,
   onBookingClick,
   compact = false
 }: AvailabilityCalendarProps) {
-  // Use null for initial state to ensure consistent SSR/client rendering
   const [dateState, setDateState] = useState<{
     today: Date
     currentMonth: number
@@ -40,7 +37,6 @@ export function AvailabilityCalendar({
   const [selectingStart, setSelectingStart] = useState(true)
   const [hoverDate, setHoverDate] = useState<Date | null>(null)
 
-  // Initialize date on client side only to avoid hydration mismatch
   useEffect(() => {
     const now = new Date()
     setDateState({
@@ -50,7 +46,6 @@ export function AvailabilityCalendar({
     })
   }, [])
 
-  // Derived state with fallbacks
   const today = dateState?.today ?? new Date()
   const currentMonth = dateState?.currentMonth ?? 0
   const currentYear = dateState?.currentYear ?? 2024
@@ -63,24 +58,14 @@ export function AvailabilityCalendar({
     return new Date(year, month, 1).getDay()
   }
 
-  // SAFETY FIX V3: Completely rewritten to handle undefined availability
-  const isDateAvailable = (date: Date): boolean => {
-    // CRITICAL: availability prop may be undefined - handle gracefully
-    if (availability === undefined || availability === null) {
-      // No availability data means assume all dates are available
-      return true
-    }
-    // CRITICAL: Verify it's actually an array
-    if (!Array.isArray(availability)) {
-      console.warn('[v0] availability is not an array:', typeof availability)
-      return true
-    }
-    // Empty array means all dates available
-    if (availability.length === 0) {
-      return true
-    }
-    // Now safe to iterate
-    for (const range of availability) {
+  const checkDateInAvailability = (date: Date): boolean => {
+    if (!availability) return true
+    if (!Array.isArray(availability)) return true
+    if (availability.length === 0) return true
+    
+    for (let i = 0; i < availability.length; i++) {
+      const range = availability[i]
+      if (!range || !range.start || !range.end) continue
       const start = new Date(range.start)
       const end = new Date(range.end)
       if (date >= start && date <= end) {
@@ -97,14 +82,11 @@ export function AvailabilityCalendar({
 
   const isDateSelected = (date: Date) => {
     if (!selectedDates?.start) return false
-    
     const dateTime = date.getTime()
     const startTime = selectedDates.start.getTime()
-    
     if (!selectedDates.end) {
       return dateTime === startTime
     }
-    
     const endTime = selectedDates.end.getTime()
     return dateTime >= startTime && dateTime <= endTime
   }
@@ -114,7 +96,6 @@ export function AvailabilityCalendar({
     const dateTime = date.getTime()
     const startTime = selectedDates.start.getTime()
     const hoverTime = hoverDate.getTime()
-    
     if (hoverTime > startTime) {
       return dateTime > startTime && dateTime <= hoverTime
     } else {
@@ -133,8 +114,8 @@ export function AvailabilityCalendar({
   }
 
   const handleDateClick = (date: Date) => {
-    if (readOnly || !onDateSelect || isDateInPast(date) || !isDateAvailable(date)) return
-
+    const isAvailable = checkDateInAvailability(date)
+    if (readOnly || !onDateSelect || isDateInPast(date) || !isAvailable) return
     if (selectingStart) {
       onDateSelect({ start: date, end: null })
       setSelectingStart(false)
@@ -173,22 +154,18 @@ export function AvailabilityCalendar({
   }
 
   const nights = calculateNights()
-
   const daysInMonth = getDaysInMonth(currentMonth, currentYear)
   const firstDay = getFirstDayOfMonth(currentMonth, currentYear)
 
   const days = []
-  
-  // Empty cells for days before the first day of the month
   for (let i = 0; i < firstDay; i++) {
     days.push(<div key={`empty-${i}`} className={cn(compact ? 'h-8' : 'h-10')} />)
   }
   
-  // Days of the month
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(currentYear, currentMonth, day)
     const isPast = isDateInPast(date)
-    const isAvailable = isDateAvailable(date)
+    const isAvailable = checkDateInAvailability(date)
     const isSelected = isDateSelected(date)
     const isStart = isStartDate(date)
     const isEnd = isEndDate(date)
@@ -231,7 +208,6 @@ export function AvailabilityCalendar({
     }
   }
 
-  // Show skeleton during SSR to avoid hydration mismatch with Date
   if (!dateState) {
     return (
       <div className={cn(
@@ -262,7 +238,6 @@ export function AvailabilityCalendar({
       )}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Header */}
       <div className={cn(
         "bg-secondary/50 border-b border-border",
         compact ? "p-4" : "p-6"
@@ -290,7 +265,6 @@ export function AvailabilityCalendar({
           </div>
         </div>
 
-        {/* Selection indicator */}
         {!readOnly && (
           <motion.div 
             initial={{ opacity: 0 }}
@@ -313,7 +287,6 @@ export function AvailabilityCalendar({
           </motion.div>
         )}
 
-        {/* Hint for read-only calendar */}
         {readOnly && onBookingClick && (
           <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
             This calendar shows availability. To book, use the 
@@ -330,7 +303,6 @@ export function AvailabilityCalendar({
       </div>
 
       <div className={cn(compact ? "p-4" : "p-6")}>
-        {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DAYS.map(day => (
             <div key={day} className={cn(
@@ -342,12 +314,10 @@ export function AvailabilityCalendar({
           ))}
         </div>
 
-        {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-1">
           {days}
         </div>
 
-        {/* Selected dates summary */}
         <AnimatePresence>
           {selectedDates?.start && selectedDates?.end && (
             <motion.div
@@ -367,7 +337,6 @@ export function AvailabilityCalendar({
           )}
         </AnimatePresence>
 
-        {/* Legend */}
         <div className={cn(
           "flex items-center gap-4 mt-4 pt-4 border-t border-border text-xs",
           compact && "gap-3"
