@@ -12,7 +12,7 @@ export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
         property_images (id, image_url, alt_text, display_order, is_cover),
         property_rooms (id, room_name, room_number, bed_type, bed_count, max_guests, has_bathroom, has_shower, has_bathtub)
       `)
-      .eq('is_active', true)
+      .eq('status', 'published')
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
     
@@ -36,7 +36,7 @@ export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<U
         property_rooms (id, room_name, room_number, bed_type, bed_count, max_guests, has_bathroom, has_shower, has_bathtub)
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .eq('is_active', true)
+      .eq('status', 'published')
       .single()
     
     if (error || !data) {

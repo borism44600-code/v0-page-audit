@@ -67,7 +67,8 @@ export async function createPropertyAction(data: CreatePropertyInput): Promise<{
     parking_spots: data.parking_spots || 0,
     meta_title: data.seo_title || null,
     meta_description: data.seo_description || null,
-    is_active: data.status === 'published',
+    status: data.status || 'draft',  // Now uses status column directly
+    is_active: data.status === 'published',  // Kept for backward compatibility
     featured: data.featured || false,
   }
   
@@ -140,7 +141,10 @@ export async function updatePropertyAction(id: string, data: UpdatePropertyInput
   if (data.parking_spots !== undefined) dbData.parking_spots = data.parking_spots
   if (data.seo_title !== undefined) dbData.meta_title = data.seo_title
   if (data.seo_description !== undefined) dbData.meta_description = data.seo_description
-  if (data.status !== undefined) dbData.is_active = data.status === 'published'
+  if (data.status !== undefined) {
+    dbData.status = data.status  // Now uses status column directly
+    dbData.is_active = data.status === 'published'  // Kept for backward compatibility
+  }
   if (data.featured !== undefined) dbData.featured = data.featured
   
   const { data: property, error } = await supabase

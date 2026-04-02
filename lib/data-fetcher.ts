@@ -40,7 +40,7 @@ export async function fetchPublishedProperties(): Promise<UiProperty[]> {
           has_bathtub
         )
       `)
-      .eq('is_active', true)
+      .eq('status', 'published')
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
     
@@ -94,7 +94,7 @@ export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiPrope
         )
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .eq('is_active', true)
+      .eq('status', 'published')
       .single()
     
     if (error || !data) {

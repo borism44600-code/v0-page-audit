@@ -176,7 +176,7 @@ export async function getPropertyBySlug(slug: string) {
       )
     `)
     .eq('slug', slug)
-    .eq('is_active', true)  // DB uses is_active boolean, not status string
+    .eq('status', 'published')  // Use status column for published properties
     .single()
   
   if (error) {
@@ -218,7 +218,8 @@ export async function createProperty(formData: PropertyFormData) {
     parking_spots: formData.parking_spots || 0,
     meta_title: formData.seo_title || null,
     meta_description: formData.seo_description || null,
-    is_active: formData.status === 'published',
+    status: formData.status || 'draft',  // Use status column directly
+    is_active: formData.status === 'published',  // Kept for backward compatibility
     featured: formData.featured || false
   }
   
@@ -286,7 +287,10 @@ export async function updateProperty(id: string, formData: Partial<PropertyFormD
   if (formData.parking_spots !== undefined) dbData.parking_spots = formData.parking_spots
   if (formData.seo_title !== undefined) dbData.meta_title = formData.seo_title
   if (formData.seo_description !== undefined) dbData.meta_description = formData.seo_description
-  if (formData.status !== undefined) dbData.is_active = formData.status === 'published'
+  if (formData.status !== undefined) {
+    dbData.status = formData.status  // Use status column directly
+    dbData.is_active = formData.status === 'published'  // Kept for backward compatibility
+  }
   if (formData.featured !== undefined) dbData.featured = formData.featured
   
   const { data, error } = await supabase
@@ -526,7 +530,7 @@ export async function getPublishedProperties(filters?: {
         is_cover
       )
     `)
-    .eq('is_active', true)  // DB uses is_active boolean, not status string
+    .eq('status', 'published')  // Use status column for published properties
     .order('featured', { ascending: false })
     .order('created_at', { ascending: false })
   

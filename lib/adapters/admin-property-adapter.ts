@@ -13,10 +13,10 @@
  * 1. This adapter is specifically for the admin edit/create forms.
  * 2. The public-facing adapter is in lib/adapters/property-adapter.ts
  * 3. The UI -> DB mapping is in app/admin/actions.ts (createPropertyAction, updatePropertyAction)
- * 4. Status handling: DB has `is_active` (boolean), UI shows draft/published/archived
- *    - is_active=true -> 'published'
- *    - is_active=false -> 'draft'
- *    - 'archived' is NOT supported in current DB schema
+ * 4. Status handling: DB now has `status` column (text) with values:
+ *    - 'draft' - Property is not visible to public
+ *    - 'published' - Property is visible to public  
+ *    - 'archived' - Property is hidden but preserved
  * 
  * FIELD MAPPING REFERENCE:
  * | UI Field              | DB Column                | Notes                          |
@@ -42,7 +42,7 @@
  * | parkingSpots          | parking_spots            | Direct mapping                 |
  * | seoTitle              | meta_title               |                                |
  * | seoDescription        | meta_description         |                                |
- * | status                | is_active                | Boolean->string conversion     |
+ * | status                | status                   | Direct mapping (draft/published/archived) |
  * | featured              | featured                 | Direct mapping                 |
  * 
  * NON-PERSISTED FIELDS (UI only):
@@ -109,7 +109,8 @@ export interface DbPropertyRaw {
   meta_title?: string | null
   meta_description?: string | null
   // Status
-  is_active?: boolean | null
+  status?: 'draft' | 'published' | 'archived' | null
+  is_active?: boolean | null  // Deprecated, kept for backward compatibility
   featured?: boolean | null
   instant_booking?: boolean | null
   // Images
@@ -230,11 +231,14 @@ export function dbToAdminForm(db: DbPropertyRaw): AdminFormProperty {
     }
   }
 
-  // Convert is_active boolean to status string
-  // Note: DB only has is_active (boolean), not draft/published/archived
-  // We interpret: is_active=true → 'published', is_active=false → 'draft'
-  // 'archived' is NOT currently supported in DB schema
-  const status = db.is_active === true ? 'published' : 'draft'
+  // Status: DB now has 'status' column (draft/published/archived)
+  // Fallback to is_active for backward compatibility during transition
+  let status: 'draft' | 'published' | 'archived' = 'draft'
+  if (db.status) {
+    status = db.status
+  } else if (db.is_active === true) {
+    status = 'published'
+  }
 
   // Get availability sync data (first record if array)
   const syncData = Array.isArray(db.availability_sync) && db.availability_sync.length > 0
@@ -368,7 +372,8 @@ export function adminFormToDb(form: AdminFormPayload): Record<string, unknown> {
     parking_spots: form.parking_spots || 0,
     meta_title: form.seo_title || null,
     meta_description: form.seo_description || null,
-    is_active: form.status === 'published',
+    status: form.status || 'draft',  // Now uses status column directly
+    is_active: form.status === 'published',  // Kept for backward compatibility
     featured: form.featured || false,
     updated_at: new Date().toISOString()
   }
@@ -402,12 +407,12 @@ export const PARTIAL_PERSISTED_FIELDS = [
 
 /**
  * Status mapping documentation.
- * DB only has `is_active` (boolean). The UI shows draft/published/archived.
+ * DB now has `status` column (text) with supported values:
+ * - 'draft' - Property not visible to public
+ * - 'published' - Property visible to public
+ * - 'archived' - Property hidden but preserved
  * 
- * Mapping:
- * - is_active = true  → status = 'published'
- * - is_active = false → status = 'draft'
- * - 'archived' status is NOT supported in current DB schema
+ * The `is_active` boolean column is kept for backward compatibility
  *   (would need a separate `is_archived` column or enum)
  */
 export const STATUS_MAPPING = {

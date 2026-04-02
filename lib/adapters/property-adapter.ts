@@ -43,7 +43,8 @@ export interface DbProperty {
   parking_spots?: number
   meta_title?: string
   meta_description?: string
-  is_active?: boolean
+  status?: 'draft' | 'published' | 'archived'
+  is_active?: boolean  // Deprecated, kept for backward compatibility
   featured?: boolean
   instant_booking?: boolean
   cover_image?: string
