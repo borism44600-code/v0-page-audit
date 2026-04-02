@@ -250,7 +250,7 @@ export function generatePropertySchema(property: {
     '@id': `${SITE_URL}/properties/${property.id}`,
     name: property.name,
     description: property.description,
-    image: property.images.map(img => `${SITE_URL}${img}`),
+    image: (property.images || []).map(img => `${SITE_URL}${img}`),
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Marrakech',

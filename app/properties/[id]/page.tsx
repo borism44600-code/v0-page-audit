@@ -149,7 +149,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    {property.location.subDistrict || property.location.district}
+                    {property.location?.subDistrict || property.location?.district || 'Marrakech'}
                   </span>
                   <span className="flex items-center gap-1 text-gold">
                     <Star className="w-4 h-4 fill-gold" />
@@ -297,24 +297,27 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               </motion.div>
 
               {/* Additional Amenities */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
-                <div className="flex flex-wrap gap-2">
-                  {property.amenities.map((amenity) => (
-                    <span 
-                      key={amenity}
-                      className="px-4 py-2 bg-secondary rounded-full text-sm"
-                    >
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
+              {/* Additional Amenities - only show if available */}
+              {property.amenities && property.amenities.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {property.amenities.map((amenity) => (
+                      <span 
+                        key={amenity}
+                        className="px-4 py-2 bg-secondary rounded-full text-sm"
+                      >
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Location */}
               <motion.div
@@ -328,11 +331,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                      <p className="font-medium">{property.location.district}</p>
-                      {property.location.subDistrict && (
+                      <p className="font-medium">{property.location?.district || 'Medina'}</p>
+                      {property.location?.subDistrict && (
                         <p className="text-muted-foreground">{property.location.subDistrict}</p>
                       )}
-                      {property.location.distanceFromCenter && (
+                      {property.location?.distanceFromCenter && (
                         <p className="text-sm text-muted-foreground mt-2">
                           Distance from center: {property.location.distanceFromCenter.replace('-', ' ')}
                         </p>

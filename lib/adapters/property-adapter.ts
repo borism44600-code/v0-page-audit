@@ -93,10 +93,12 @@ export interface UiProperty {
     address?: string
     nearbyInfo?: string
     mapLocation?: string
+    distanceFromCenter?: string
     coordinates?: { lat: number; lng: number }
   }
   sleepingArrangements: SleepingSpace[]
   features: PropertyFeatures
+  amenities: string[]  // String array for additional amenities display
   parking: {
     available: boolean
     type?: string
@@ -242,6 +244,7 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
     },
     sleepingArrangements: roomsToSleepingArrangements(dbProperty.property_rooms),
     features: amenitiestoFeatures(featureKeys),
+    amenities: featureKeys.length > 0 ? featureKeys : ['WiFi', 'Air Conditioning'],  // Default amenities
     parking: {
       available: !!dbProperty.parking_type && dbProperty.parking_type !== 'none',
       type: dbProperty.parking_type,
