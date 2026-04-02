@@ -293,8 +293,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </motion.div>
 
-              {/* Additional Amenities - only show if available */}
-              {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
+              {/* Additional Amenities - render only when amenities array exists and has items */}
+              {property.amenities && Array.isArray(property.amenities) && property.amenities.length > 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}

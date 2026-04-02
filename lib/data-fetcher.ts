@@ -14,33 +14,41 @@ import { mockProperties, mockPartners, mockServices, mockAddons } from '@/lib/da
  * Helper to convert mock property to UiProperty format
  * Ensures consistent shape between DB and mock data
  */
+/**
+ * Convert mock property to canonical UiProperty format.
+ * GUARANTEES all fields have safe defaults matching UiProperty contract.
+ */
 function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
   return {
     id: mock.id,
-    title: mock.title,
+    title: mock.title || 'Untitled Property',
     subtitle: '',
-    shortDescription: mock.shortDescription,
-    description: mock.description,
-    type: mock.type as 'riad' | 'villa' | 'apartment',
-    pricePerNight: mock.pricePerNight,
-    numberOfBedrooms: mock.numberOfBedrooms,
-    numberOfBathrooms: mock.numberOfBathrooms,
+    shortDescription: mock.shortDescription || '',
+    description: mock.description || '',
+    type: (mock.type || 'riad') as 'riad' | 'villa' | 'apartment',
+    pricePerNight: mock.pricePerNight || 0,
+    numberOfBedrooms: mock.numberOfBedrooms || 1,
+    numberOfBathrooms: mock.numberOfBathrooms || 1,
     bedroomGuestCapacity: mock.bedroomGuestCapacity || mock.numberOfBedrooms * 2,
     additionalGuestCapacity: mock.additionalGuestCapacity || 0,
-    totalGuestCapacity: mock.totalGuestCapacity,
-    images: mock.images,
-    location: {
+    totalGuestCapacity: mock.totalGuestCapacity || mock.numberOfBedrooms * 2,
+    images: mock.images || ['/placeholder-property.jpg'],  // GUARANTEED: array
+    location: {  // GUARANTEED: object with all fields
       city: 'Marrakech',
-      district: mock.location.district,
-      subDistrict: mock.location.subDistrict,
-      distanceFromCenter: mock.location.distanceFromCenter
+      district: mock.location?.district || 'Medina',
+      subDistrict: mock.location?.subDistrict || '',
+      address: '',
+      nearbyInfo: '',
+      mapLocation: '',
+      distanceFromCenter: mock.location?.distanceFromCenter || '',
+      coordinates: null
     },
-    sleepingArrangements: (mock.sleepingArrangements || []).map(s => ({
+    sleepingArrangements: (mock.sleepingArrangements || []).map(s => ({  // GUARANTEED: array
       id: s.id || crypto.randomUUID(),
-      name: s.name,
+      name: s.name || 'Bedroom',
       bedTypes: (s.beds || []).map(b => ({
-        type: b.type as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
-        quantity: b.quantity
+        type: (b.type || 'double') as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
+        quantity: b.quantity || 1
       })),
       bathroom: {
         hasPrivate: s.bathroom?.hasPrivate || false,
@@ -48,10 +56,15 @@ function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
         hasBathtub: s.bathroom?.hasBathtub || false
       }
     })),
-    features: mock.features,
-    amenities: mock.amenities || [],
-    parking: mock.parking || { available: false },
-    featured: mock.featured
+    features: mock.features || {},  // GUARANTEED: object
+    amenities: mock.amenities || [],  // GUARANTEED: array
+    parking: {  // GUARANTEED: object with all fields
+      available: mock.parking?.available || false,
+      type: mock.parking?.type || '',
+      spots: mock.parking?.spots || 0,
+      notes: mock.parking?.notes || ''
+    },
+    featured: mock.featured || false
   }
 }
 

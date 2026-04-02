@@ -71,41 +71,57 @@ export interface DbProperty {
   }[]
 }
 
-// UI property type (matching existing mockProperties format)
+/**
+ * Canonical Public Property Type
+ * 
+ * ALL fields are guaranteed to exist with safe defaults.
+ * The adapter layer MUST ensure these values are never undefined.
+ * UI components should NOT need defensive null checks for these fields.
+ * 
+ * GUARANTEED ARRAYS (always [] if no data):
+ * - images
+ * - sleepingArrangements
+ * - amenities
+ * 
+ * GUARANTEED OBJECTS (always present with defaults):
+ * - location
+ * - features
+ * - parking
+ */
 export interface UiProperty {
   id: string
   title: string
-  subtitle?: string
-  shortDescription: string
-  description: string
+  subtitle: string  // Always string, empty if not set
+  shortDescription: string  // Always string, empty if not set
+  description: string  // Always string, empty if not set
   type: 'riad' | 'villa' | 'apartment'
-  pricePerNight: number
-  numberOfBedrooms: number
-  numberOfBathrooms: number
-  bedroomGuestCapacity: number
-  additionalGuestCapacity: number
-  totalGuestCapacity: number
-  images: string[]
-  location: {
-    city: string
-    district: string
-    subDistrict?: string
-    address?: string
-    nearbyInfo?: string
-    mapLocation?: string
-    distanceFromCenter?: string
-    coordinates?: { lat: number; lng: number }
+  pricePerNight: number  // Always number, 0 if not set
+  numberOfBedrooms: number  // Always number, 1 if not set
+  numberOfBathrooms: number  // Always number, 1 if not set
+  bedroomGuestCapacity: number  // Always number
+  additionalGuestCapacity: number  // Always number, 0 if not set
+  totalGuestCapacity: number  // Always number
+  images: string[]  // GUARANTEED: Always array, never undefined
+  location: {  // GUARANTEED: Always object
+    city: string  // Default: 'Marrakech'
+    district: string  // Default: 'Medina'
+    subDistrict: string  // Default: ''
+    address: string  // Default: ''
+    nearbyInfo: string  // Default: ''
+    mapLocation: string  // Default: ''
+    distanceFromCenter: string  // Default: ''
+    coordinates: { lat: number; lng: number } | null  // Nullable, check before use
   }
-  sleepingArrangements: SleepingSpace[]
-  features: PropertyFeatures
-  amenities: string[]  // String array for additional amenities display
-  parking: {
+  sleepingArrangements: SleepingSpace[]  // GUARANTEED: Always array
+  features: PropertyFeatures  // GUARANTEED: Always object
+  amenities: string[]  // GUARANTEED: Always array
+  parking: {  // GUARANTEED: Always object
     available: boolean
-    type?: string
-    spots?: number
-    notes?: string
+    type: string  // Default: ''
+    spots: number  // Default: 0
+    notes: string  // Default: ''
   }
-  featured: boolean
+  featured: boolean  // Default: false
 }
 
 // Default features (all false)
@@ -221,10 +237,11 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
   const combinedFeatures = { ...featuresObj, ...amenitiesObj }
   const featureKeys = Object.keys(combinedFeatures).filter(k => combinedFeatures[k] === true)
 
+  // GUARANTEED: All fields have safe defaults - no undefined values
   return {
     id: dbProperty.id,
     title,
-    subtitle: '',
+    subtitle: '',  // Always string
     shortDescription: shortDesc,
     description,
     type: (dbProperty.category || 'riad') as 'riad' | 'villa' | 'apartment',
@@ -234,21 +251,25 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
     bedroomGuestCapacity: dbProperty.bedroom_guest_capacity || dbProperty.max_guests || 2,
     additionalGuestCapacity: dbProperty.additional_guest_capacity || 0,
     totalGuestCapacity: dbProperty.max_guests || dbProperty.bedroom_guest_capacity || 2,
-    images: propertyImages,
-    location: {
+    images: propertyImages,  // GUARANTEED: Always array with at least placeholder
+    location: {  // GUARANTEED: Always object with all fields
       city: dbProperty.location || 'Marrakech',
       district: dbProperty.district || 'Medina',
-      subDistrict: dbProperty.sub_district,
-      address: dbProperty.address,
-      mapLocation: dbProperty.map_url
+      subDistrict: dbProperty.sub_district || '',
+      address: dbProperty.address || '',
+      nearbyInfo: '',
+      mapLocation: dbProperty.map_url || '',
+      distanceFromCenter: '',
+      coordinates: null
     },
-    sleepingArrangements: roomsToSleepingArrangements(dbProperty.property_rooms),
-    features: amenitiestoFeatures(featureKeys),
-    amenities: featureKeys.length > 0 ? featureKeys : ['WiFi', 'Air Conditioning'],  // Default amenities
-    parking: {
+    sleepingArrangements: roomsToSleepingArrangements(dbProperty.property_rooms),  // GUARANTEED: Always array
+    features: amenitiestoFeatures(featureKeys),  // GUARANTEED: Always object
+    amenities: featureKeys.length > 0 ? featureKeys : ['WiFi', 'Air Conditioning'],  // GUARANTEED: Always array
+    parking: {  // GUARANTEED: Always object with all fields
       available: !!dbProperty.parking_type && dbProperty.parking_type !== 'none',
-      type: dbProperty.parking_type,
-      spots: dbProperty.parking_spots
+      type: dbProperty.parking_type || '',
+      spots: dbProperty.parking_spots || 0,
+      notes: ''
     },
     featured: dbProperty.featured || false
   }

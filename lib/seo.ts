@@ -254,9 +254,9 @@ export function generatePropertySchema(property: {
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Marrakech',
-      addressRegion: property.location.district,
+      addressRegion: property.location?.district || 'Medina',
       addressCountry: 'MA',
-      streetAddress: property.location.address || ''
+      streetAddress: property.location?.address || ''
     },
     geo: {
       '@type': 'GeoCoordinates',
