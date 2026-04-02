@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { getPropertyById } from '@/lib/services/properties'
-import { requireAdmin } from '@/lib/services/auth'
 import { PropertyEditForm } from '@/components/admin/property-edit-form'
 
 interface EditPropertyPageProps {
@@ -8,8 +7,8 @@ interface EditPropertyPageProps {
 }
 
 export default async function EditPropertyPage({ params }: EditPropertyPageProps) {
-  // Require admin authentication
-  await requireAdmin()
+  // NOTE: Admin authentication is currently disabled at middleware level
+  // When re-enabling, uncomment: await requireAdmin()
   
   const { id } = await params
   

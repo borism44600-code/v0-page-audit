@@ -1,10 +1,9 @@
 import { getPartners } from '@/lib/services/partners'
-import { requireAdmin } from '@/lib/services/auth'
 import { PartnersAdmin } from '@/components/admin/partners-admin'
 
 export default async function AdminPartnersPage() {
-  // Require admin authentication
-  await requireAdmin()
+  // NOTE: Admin authentication is currently disabled at middleware level
+  // When re-enabling, add: await requireAdmin()
   
   // Fetch real partners from database
   const partners = await getPartners()

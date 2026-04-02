@@ -4,12 +4,11 @@ import { Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { getProperties } from '@/lib/services/properties'
-import { requireAdmin } from '@/lib/services/auth'
 import { PropertiesTable } from '@/components/admin/properties-table'
 
 export default async function AdminPropertiesPage() {
-  // Require admin authentication
-  await requireAdmin()
+  // NOTE: Admin authentication is currently disabled at middleware level
+  // When re-enabling, add: await requireAdmin()
   
   // Fetch real properties from database
   const properties = await getProperties()
