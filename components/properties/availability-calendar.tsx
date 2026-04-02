@@ -1,4 +1,5 @@
 'use client'
+// BUILD_MARKER_2026_04_02_SAFETY_FIX_V2 - Forces recompile with safety checks
 
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ArrowUpRight, Calendar, Moon } from 'lucide-react'
@@ -7,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface AvailabilityCalendarProps {
-  availability: { start: string; end: string }[]
+  // SAFETY: availability is optional - may be undefined for new properties
+  availability?: { start: string; end: string }[] | null | undefined
   selectedDates?: { start: Date | null; end: Date | null }
   onDateSelect?: (dates: { start: Date | null; end: Date | null }) => void
   readOnly?: boolean
@@ -61,17 +63,31 @@ export function AvailabilityCalendar({
     return new Date(year, month, 1).getDay()
   }
 
-  /** Check if a date is available - SAFE: handles undefined availability */
-  const isDateAvailable = (date: Date) => {
-    // Ensure availability is always a valid array before accessing
-    const safeAvail = (availability && Array.isArray(availability)) ? availability : []
-    // No availability data means all dates are available
-    if (safeAvail.length === 0) return true
-    return safeAvail.some(range => {
+  // SAFETY FIX V3: Completely rewritten to handle undefined availability
+  const isDateAvailable = (date: Date): boolean => {
+    // CRITICAL: availability prop may be undefined - handle gracefully
+    if (availability === undefined || availability === null) {
+      // No availability data means assume all dates are available
+      return true
+    }
+    // CRITICAL: Verify it's actually an array
+    if (!Array.isArray(availability)) {
+      console.warn('[v0] availability is not an array:', typeof availability)
+      return true
+    }
+    // Empty array means all dates available
+    if (availability.length === 0) {
+      return true
+    }
+    // Now safe to iterate
+    for (const range of availability) {
       const start = new Date(range.start)
       const end = new Date(range.end)
-      return date >= start && date <= end
-    })
+      if (date >= start && date <= end) {
+        return true
+      }
+    }
+    return false
   }
 
   const isDateInPast = (date: Date) => {

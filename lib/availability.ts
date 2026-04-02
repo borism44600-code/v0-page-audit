@@ -1,3 +1,4 @@
+// BUILD_MARKER_2026_04_02_SAFETY_FIX_V2 - Forces recompile with safety checks
 import { Property } from './types'
 
 // ============================================
@@ -153,24 +154,40 @@ export function calculateNights(start: Date, end: Date): number {
  * Check if a specific date is within availability ranges
  * Also checks against date blocks if propertyId is provided
  */
-/** Check if a specific date is available - SAFE: handles undefined availability */
+// SAFETY FIX V3: Completely rewritten to handle undefined availability
 export function isDateAvailable(
   date: Date,
   availability: { start: string; end: string }[] | undefined | null,
   propertyId?: string
 ): boolean {
-  // Ensure availability is always a valid array before any operations
-  const safeAvailability = (availability && Array.isArray(availability)) ? availability : []
-  // No availability data means all dates are available by default
-  if (safeAvailability.length === 0) return true
-  // Check if date is within any availability range
-  const inAvailabilityRange = safeAvailability.some(range => {
+  // CRITICAL: availability may be undefined or null - handle gracefully
+  if (availability === undefined || availability === null) {
+    // No availability data means assume all dates are available
+    return true
+  }
+  // CRITICAL: Verify it's actually an array
+  if (!Array.isArray(availability)) {
+    console.warn('[v0] isDateAvailable: availability is not an array:', typeof availability)
+    return true
+  }
+  // Empty array means all dates available
+  if (availability.length === 0) {
+    return true
+  }
+  // Now safe to iterate - check if date is in any availability range
+  let inAvailabilityRange = false
+  for (const range of availability) {
     const start = new Date(range.start)
     const end = new Date(range.end)
-    return date >= start && date <= end
-  })
+    if (date >= start && date <= end) {
+      inAvailabilityRange = true
+      break
+    }
+  }
   
-  if (!inAvailabilityRange) return false
+  if (!inAvailabilityRange) {
+    return false
+  }
   
   // If propertyId provided, also check date blocks
   if (propertyId) {

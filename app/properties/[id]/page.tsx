@@ -1,4 +1,5 @@
 'use client'
+// BUILD_MARKER_2026_04_02_SAFETY_FIX_V2 - Forces recompile with safety checks
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
