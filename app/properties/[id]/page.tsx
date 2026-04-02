@@ -45,6 +45,38 @@ const propertyStories = {
   }
 }
 
+/**
+ * AmenitiesSection - Renders additional amenities with built-in null safety
+ * SAFETY: Returns null if amenities prop is undefined, null, not an array, or empty
+ * This prevents any .map() call on undefined values
+ */
+function AmenitiesSection({ amenities }: { amenities?: string[] }) {
+  if (!amenities || !Array.isArray(amenities) || amenities.length === 0) {
+    return null
+  }
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+    >
+      <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
+      <div className="flex flex-wrap gap-2">
+        {amenities.map((amenity) => (
+          <span 
+            key={amenity}
+            className="px-4 py-2 bg-secondary rounded-full text-sm"
+          >
+            {amenity}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [property, setProperty] = useState<UiProperty | null>(null)
@@ -292,34 +324,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </motion.div>
 
-              {/* Additional Amenities - safely render only when valid amenities array exists */}
-              {(() => {
-                // Safety check: ensure amenities is a valid non-empty array
-                const amenitiesList = property?.amenities
-                if (!amenitiesList || !Array.isArray(amenitiesList) || amenitiesList.length === 0) {
-                  return null
-                }
-                return (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
-                    <div className="flex flex-wrap gap-2">
-                      {amenitiesList.map((amenity) => (
-                        <span 
-                          key={amenity}
-                          className="px-4 py-2 bg-secondary rounded-full text-sm"
-                        >
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                  </motion.div>
-                )
-              })()}
+              {/* Additional Amenities Section */}
+              <AmenitiesSection amenities={property?.amenities} />
 
               {/* Location */}
               <motion.div

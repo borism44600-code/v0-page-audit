@@ -29,8 +29,6 @@ export function AvailabilityCalendar({
   onBookingClick,
   compact = false
 }: AvailabilityCalendarProps) {
-  // SAFETY: Ensure availability is always a valid array, even if undefined/null passed
-  const safeAvailability = (availability && Array.isArray(availability)) ? availability : []
   // Use null for initial state to ensure consistent SSR/client rendering
   const [dateState, setDateState] = useState<{
     today: Date
@@ -63,9 +61,15 @@ export function AvailabilityCalendar({
     return new Date(year, month, 1).getDay()
   }
 
+  /**
+   * Check if a date is available for booking
+   * SAFETY: Handles undefined/null/non-array availability prop
+   * Returns true (available) if no availability data exists
+   */
   const isDateAvailable = (date: Date) => {
-    if (safeAvailability.length === 0) return true  // If no availability data, assume all dates available
-    return safeAvailability.some(range => {
+    const safeAvail = (availability && Array.isArray(availability)) ? availability : []
+    if (safeAvail.length === 0) return true
+    return safeAvail.some(range => {
       const start = new Date(range.start)
       const end = new Date(range.end)
       return date >= start && date <= end
