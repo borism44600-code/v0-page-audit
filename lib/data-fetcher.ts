@@ -11,6 +11,51 @@ import { adaptPropertiesToUi, adaptPropertyToUi, type DbProperty, type UiPropert
 import { mockProperties, mockPartners, mockServices, mockAddons } from '@/lib/data'
 
 /**
+ * Helper to convert mock property to UiProperty format
+ * Ensures consistent shape between DB and mock data
+ */
+function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
+  return {
+    id: mock.id,
+    title: mock.title,
+    subtitle: '',
+    shortDescription: mock.shortDescription,
+    description: mock.description,
+    type: mock.type as 'riad' | 'villa' | 'apartment',
+    pricePerNight: mock.pricePerNight,
+    numberOfBedrooms: mock.numberOfBedrooms,
+    numberOfBathrooms: mock.numberOfBathrooms,
+    bedroomGuestCapacity: mock.bedroomGuestCapacity || mock.numberOfBedrooms * 2,
+    additionalGuestCapacity: mock.additionalGuestCapacity || 0,
+    totalGuestCapacity: mock.totalGuestCapacity,
+    images: mock.images,
+    location: {
+      city: 'Marrakech',
+      district: mock.location.district,
+      subDistrict: mock.location.subDistrict,
+      distanceFromCenter: mock.location.distanceFromCenter
+    },
+    sleepingArrangements: (mock.sleepingArrangements || []).map(s => ({
+      id: s.id || crypto.randomUUID(),
+      name: s.name,
+      bedTypes: (s.beds || []).map(b => ({
+        type: b.type as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
+        quantity: b.quantity
+      })),
+      bathroom: {
+        hasPrivate: s.bathroom?.hasPrivate || false,
+        hasShower: s.bathroom?.hasShower || false,
+        hasBathtub: s.bathroom?.hasBathtub || false
+      }
+    })),
+    features: mock.features,
+    amenities: mock.amenities || [],
+    parking: mock.parking || { available: false },
+    featured: mock.featured
+  }
+}
+
+/**
  * Fetch all published properties for public pages
  */
 export async function fetchPublishedProperties(): Promise<UiProperty[]> {
@@ -46,19 +91,19 @@ export async function fetchPublishedProperties(): Promise<UiProperty[]> {
     
     if (error) {
       console.error('Error fetching properties:', error)
-      // Fall back to mock data
-      return mockProperties
+      // Fall back to mock data (adapted to UiProperty format)
+      return mockProperties.map(mockToUiProperty)
     }
     
     if (!data || data.length === 0) {
-      // No database properties yet, use mock data
-      return mockProperties
+      // No database properties yet, use mock data (adapted to UiProperty format)
+      return mockProperties.map(mockToUiProperty)
     }
     
     return adaptPropertiesToUi(data as DbProperty[])
   } catch (error) {
     console.error('Error in fetchPublishedProperties:', error)
-    return mockProperties
+    return mockProperties.map(mockToUiProperty)
   }
 }
 
@@ -98,16 +143,16 @@ export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiPrope
       .single()
     
     if (error || !data) {
-      // Try mock data
-      const mockProperty = mockProperties.find(p => p.id === idOrSlug)
-      return mockProperty || null
+      // Try mock data (adapted to UiProperty format)
+      const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
+      return mockProperty ? mockToUiProperty(mockProperty) : null
     }
     
     return adaptPropertyToUi(data as DbProperty)
   } catch (error) {
     console.error('Error in fetchPropertyByIdOrSlug:', error)
-    const mockProperty = mockProperties.find(p => p.id === idOrSlug)
-    return mockProperty || null
+    const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
+    return mockProperty ? mockToUiProperty(mockProperty) : null
   }
 }
 

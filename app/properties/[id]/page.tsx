@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
 import { mockProperties, mockServices, mockAddons } from '@/lib/data'
 import { getPropertyBySlugClient as fetchPropertyBySlug } from '@/lib/data-fetcher-client'
+import { type UiProperty } from '@/lib/adapters/property-adapter'
 import { FEATURE_LABELS, BED_TYPE_LABELS, BATHROOM_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -47,29 +48,21 @@ const propertyStories = {
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [property, setProperty] = useState<typeof mockProperties[0] | null>(null)
+  const [property, setProperty] = useState<UiProperty | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadProperty() {
       try {
-        // Try to fetch from database first
+        // Fetch from database - client fetcher handles mock fallback internally
         const dbProperty = await fetchPropertyBySlug(id)
         if (dbProperty) {
           setProperty(dbProperty)
-        } else {
-          // Fallback to mock data for demo
-          const mockProperty = mockProperties.find(p => p.id === id || p.slug === id)
-          if (mockProperty) {
-            setProperty(mockProperty)
-          }
         }
+        // If no property found (null returned), property state remains null and notFound() is called
       } catch (error) {
-        // Fallback to mock data on error
-        const mockProperty = mockProperties.find(p => p.id === id || p.slug === id)
-        if (mockProperty) {
-          setProperty(mockProperty)
-        }
+        // fetchPropertyBySlug handles fallback internally, so if we get here it's a real error
+        console.error('Error loading property:', error)
       } finally {
         setLoading(false)
       }
@@ -99,11 +92,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     notFound()
   }
 
-  const activeFeatures = (Object.entries(property.features) as [keyof PropertyFeatures, boolean][])
+  // Safe access to features - ensure it's an object before iterating
+  const features = property.features || {}
+  const activeFeatures = (Object.entries(features) as [keyof PropertyFeatures, boolean][])
     .filter(([, value]) => value)
     .map(([key]) => ({ key, label: FEATURE_LABELS[key] }))
 
-  const story = propertyStories[property.type]
+  // Safe access to property type with fallback
+  const propertyType = property.type || 'riad'
+  const story = propertyStories[propertyType]
 
   return (
     <>
@@ -117,10 +114,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </Link>
             <span>/</span>
             <Link 
-              href={`/properties/${property.type}s`} 
+              href={`/properties/${propertyType}s`} 
               className="hover:text-foreground transition-colors capitalize"
             >
-              {property.type}s
+              {propertyType}s
             </Link>
             <span>/</span>
             <span className="text-foreground">{property.title}</span>
@@ -145,7 +142,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               >
                 <div className="flex items-center gap-3 text-muted-foreground mb-3">
                   <span className="px-3 py-1 bg-gold/10 text-gold text-xs uppercase tracking-wider rounded-full font-medium">
-                    {property.type}
+                    {propertyType}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
@@ -296,9 +293,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </motion.div>
 
-              {/* Additional Amenities */}
               {/* Additional Amenities - only show if available */}
-              {property.amenities && property.amenities.length > 0 && (
+              {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -317,7 +313,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     ))}
                   </div>
                 </motion.div>
-              )}
+              ) : null}
 
               {/* Location */}
               <motion.div
@@ -427,7 +423,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   <div className="space-y-3 mb-6 pb-6 border-b border-border">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Property Type</span>
-                      <span className="capitalize font-medium">{property.type}</span>
+                      <span className="capitalize font-medium">{propertyType}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Bedrooms</span>
