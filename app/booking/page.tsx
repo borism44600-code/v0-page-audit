@@ -21,7 +21,8 @@ import { CancellationPolicy } from '@/components/booking/cancellation-policy'
 import { ServicesSelector } from '@/components/booking/services-selector'
 import { PayPalPayment, PaymentSuccessDetails } from '@/components/payment/paypal-payment'
 import type { BreakfastBooking, MealBooking, TaxiBooking, OtherServiceBooking } from '@/lib/service-booking'
-import { mockProperties, mockAddons } from '@/lib/data'
+import { fetchPublishedPropertiesClient } from '@/lib/data-fetcher-client'
+import { type UiProperty } from '@/lib/adapters/property-adapter'
 import { 
   checkPropertyAvailability, 
   generateSplitStaySuggestion,
@@ -77,7 +78,26 @@ function BookingContent() {
   const [paymentDetails, setPaymentDetails] = useState<PaymentSuccessDetails | null>(null)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
-  const selectedProperty = mockProperties.find(p => p.id === selectedPropertyId)
+  // Properties from database
+  const [properties, setProperties] = useState<UiProperty[]>([])
+  const [propertiesLoading, setPropertiesLoading] = useState(true)
+
+  // Fetch properties from database on mount
+  useEffect(() => {
+    async function loadProperties() {
+      try {
+        const data = await fetchPublishedPropertiesClient()
+        setProperties(data)
+      } catch (error) {
+        console.error('Error loading properties:', error)
+      } finally {
+        setPropertiesLoading(false)
+      }
+    }
+    loadProperties()
+  }, [])
+
+  const selectedProperty = properties.find(p => p.id === selectedPropertyId)
 
   // Check availability when dates change
   useEffect(() => {
@@ -89,7 +109,7 @@ function BookingContent() {
           selectedProperty,
           dates.start,
           dates.end,
-          mockProperties
+          properties
         )
         setSplitStaySuggestion(suggestion)
         setAcceptedSplitStay(false)
@@ -111,7 +131,7 @@ function BookingContent() {
     if (acceptedSplitStay && splitStaySuggestion) {
       // Calculate total for split stay
       splitStaySuggestion.segments.forEach(segment => {
-        const property = mockProperties.find(p => p.id === segment.propertyId)
+        const property = properties.find(p => p.id === segment.propertyId)
         if (property) {
           total += property.pricePerNight * segment.nights
         }
@@ -119,18 +139,6 @@ function BookingContent() {
     } else if (selectedProperty) {
       total = selectedProperty.pricePerNight * nights
     }
-    
-    // Add legacy addons (kept for backward compatibility)
-    selectedAddons.forEach(addon => {
-      const addonData = mockAddons.find(a => a.id === addon.id)
-      if (addonData) {
-        if (addonData.pricePerPerson) {
-          total += addonData.pricePerPerson * addon.persons * addon.quantity
-        } else if (addonData.priceFlat) {
-          total += addonData.priceFlat * addon.quantity
-        }
-      }
-    })
     
     // Add new services total
     total += bookedServices.total
@@ -306,64 +314,88 @@ function BookingContent() {
                     <h2 className="text-2xl font-semibold mb-2">Choose Your Property</h2>
                     <p className="text-muted-foreground">Select from our collection of carefully chosen stays</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {mockProperties.map((property) => (
-                      <motion.button
-                        key={property.id}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSelectedPropertyId(property.id)}
-                        className={cn(
-                          'text-left p-4 rounded-xl border-2 transition-all',
-                          selectedPropertyId === property.id
-                            ? 'border-gold bg-gold/5 shadow-lg'
-                            : 'border-border hover:border-gold/50'
-                        )}
-                      >
-                        <div className="flex gap-4">
-                          <div className="relative w-28 h-28 rounded-lg overflow-hidden flex-shrink-0">
-                            <Image
-                              src={property.images[0] || '/images/placeholder-property.jpg'}
-                              alt={property.title}
-                              fill
-                              className="object-cover"
-                              sizes="112px"
-                            />
-                            {selectedPropertyId === property.id && (
-                              <div className="absolute inset-0 bg-gold/20 flex items-center justify-center">
-                                <CheckCircle2 className="w-8 h-8 text-gold" />
+                  {propertiesLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="h-36 bg-muted rounded-xl animate-pulse" />
+                      ))}
+                    </div>
+                  ) : properties.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                        <Building2 className="w-8 h-8 text-muted-foreground/50" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">No Properties Available</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                        We&apos;re currently preparing our collection. Contact us to be notified when properties become available.
+                      </p>
+                      <Link href="/contact">
+                        <Button variant="outline" className="gap-2">
+                          Contact Us
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {properties.map((property) => (
+                        <motion.button
+                          key={property.id}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setSelectedPropertyId(property.id)}
+                          className={cn(
+                            'text-left p-4 rounded-xl border-2 transition-all',
+                            selectedPropertyId === property.id
+                              ? 'border-gold bg-gold/5 shadow-lg'
+                              : 'border-border hover:border-gold/50'
+                          )}
+                        >
+                          <div className="flex gap-4">
+                            <div className="relative w-28 h-28 rounded-lg overflow-hidden flex-shrink-0">
+                              <Image
+                                src={property.images[0] || '/images/placeholder-property.jpg'}
+                                alt={property.title}
+                                fill
+                                className="object-cover"
+                                sizes="112px"
+                              />
+                              {selectedPropertyId === property.id && (
+                                <div className="absolute inset-0 bg-gold/20 flex items-center justify-center">
+                                  <CheckCircle2 className="w-8 h-8 text-gold" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs uppercase tracking-wider text-gold font-medium">{property.type}</span>
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Star className="w-3 h-3 fill-gold text-gold" />4.9
+                                </span>
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs uppercase tracking-wider text-gold font-medium">{property.type}</span>
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Star className="w-3 h-3 fill-gold text-gold" />4.9
-                              </span>
+                              <h3 className="font-medium truncate">{property.title}</h3>
+                              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3" />
+                                {property.location.district}
+                              </p>
+                              <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Bed className="w-3 h-3" />{property.numberOfBedrooms}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Bath className="w-3 h-3" />{property.numberOfBathrooms}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" />{property.totalGuestCapacity}
+                                </span>
+                              </div>
+                              <p className="mt-2 font-semibold text-lg">{property.pricePerNight}€<span className="text-sm font-normal text-muted-foreground">/night</span></p>
                             </div>
-                            <h3 className="font-medium truncate">{property.title}</h3>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                              <MapPin className="w-3 h-3" />
-                              {property.location.district}
-                            </p>
-                            <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Bed className="w-3 h-3" />{property.numberOfBedrooms}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Bath className="w-3 h-3" />{property.bathrooms}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />{property.totalGuestCapacity}
-                              </span>
-                            </div>
-                            <p className="mt-2 font-semibold text-lg">{property.pricePerNight}€<span className="text-sm font-normal text-muted-foreground">/night</span></p>
                           </div>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -641,7 +673,7 @@ function BookingContent() {
                         </div>
                         <div className="space-y-4">
                           {splitStaySuggestion.segments.map((segment, idx) => {
-                            const property = mockProperties.find(p => p.id === segment.propertyId)
+                            const property = properties.find(p => p.id === segment.propertyId)
                             if (!property) return null
                             return (
                               <div key={idx} className="flex gap-4 p-3 bg-secondary/30 rounded-lg">
@@ -721,7 +753,7 @@ function BookingContent() {
                     <div className="p-6 space-y-3 border-b border-border">
                       {acceptedSplitStay && splitStaySuggestion ? (
                         splitStaySuggestion.segments.map((segment, idx) => {
-                          const property = mockProperties.find(p => p.id === segment.propertyId)
+                          const property = properties.find(p => p.id === segment.propertyId)
                           if (!property) return null
                           return (
                             <div key={idx} className="flex justify-between">

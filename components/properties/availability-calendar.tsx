@@ -29,8 +29,8 @@ export function AvailabilityCalendar({
   onBookingClick,
   compact = false
 }: AvailabilityCalendarProps) {
-  // Ensure availability is always an array
-  const safeAvailability = Array.isArray(availability) ? availability : []
+  // SAFETY: Ensure availability is always a valid array, even if undefined/null passed
+  const safeAvailability = (availability && Array.isArray(availability)) ? availability : []
   // Use null for initial state to ensure consistent SSR/client rendering
   const [dateState, setDateState] = useState<{
     today: Date

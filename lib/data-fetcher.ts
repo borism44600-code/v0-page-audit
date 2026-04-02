@@ -1,6 +1,9 @@
 /**
  * Data fetching utilities for public pages (SERVER-ONLY)
- * Fetches from database and falls back to mock data if needed
+ * Fetches from database ONLY - no mock/demo fallbacks for user-facing flows.
+ * 
+ * RUNTIME POLICY: Return empty arrays or null when no real data exists.
+ * UI components must render premium empty states instead of fake content.
  * 
  * WARNING: This file uses next/headers and can ONLY be imported in Server Components.
  * For client components, use @/lib/data-fetcher-client instead
@@ -8,69 +11,10 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { adaptPropertiesToUi, adaptPropertyToUi, type DbProperty, type UiProperty } from '@/lib/adapters/property-adapter'
-import { mockProperties, mockPartners, mockServices, mockAddons } from '@/lib/data'
-
-/**
- * Helper to convert mock property to UiProperty format
- * Ensures consistent shape between DB and mock data
- */
-/**
- * Convert mock property to canonical UiProperty format.
- * GUARANTEES all fields have TRUTHFUL safe defaults - no fake content.
- * Empty arrays mean "no data" - UI shows premium empty states.
- */
-function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
-  return {
-    id: mock.id,
-    title: mock.title || 'Untitled Property',
-    subtitle: '',
-    shortDescription: mock.shortDescription || '',
-    description: mock.description || '',
-    type: (mock.type || 'riad') as 'riad' | 'villa' | 'apartment',
-    pricePerNight: mock.pricePerNight || 0,
-    numberOfBedrooms: mock.numberOfBedrooms || 1,
-    numberOfBathrooms: mock.numberOfBathrooms || 1,
-    bedroomGuestCapacity: mock.bedroomGuestCapacity || mock.numberOfBedrooms * 2,
-    additionalGuestCapacity: mock.additionalGuestCapacity || 0,
-    totalGuestCapacity: mock.totalGuestCapacity || mock.numberOfBedrooms * 2,
-    images: mock.images || [],  // GUARANTEED: array (may be empty - no fake images)
-    location: {  // GUARANTEED: object with all fields
-      city: 'Marrakech',
-      district: mock.location?.district || 'Medina',
-      subDistrict: mock.location?.subDistrict || '',
-      address: '',
-      nearbyInfo: '',
-      mapLocation: '',
-      distanceFromCenter: mock.location?.distanceFromCenter || '',
-      coordinates: null
-    },
-    sleepingArrangements: (mock.sleepingArrangements || []).map(s => ({  // GUARANTEED: array
-      id: s.id || crypto.randomUUID(),
-      name: s.name || 'Bedroom',
-      bedTypes: (s.beds || []).map(b => ({
-        type: (b.type || 'double') as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
-        quantity: b.quantity || 1
-      })),
-      bathroom: {
-        hasPrivate: s.bathroom?.hasPrivate || false,
-        hasShower: s.bathroom?.hasShower || false,
-        hasBathtub: s.bathroom?.hasBathtub || false
-      }
-    })),
-    features: mock.features || {},  // GUARANTEED: object
-    amenities: mock.amenities || [],  // GUARANTEED: array
-    parking: {  // GUARANTEED: object with all fields
-      available: mock.parking?.available || false,
-      type: mock.parking?.type || '',
-      spots: mock.parking?.spots || 0,
-      notes: mock.parking?.notes || ''
-    },
-    featured: mock.featured || false
-  }
-}
 
 /**
  * Fetch all published properties for public pages
+ * Returns empty array if no properties exist - NEVER returns mock data
  */
 export async function fetchPublishedProperties(): Promise<UiProperty[]> {
   try {
@@ -105,31 +49,29 @@ export async function fetchPublishedProperties(): Promise<UiProperty[]> {
     
     if (error) {
       console.error('Error fetching properties:', error)
-      // Fall back to mock data (adapted to UiProperty format)
-      return mockProperties.map(mockToUiProperty)
+      return []  // Return empty array, not mock data
     }
     
     if (!data || data.length === 0) {
-      // No database properties yet, use mock data (adapted to UiProperty format)
-      return mockProperties.map(mockToUiProperty)
+      return []  // No properties yet - UI shows premium empty state
     }
     
     return adaptPropertiesToUi(data as DbProperty[])
   } catch (error) {
     console.error('Error in fetchPublishedProperties:', error)
-    return mockProperties.map(mockToUiProperty)
+    return []  // Return empty array on error
   }
 }
 
 /**
  * Fetch a single property by ID or slug
+ * Returns null if not found - NEVER returns mock data
  */
 export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiProperty | null> {
   try {
     const supabase = await createClient()
     
-    // Try to fetch by ID first
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from('properties')
       .select(`
         *,
@@ -157,21 +99,19 @@ export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiPrope
       .single()
     
     if (error || !data) {
-      // Try mock data (adapted to UiProperty format)
-      const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
-      return mockProperty ? mockToUiProperty(mockProperty) : null
+      return null  // Property not found - no mock fallback
     }
     
     return adaptPropertyToUi(data as DbProperty)
   } catch (error) {
     console.error('Error in fetchPropertyByIdOrSlug:', error)
-    const mockProperty = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
-    return mockProperty ? mockToUiProperty(mockProperty) : null
+    return null  // Return null on error
   }
 }
 
 /**
  * Fetch all published partners
+ * Returns empty array if no partners exist - NEVER returns mock data
  */
 export async function fetchPublishedPartners() {
   try {
@@ -185,7 +125,7 @@ export async function fetchPublishedPartners() {
       .order('name', { ascending: true })
     
     if (error || !data || data.length === 0) {
-      return mockPartners
+      return []  // No partners - UI shows premium empty state
     }
     
     // Adapt to expected format
@@ -201,12 +141,13 @@ export async function fetchPublishedPartners() {
     }))
   } catch (error) {
     console.error('Error in fetchPublishedPartners:', error)
-    return mockPartners
+    return []
   }
 }
 
 /**
  * Fetch services
+ * Returns empty array if no services exist - NEVER returns mock data
  */
 export async function fetchServices() {
   try {
@@ -220,7 +161,7 @@ export async function fetchServices() {
       .order('sort_order', { ascending: true })
     
     if (error || !data || data.length === 0) {
-      return mockServices
+      return []  // No services - UI shows premium empty state
     }
     
     // Adapt to expected format
@@ -234,15 +175,17 @@ export async function fetchServices() {
     }))
   } catch (error) {
     console.error('Error in fetchServices:', error)
-    return mockServices
+    return []
   }
 }
 
 /**
  * Fetch add-ons
+ * Returns empty array - NEVER returns mock data
  */
 export async function fetchAddons() {
-  return mockAddons
+  // TODO: Implement when add-ons table exists
+  return []
 }
 
 // Aliases for backward compatibility

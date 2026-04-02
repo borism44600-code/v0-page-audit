@@ -1,14 +1,18 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { ArrowRight, Building2 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { PropertyFilters, PropertyFiltersState } from '@/components/properties/property-filters'
 import { PropertiesGrid } from '@/components/properties/properties-grid'
 import { DisplayModeToggle, DisplayMode } from '@/components/properties/display-mode-toggle'
-import { mockProperties } from '@/lib/data'
-import { Property, PropertyFeatures } from '@/lib/types'
+import { Button } from '@/components/ui/button'
+import { fetchPublishedPropertiesClient } from '@/lib/data-fetcher-client'
+import { type UiProperty } from '@/lib/adapters/property-adapter'
+import { PropertyFeatures } from '@/lib/types'
 
 const defaultFilters: PropertyFiltersState = {
   priceRange: [0, 2000],
@@ -20,7 +24,7 @@ const defaultFilters: PropertyFiltersState = {
 }
 
 interface CategoryConfig {
-  type: Property['type']
+  type: 'riad' | 'villa' | 'apartment'
   title: string
   subtitle: string
   description: string
@@ -35,8 +39,24 @@ interface PropertyCategoryPageProps {
 export function PropertyCategoryPage({ config }: PropertyCategoryPageProps) {
   const [filters, setFilters] = useState<PropertyFiltersState>(defaultFilters)
   const [displayMode, setDisplayMode] = useState<DisplayMode>('medium')
+  const [allProperties, setAllProperties] = useState<UiProperty[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const categoryProperties = mockProperties.filter(p => p.type === config.type)
+  useEffect(() => {
+    async function loadProperties() {
+      try {
+        const data = await fetchPublishedPropertiesClient()
+        setAllProperties(data)
+      } catch (error) {
+        console.error('Error loading properties:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProperties()
+  }, [])
+
+  const categoryProperties = allProperties.filter(p => p.type === config.type)
 
   const filteredProperties = useMemo(() => {
     return categoryProperties.filter(property => {
@@ -60,9 +80,6 @@ export function PropertyCategoryPage({ config }: PropertyCategoryPageProps) {
           feature => property.features[feature as keyof PropertyFeatures]
         )
         if (!hasAllFeatures) return false
-      }
-      if (filters.parking.length > 0 && !filters.parking.includes(property.parking)) {
-        return false
       }
       return true
     })
@@ -97,37 +114,81 @@ export function PropertyCategoryPage({ config }: PropertyCategoryPageProps) {
 
         {/* Content */}
         <div className="container mx-auto px-6 py-12">
-          <div className="flex gap-8">
-            <PropertyFilters 
-              filters={filters}
-              onFiltersChange={setFilters}
-              onReset={() => setFilters(defaultFilters)}
-            />
-
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-muted-foreground">
-                  <span className="font-medium text-foreground">{filteredProperties.length}</span>
-                  {' '}{config.pluralName} found
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="lg:hidden">
-                    <PropertyFilters 
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                      onReset={() => setFilters(defaultFilters)}
-                    />
-                  </div>
-                  <DisplayModeToggle mode={displayMode} onModeChange={setDisplayMode} />
-                </div>
+          {loading ? (
+            <div className="animate-pulse">
+              <div className="h-8 w-48 bg-muted rounded mb-6" />
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-80 bg-muted rounded-xl" />
+                ))}
               </div>
-
-              <PropertiesGrid 
-                properties={filteredProperties} 
-                displayMode={displayMode}
-              />
             </div>
-          </div>
+          ) : categoryProperties.length === 0 ? (
+            // Premium empty state
+            <div className="text-center py-16">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+                <Building2 className="w-10 h-10 text-muted-foreground/50" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-3">No {config.pluralName} Available Yet</h2>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                We&apos;re currently preparing our collection of {config.pluralName.toLowerCase()} in Marrakech.
+                Contact us to be notified when new properties become available.
+              </p>
+              <Link href="/contact">
+                <Button variant="outline" className="gap-2">
+                  Get Notified
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="flex gap-8">
+              <PropertyFilters 
+                filters={filters}
+                onFiltersChange={setFilters}
+                onReset={() => setFilters(defaultFilters)}
+              />
+
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">{filteredProperties.length}</span>
+                    {' '}{config.pluralName} found
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="lg:hidden">
+                      <PropertyFilters 
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        onReset={() => setFilters(defaultFilters)}
+                      />
+                    </div>
+                    <DisplayModeToggle mode={displayMode} onModeChange={setDisplayMode} />
+                  </div>
+                </div>
+
+                {filteredProperties.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      No properties match your filters. Try adjusting your criteria.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setFilters(defaultFilters)}
+                    >
+                      Reset Filters
+                    </Button>
+                  </div>
+                ) : (
+                  <PropertiesGrid 
+                    properties={filteredProperties} 
+                    displayMode={displayMode}
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

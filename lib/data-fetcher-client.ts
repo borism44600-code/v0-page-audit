@@ -1,62 +1,18 @@
+/**
+ * Data fetching utilities for CLIENT components
+ * Fetches from database ONLY - no mock/demo fallbacks for user-facing flows.
+ * 
+ * RUNTIME POLICY: Return empty arrays or null when no real data exists.
+ * UI components must render premium empty states instead of fake content.
+ */
+
 import { createClient } from '@/lib/supabase/client'
 import { adaptPropertiesToUi, adaptPropertyToUi, type DbProperty, type UiProperty } from '@/lib/adapters/property-adapter'
-import { mockProperties, mockPartners } from '@/lib/data'
 
 /**
- * Convert mock property to canonical UiProperty format.
- * GUARANTEES all fields have TRUTHFUL safe defaults - no fake content.
- * Empty arrays mean "no data" - UI shows premium empty states.
+ * Fetch all published properties (client-side)
+ * Returns empty array if no properties exist - NEVER returns mock data
  */
-function mockToUiProperty(mock: typeof mockProperties[0]): UiProperty {
-  return {
-    id: mock.id,
-    title: mock.title || 'Untitled Property',
-    subtitle: '',
-    shortDescription: mock.shortDescription || '',
-    description: mock.description || '',
-    type: (mock.type || 'riad') as 'riad' | 'villa' | 'apartment',
-    pricePerNight: mock.pricePerNight || 0,
-    numberOfBedrooms: mock.numberOfBedrooms || 1,
-    numberOfBathrooms: mock.numberOfBathrooms || 1,
-    bedroomGuestCapacity: mock.bedroomGuestCapacity || mock.numberOfBedrooms * 2,
-    additionalGuestCapacity: mock.additionalGuestCapacity || 0,
-    totalGuestCapacity: mock.totalGuestCapacity || mock.numberOfBedrooms * 2,
-    images: mock.images || [],  // GUARANTEED: array (may be empty - no fake images)
-    location: {  // GUARANTEED: object with all fields
-      city: 'Marrakech',
-      district: mock.location?.district || 'Medina',
-      subDistrict: mock.location?.subDistrict || '',
-      address: '',
-      nearbyInfo: '',
-      mapLocation: '',
-      distanceFromCenter: mock.location?.distanceFromCenter || '',
-      coordinates: null
-    },
-    sleepingArrangements: (mock.sleepingArrangements || []).map(s => ({  // GUARANTEED: array
-      id: s.id || crypto.randomUUID(),
-      name: s.name || 'Bedroom',
-      bedTypes: (s.beds || []).map(b => ({
-        type: (b.type || 'double') as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
-        quantity: b.quantity || 1
-      })),
-      bathroom: {
-        hasPrivate: s.bathroom?.hasPrivate || false,
-        hasShower: s.bathroom?.hasShower || false,
-        hasBathtub: s.bathroom?.hasBathtub || false
-      }
-    })),
-    features: mock.features || {},  // GUARANTEED: object
-    amenities: mock.amenities || [],  // GUARANTEED: array
-    parking: {  // GUARANTEED: object with all fields
-      available: mock.parking?.available || false,
-      type: mock.parking?.type || '',
-      spots: mock.parking?.spots || 0,
-      notes: mock.parking?.notes || ''
-    },
-    featured: mock.featured || false
-  }
-}
-
 export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
   try {
     const supabase = createClient()
@@ -72,14 +28,18 @@ export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
       .order('created_at', { ascending: false })
     
     if (error || !data || data.length === 0) {
-      return mockProperties.map(mockToUiProperty)
+      return []  // No properties - UI shows premium empty state
     }
     return adaptPropertiesToUi(data as DbProperty[])
   } catch {
-    return mockProperties.map(mockToUiProperty)
+    return []  // Return empty array on error
   }
 }
 
+/**
+ * Fetch a single property by ID or slug (client-side)
+ * Returns null if not found - NEVER returns mock data
+ */
 export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<UiProperty | null> {
   try {
     const supabase = createClient()
@@ -95,16 +55,18 @@ export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<U
       .single()
     
     if (error || !data) {
-      const mock = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
-      return mock ? mockToUiProperty(mock) : null
+      return null  // Property not found - no mock fallback
     }
     return adaptPropertyToUi(data as DbProperty)
   } catch {
-    const mock = mockProperties.find(p => p.id === idOrSlug || p.slug === idOrSlug)
-    return mock ? mockToUiProperty(mock) : null
+    return null  // Return null on error
   }
 }
 
+/**
+ * Fetch all published partners (client-side)
+ * Returns empty array if no partners exist - NEVER returns mock data
+ */
 export async function fetchPublishedPartnersClient() {
   try {
     const supabase = createClient()
@@ -115,7 +77,7 @@ export async function fetchPublishedPartnersClient() {
       .order('sort_order', { ascending: true })
     
     if (error || !data || data.length === 0) {
-      return mockPartners
+      return []  // No partners - UI shows premium empty state
     }
     return data.map(p => ({
       id: p.id,
@@ -128,9 +90,10 @@ export async function fetchPublishedPartnersClient() {
       bookingProcedure: undefined
     }))
   } catch {
-    return mockPartners
+    return []
   }
 }
 
+// Aliases for backward compatibility
 export const getPublicPropertiesClient = fetchPublishedPropertiesClient
 export const getPropertyBySlugClient = fetchPropertyByIdOrSlugClient

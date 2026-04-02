@@ -1,10 +1,13 @@
 import { MetadataRoute } from 'next'
-import { mockProperties } from '@/lib/data'
-import { SITE_URL, LOCATIONS, PROPERTY_TYPES } from '@/lib/seo'
+import { fetchPublishedProperties } from '@/lib/data-fetcher'
+import { SITE_URL, LOCATIONS } from '@/lib/seo'
 import { locales } from '@/i18n/config'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_URL
+
+  // Fetch real properties from database
+  const properties = await fetchPublishedProperties()
 
   // Static pages
   const staticPages = [
@@ -40,8 +43,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     `/apartments-marrakech-${location.slug}`,
   ])
 
-  // Property detail pages
-  const propertyPages = mockProperties.map(property => `/properties/${property.id}`)
+  // Property detail pages - from real DB data only
+  const propertyPages = properties.map(property => `/properties/${property.id}`)
 
   // Blog/Guide pages (will be dynamic later)
   const blogPages = [

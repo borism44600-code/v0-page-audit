@@ -16,7 +16,6 @@ import { ImageGallery } from '@/components/properties/image-gallery'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
-import { mockProperties, mockServices, mockAddons } from '@/lib/data'
 import { getPropertyBySlugClient as fetchPropertyBySlug } from '@/lib/data-fetcher-client'
 import { type UiProperty } from '@/lib/adapters/property-adapter'
 import { FEATURE_LABELS, BED_TYPE_LABELS, BATHROOM_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
@@ -293,9 +292,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </motion.div>
 
-              {/* Additional Amenities - only render when amenities exist */}
+              {/* Additional Amenities - safely render only when valid amenities array exists */}
               {(() => {
-                const amenitiesList = property.amenities
+                // Safety check: ensure amenities is a valid non-empty array
+                const amenitiesList = property?.amenities
                 if (!amenitiesList || !Array.isArray(amenitiesList) || amenitiesList.length === 0) {
                   return null
                 }
@@ -362,40 +362,26 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 transition={{ duration: 0.5 }}
               >
                 <h2 className="text-xl font-semibold mb-6">Experiences &amp; Services</h2>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-4">
                   Enhance your stay with our premium services, available on request.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {mockServices.slice(0, 4).map((service) => {
-                    const IconComponent = serviceIcons[service.category] || Sparkles
-                    return (
-                      <div 
-                        key={service.id}
-                        className="flex gap-4 p-4 bg-card rounded-lg border border-border hover:border-primary/30 transition-colors"
-                      >
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
-                          <Image 
-                            src={service.image}
-                            alt={service.name}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <IconComponent className="w-4 h-4 text-primary" />
-                            <h4 className="font-medium text-sm">{service.name}</h4>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {service.description}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  {[
+                    { icon: Utensils, label: 'Private Chef' },
+                    { icon: Mountain, label: 'Excursions' },
+                    { icon: Sparkles, label: 'Spa & Wellness' },
+                    { icon: Car, label: 'Airport Transfer' }
+                  ].map((service) => (
+                    <div 
+                      key={service.label}
+                      className="flex flex-col items-center gap-2 p-4 bg-card rounded-lg border border-border text-center"
+                    >
+                      <service.icon className="w-6 h-6 text-primary" />
+                      <span className="text-sm font-medium">{service.label}</span>
+                    </div>
+                  ))}
                 </div>
-                <Link href="/services" className="inline-block mt-4">
+                <Link href="/services" className="inline-block">
                   <Button variant="outline" size="sm" className="gap-2">
                     View All Services
                     <ArrowRight className="w-4 h-4" />
@@ -527,18 +513,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 >
                   <h4 className="font-medium mb-4">Popular Add-ons</h4>
                   <div className="space-y-3">
-                    {mockAddons.slice(0, 3).map((addon) => (
-                      <div key={addon.id} className="flex items-center justify-between text-sm">
+                    {[
+                      { name: 'Private Chef Dinner', price: 'From 45€/person' },
+                      { name: 'Airport Transfer', price: 'From 25€' },
+                      { name: 'Day Trip to Atlas', price: 'From 80€/person' }
+                    ].map((addon) => (
+                      <div key={addon.name} className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{addon.name}</span>
-                        <span className="font-medium text-primary">
-                          {addon.pricePerPerson 
-                            ? `${addon.pricePerPerson}€/person` 
-                            : `${addon.priceFlat}€`}
-                        </span>
+                        <span className="font-medium text-primary">{addon.price}</span>
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3">Add during checkout</p>
+                  <p className="text-xs text-muted-foreground mt-3">Available during checkout</p>
                 </motion.div>
               </div>
             </div>
