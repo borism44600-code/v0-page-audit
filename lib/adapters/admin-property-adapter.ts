@@ -1,13 +1,52 @@
 /**
  * Admin Property Adapter
  * 
- * Centralizes the mapping between Supabase DB columns and Admin UI form fields.
- * This ensures consistency when:
- * - Loading property data into the edit form (DB → UI)
- * - Saving property data from the form (UI → DB)
+ * ============================================================================
+ * CANONICAL MAPPING: Supabase DB <-> Admin UI Form
+ * ============================================================================
  * 
- * IMPORTANT: This adapter is specifically for the admin edit/create forms.
- * The public-facing adapter is in lib/adapters/property-adapter.ts
+ * This adapter centralizes ALL field mapping between:
+ * - DB row -> Admin edit form props/state (dbToAdminForm)
+ * - Admin form state -> Save action payload -> DB (handled by updatePropertyAction)
+ * 
+ * IMPORTANT NOTES:
+ * 1. This adapter is specifically for the admin edit/create forms.
+ * 2. The public-facing adapter is in lib/adapters/property-adapter.ts
+ * 3. The UI -> DB mapping is in app/admin/actions.ts (createPropertyAction, updatePropertyAction)
+ * 4. Status handling: DB has `is_active` (boolean), UI shows draft/published/archived
+ *    - is_active=true -> 'published'
+ *    - is_active=false -> 'draft'
+ *    - 'archived' is NOT supported in current DB schema
+ * 
+ * FIELD MAPPING REFERENCE:
+ * | UI Field              | DB Column                | Notes                          |
+ * |-----------------------|--------------------------|--------------------------------|
+ * | title                 | name_en                  | Only English saved             |
+ * | slug                  | slug                     | Direct mapping                 |
+ * | type                  | category                 |                                |
+ * | shortDescription      | short_description_en     | Only English saved             |
+ * | description           | description_en           | Only English saved             |
+ * | city                  | location                 |                                |
+ * | district              | district                 | Direct mapping                 |
+ * | address               | address                  | Direct mapping                 |
+ * | mapLocation           | map_url                  |                                |
+ * | pricePerNight         | price_per_night          | Direct mapping                 |
+ * | cleaningFee           | cleaning_fee             | Direct mapping                 |
+ * | securityDeposit       | security_deposit         | Direct mapping                 |
+ * | numberOfBedrooms      | bedrooms                 |                                |
+ * | numberOfBathrooms     | bathrooms                |                                |
+ * | bedroomGuestCapacity  | bedroom_guest_capacity   | Direct mapping                 |
+ * | additionalGuestCapacity| additional_guest_capacity| Direct mapping                |
+ * | totalGuestCapacity    | max_guests               |                                |
+ * | parkingType           | parking_type             | Direct mapping                 |
+ * | parkingSpots          | parking_spots            | Direct mapping                 |
+ * | seoTitle              | meta_title               |                                |
+ * | seoDescription        | meta_description         |                                |
+ * | status                | is_active                | Boolean->string conversion     |
+ * | featured              | featured                 | Direct mapping                 |
+ * 
+ * NON-PERSISTED FIELDS (UI only):
+ * - serviceFee, parkingNotes, seoKeywords, subtitle, nearbyInfo, priceDisplayNote, currency
  */
 
 // ============================================================================
@@ -264,9 +303,76 @@ export function dbToAdminForm(db: DbPropertyRaw): AdminFormProperty {
 
 // ============================================================================
 // UI → DB ADAPTER (for saving data from form)
-// This is handled in app/admin/actions.ts - updatePropertyAction
-// The mapping there should match the inverse of dbToAdminForm
 // ============================================================================
+
+/**
+ * Form data as submitted from PropertyEditForm
+ * This matches the structure sent to updatePropertyAction
+ */
+export interface AdminFormPayload {
+  title: string
+  slug: string
+  type: 'riad' | 'villa' | 'apartment' | 'house'
+  description_short?: string
+  description_long?: string
+  city: string
+  district?: string
+  address?: string
+  map_location?: string
+  price_per_night: number
+  cleaning_fee?: number
+  security_deposit?: number
+  num_bedrooms: number
+  num_bathrooms: number
+  bedroom_guest_capacity?: number
+  additional_guest_capacity?: number
+  total_guest_capacity: number
+  parking_type?: string
+  parking_spots?: number
+  seo_title?: string
+  seo_description?: string
+  status: string
+  featured?: boolean
+  airbnb_ical_url?: string
+  booking_ical_url?: string
+  internal_ical_url?: string
+}
+
+/**
+ * Converts admin form payload to database format
+ * Used when saving/updating a property
+ * 
+ * NOTE: This function is provided for reference. The actual mapping
+ * is done in app/admin/actions.ts -> updatePropertyAction for flexibility.
+ */
+export function adminFormToDb(form: AdminFormPayload): Record<string, unknown> {
+  return {
+    name_en: form.title,
+    slug: form.slug,
+    category: form.type,
+    short_description_en: form.description_short || null,
+    description_en: form.description_long || null,
+    location: form.city || 'Marrakech',
+    district: form.district || null,
+    address: form.address || null,
+    map_url: form.map_location || null,
+    price_per_night: form.price_per_night || 0,
+    cleaning_fee: form.cleaning_fee || 0,
+    security_deposit: form.security_deposit || 0,
+    bedrooms: form.num_bedrooms || 1,
+    bathrooms: form.num_bathrooms || 1,
+    bedroom_guest_capacity: form.bedroom_guest_capacity || 2,
+    additional_guest_capacity: form.additional_guest_capacity || 0,
+    max_guests: form.total_guest_capacity || form.bedroom_guest_capacity || 2,
+    parking_type: form.parking_type || null,
+    parking_spots: form.parking_spots || 0,
+    meta_title: form.seo_title || null,
+    meta_description: form.seo_description || null,
+    is_active: form.status === 'published',
+    featured: form.featured || false,
+    updated_at: new Date().toISOString()
+  }
+}
 
 /**
  * List of fields that exist in the UI but are NOT persisted to the database.

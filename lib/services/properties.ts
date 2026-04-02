@@ -4,6 +4,18 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { dbToAdminForm, type DbPropertyRaw } from '@/lib/adapters/admin-property-adapter'
 
+/**
+ * DEPRECATED: Use CreatePropertyInput from app/admin/actions.ts instead.
+ * This interface is kept for backward compatibility with existing code.
+ * 
+ * NOTE: The actual DB columns are different:
+ * - title -> name_en
+ * - type -> category
+ * - status -> is_active (boolean)
+ * - etc.
+ * 
+ * See lib/adapters/admin-property-adapter.ts for the canonical mapping.
+ */
 export interface PropertyFormData {
   title: string
   slug: string
@@ -16,7 +28,7 @@ export interface PropertyFormData {
   map_location?: string
   price_per_night: number
   cleaning_fee?: number
-  service_fee?: number
+  security_deposit?: number  // Changed from service_fee (which doesn't exist in DB)
   num_bedrooms: number
   num_bathrooms: number
   bedroom_guest_capacity?: number
@@ -25,11 +37,11 @@ export interface PropertyFormData {
   amenities?: string[]
   parking_type?: string
   parking_spots?: number
-  parking_notes?: string
+  // parking_notes removed - not in DB schema
   seo_title?: string
   seo_description?: string
-  seo_keywords?: string[]
-  status: 'draft' | 'published' | 'archived'
+  // seo_keywords removed - not in DB schema
+  status: 'draft' | 'published'  // 'archived' removed - not supported by is_active boolean
   featured?: boolean
   airbnb_ical_url?: string
   booking_ical_url?: string
@@ -156,16 +168,15 @@ export async function getPropertyBySlug(slug: string) {
         room_name,
         room_number,
         bed_type,
-        num_beds,
+        bed_count,
+        max_guests,
         has_bathroom,
         has_shower,
-        has_bathtub,
-        equipment,
-        notes
+        has_bathtub
       )
     `)
     .eq('slug', slug)
-    .eq('status', 'published')
+    .eq('is_active', true)  // DB uses is_active boolean, not status string
     .single()
   
   if (error) {
@@ -176,40 +187,44 @@ export async function getPropertyBySlug(slug: string) {
   return data
 }
 
-// Create new property
+/**
+ * DEPRECATED: Use createPropertyAction from app/admin/actions.ts instead.
+ * This function is kept for backward compatibility but uses the correct DB column mapping.
+ */
 export async function createProperty(formData: PropertyFormData) {
   const supabase = await createClient()
   
+  // Map form fields to actual Supabase column names
+  const dbData = {
+    name_en: formData.title,
+    slug: formData.slug,
+    category: formData.type,
+    short_description_en: formData.description_short || null,
+    description_en: formData.description_long || null,
+    location: formData.city || 'Marrakech',
+    district: formData.district || null,
+    address: formData.address || null,
+    map_url: formData.map_location || null,
+    price_per_night: formData.price_per_night || 0,
+    cleaning_fee: formData.cleaning_fee || 0,
+    security_deposit: formData.security_deposit || 0,
+    bedrooms: formData.num_bedrooms || 1,
+    bathrooms: formData.num_bathrooms || 1,
+    bedroom_guest_capacity: formData.bedroom_guest_capacity || 2,
+    additional_guest_capacity: formData.additional_guest_capacity || 0,
+    max_guests: formData.total_guest_capacity || formData.bedroom_guest_capacity || 2,
+    amenities: formData.amenities ? { items: formData.amenities } : null,
+    parking_type: formData.parking_type || null,
+    parking_spots: formData.parking_spots || 0,
+    meta_title: formData.seo_title || null,
+    meta_description: formData.seo_description || null,
+    is_active: formData.status === 'published',
+    featured: formData.featured || false
+  }
+  
   const { data, error } = await supabase
     .from('properties')
-    .insert({
-      title: formData.title,
-      slug: formData.slug,
-      type: formData.type,
-      description_short: formData.description_short,
-      description_long: formData.description_long,
-      city: formData.city,
-      district: formData.district,
-      address: formData.address,
-      map_location: formData.map_location,
-      price_per_night: formData.price_per_night,
-      cleaning_fee: formData.cleaning_fee,
-      service_fee: formData.service_fee,
-      num_bedrooms: formData.num_bedrooms,
-      num_bathrooms: formData.num_bathrooms,
-      bedroom_guest_capacity: formData.bedroom_guest_capacity,
-      additional_guest_capacity: formData.additional_guest_capacity,
-      total_guest_capacity: formData.total_guest_capacity,
-      amenities: formData.amenities,
-      parking_type: formData.parking_type,
-      parking_spots: formData.parking_spots,
-      parking_notes: formData.parking_notes,
-      seo_title: formData.seo_title,
-      seo_description: formData.seo_description,
-      seo_keywords: formData.seo_keywords,
-      status: formData.status,
-      featured: formData.featured || false
-    })
+    .insert(dbData)
     .select()
     .single()
   
@@ -224,9 +239,9 @@ export async function createProperty(formData: PropertyFormData) {
       .from('availability_sync')
       .insert({
         property_id: data.id,
-        airbnb_ical_url: formData.airbnb_ical_url,
-        booking_ical_url: formData.booking_ical_url,
-        internal_ical_url: formData.internal_ical_url
+        airbnb_ical_url: formData.airbnb_ical_url || null,
+        booking_ical_url: formData.booking_ical_url || null,
+        internal_ical_url: formData.internal_ical_url || null
       })
   }
   
@@ -236,41 +251,47 @@ export async function createProperty(formData: PropertyFormData) {
   return data
 }
 
-// Update property
+/**
+ * DEPRECATED: Use updatePropertyAction from app/admin/actions.ts instead.
+ * This function is kept for backward compatibility but uses the correct DB column mapping.
+ */
 export async function updateProperty(id: string, formData: Partial<PropertyFormData>) {
   const supabase = await createClient()
   
+  // Map form fields to actual Supabase column names
+  // Only include fields that are defined to avoid overwriting with undefined
+  const dbData: Record<string, unknown> = {
+    updated_at: new Date().toISOString()
+  }
+  
+  if (formData.title !== undefined) dbData.name_en = formData.title
+  if (formData.slug !== undefined) dbData.slug = formData.slug
+  if (formData.type !== undefined) dbData.category = formData.type
+  if (formData.description_short !== undefined) dbData.short_description_en = formData.description_short
+  if (formData.description_long !== undefined) dbData.description_en = formData.description_long
+  if (formData.city !== undefined) dbData.location = formData.city
+  if (formData.district !== undefined) dbData.district = formData.district
+  if (formData.address !== undefined) dbData.address = formData.address
+  if (formData.map_location !== undefined) dbData.map_url = formData.map_location
+  if (formData.price_per_night !== undefined) dbData.price_per_night = formData.price_per_night
+  if (formData.cleaning_fee !== undefined) dbData.cleaning_fee = formData.cleaning_fee
+  if (formData.security_deposit !== undefined) dbData.security_deposit = formData.security_deposit
+  if (formData.num_bedrooms !== undefined) dbData.bedrooms = formData.num_bedrooms
+  if (formData.num_bathrooms !== undefined) dbData.bathrooms = formData.num_bathrooms
+  if (formData.bedroom_guest_capacity !== undefined) dbData.bedroom_guest_capacity = formData.bedroom_guest_capacity
+  if (formData.additional_guest_capacity !== undefined) dbData.additional_guest_capacity = formData.additional_guest_capacity
+  if (formData.total_guest_capacity !== undefined) dbData.max_guests = formData.total_guest_capacity
+  if (formData.amenities !== undefined) dbData.amenities = { items: formData.amenities }
+  if (formData.parking_type !== undefined) dbData.parking_type = formData.parking_type
+  if (formData.parking_spots !== undefined) dbData.parking_spots = formData.parking_spots
+  if (formData.seo_title !== undefined) dbData.meta_title = formData.seo_title
+  if (formData.seo_description !== undefined) dbData.meta_description = formData.seo_description
+  if (formData.status !== undefined) dbData.is_active = formData.status === 'published'
+  if (formData.featured !== undefined) dbData.featured = formData.featured
+  
   const { data, error } = await supabase
     .from('properties')
-    .update({
-      title: formData.title,
-      slug: formData.slug,
-      type: formData.type,
-      description_short: formData.description_short,
-      description_long: formData.description_long,
-      city: formData.city,
-      district: formData.district,
-      address: formData.address,
-      map_location: formData.map_location,
-      price_per_night: formData.price_per_night,
-      cleaning_fee: formData.cleaning_fee,
-      service_fee: formData.service_fee,
-      num_bedrooms: formData.num_bedrooms,
-      num_bathrooms: formData.num_bathrooms,
-      bedroom_guest_capacity: formData.bedroom_guest_capacity,
-      additional_guest_capacity: formData.additional_guest_capacity,
-      total_guest_capacity: formData.total_guest_capacity,
-      amenities: formData.amenities,
-      parking_type: formData.parking_type,
-      parking_spots: formData.parking_spots,
-      parking_notes: formData.parking_notes,
-      seo_title: formData.seo_title,
-      seo_description: formData.seo_description,
-      seo_keywords: formData.seo_keywords,
-      status: formData.status,
-      featured: formData.featured,
-      updated_at: new Date().toISOString()
-    })
+    .update(dbData)
     .eq('id', id)
     .select()
     .single()
@@ -288,24 +309,21 @@ export async function updateProperty(id: string, formData: Partial<PropertyFormD
       .eq('property_id', id)
       .single()
     
+    const syncData = {
+      airbnb_ical_url: formData.airbnb_ical_url || null,
+      booking_ical_url: formData.booking_ical_url || null,
+      internal_ical_url: formData.internal_ical_url || null
+    }
+    
     if (existingSync) {
       await supabase
         .from('availability_sync')
-        .update({
-          airbnb_ical_url: formData.airbnb_ical_url,
-          booking_ical_url: formData.booking_ical_url,
-          internal_ical_url: formData.internal_ical_url
-        })
+        .update(syncData)
         .eq('property_id', id)
-    } else {
+    } else if (formData.airbnb_ical_url || formData.booking_ical_url || formData.internal_ical_url) {
       await supabase
         .from('availability_sync')
-        .insert({
-          property_id: id,
-          airbnb_ical_url: formData.airbnb_ical_url,
-          booking_ical_url: formData.booking_ical_url,
-          internal_ical_url: formData.internal_ical_url
-        })
+        .insert({ property_id: id, ...syncData })
     }
   }
   
@@ -508,15 +526,17 @@ export async function getPublishedProperties(filters?: {
         is_cover
       )
     `)
-    .eq('status', 'published')
+    .eq('is_active', true)  // DB uses is_active boolean, not status string
     .order('featured', { ascending: false })
     .order('created_at', { ascending: false })
   
+  // Filter by category (DB column), not type (UI name)
   if (filters?.type) {
-    query = query.eq('type', filters.type)
+    query = query.eq('category', filters.type)
   }
+  // Filter by location (DB column), not city (UI name)
   if (filters?.city) {
-    query = query.eq('city', filters.city)
+    query = query.eq('location', filters.city)
   }
   if (filters?.minPrice) {
     query = query.gte('price_per_night', filters.minPrice)
@@ -524,8 +544,9 @@ export async function getPublishedProperties(filters?: {
   if (filters?.maxPrice) {
     query = query.lte('price_per_night', filters.maxPrice)
   }
+  // Filter by max_guests (DB column), not total_guest_capacity (UI name)
   if (filters?.minGuests) {
-    query = query.gte('total_guest_capacity', filters.minGuests)
+    query = query.gte('max_guests', filters.minGuests)
   }
   
   const { data, error } = await query
