@@ -28,6 +28,91 @@ export interface PropertyAvailability {
   maximumStay?: number
 }
 
+// ============================================
+// DATE BLOCK TYPES AND FUNCTIONS
+// ============================================
+
+export type DateBlockType = 'maintenance' | 'owner_use' | 'booking' | 'other'
+
+export interface DateBlock {
+  id: string
+  propertyId: string
+  startDate: string
+  endDate: string
+  type: DateBlockType
+  reason?: string
+  createdBy: string
+  createdAt: string
+}
+
+// In-memory storage for date blocks (in production, use database)
+const dateBlocksStore: Map<string, DateBlock> = new Map()
+
+/**
+ * Get all date blocks for a property
+ */
+export function getDateBlocksForProperty(propertyId: string): DateBlock[] {
+  const blocks: DateBlock[] = []
+  dateBlocksStore.forEach(block => {
+    if (block.propertyId === propertyId) {
+      blocks.push(block)
+    }
+  })
+  return blocks.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+}
+
+/**
+ * Add a new date block
+ */
+export function addDateBlock(params: {
+  propertyId: string
+  startDate: string
+  endDate: string
+  type: DateBlockType
+  reason?: string
+  createdBy: string
+}): DateBlock {
+  const id = `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  const block: DateBlock = {
+    id,
+    propertyId: params.propertyId,
+    startDate: params.startDate,
+    endDate: params.endDate,
+    type: params.type,
+    reason: params.reason,
+    createdBy: params.createdBy,
+    createdAt: new Date().toISOString()
+  }
+  dateBlocksStore.set(id, block)
+  return block
+}
+
+/**
+ * Remove a date block by ID
+ */
+export function removeDateBlock(blockId: string): boolean {
+  return dateBlocksStore.delete(blockId)
+}
+
+/**
+ * Check if a date is blocked for a property
+ */
+export function isDateBlocked(propertyId: string, date: Date): boolean {
+  const checkDate = startOfDay(date)
+  const blocks = getDateBlocksForProperty(propertyId)
+  
+  for (const block of blocks) {
+    const blockStart = startOfDay(parseISO(block.startDate))
+    const blockEnd = startOfDay(parseISO(block.endDate))
+    
+    if (isWithinInterval(checkDate, { start: blockStart, end: blockEnd })) {
+      return true
+    }
+  }
+  
+  return false
+}
+
 /**
  * Result of checking a property's availability for a date range
  */
