@@ -1,9 +1,13 @@
 import { getPartners } from '@/lib/services/partners'
 import { PartnersAdmin } from '@/components/admin/partners-admin'
+// RE-ENABLE: import { requireAdmin } from '@/lib/services/auth'
 
 export default async function AdminPartnersPage() {
-  // NOTE: Admin authentication is currently disabled at middleware level
-  // When re-enabling, add: await requireAdmin()
+  // ============================================================================
+  // TEMPORARY: Auth bypass active (TEST MODE)
+  // RE-ENABLE: Uncomment the line below when admin auth is restored
+  // await requireAdmin()
+  // ============================================================================
   
   // Fetch real partners from database
   const partners = await getPartners()

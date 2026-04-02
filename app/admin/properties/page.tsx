@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { getProperties } from '@/lib/services/properties'
 import { PropertiesTable } from '@/components/admin/properties-table'
+// RE-ENABLE: import { requireAdmin } from '@/lib/services/auth'
 
 export default async function AdminPropertiesPage() {
-  // NOTE: Admin authentication is currently disabled at middleware level
-  // When re-enabling, add: await requireAdmin()
+  // ============================================================================
+  // TEMPORARY: Auth bypass active (TEST MODE)
+  // RE-ENABLE: Uncomment the line below when admin auth is restored
+  // await requireAdmin()
+  // ============================================================================
   
   // Fetch real properties from database
   const properties = await getProperties()

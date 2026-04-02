@@ -1,14 +1,18 @@
 import { notFound } from 'next/navigation'
 import { getPropertyById } from '@/lib/services/properties'
 import { PropertyEditForm } from '@/components/admin/property-edit-form'
+// RE-ENABLE: import { requireAdmin } from '@/lib/services/auth'
 
 interface EditPropertyPageProps {
   params: Promise<{ id: string }>
 }
 
 export default async function EditPropertyPage({ params }: EditPropertyPageProps) {
-  // NOTE: Admin authentication is currently disabled at middleware level
-  // When re-enabling, uncomment: await requireAdmin()
+  // ============================================================================
+  // TEMPORARY: Auth bypass active (TEST MODE)
+  // RE-ENABLE: Uncomment the line below when admin auth is restored
+  // await requireAdmin()
+  // ============================================================================
   
   const { id } = await params
   
