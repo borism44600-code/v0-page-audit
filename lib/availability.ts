@@ -1,5 +1,6 @@
 // Availability checking utilities for vacation rental properties
 // All availability data comes from the database - no mock data
+// Last build: 2026-04-03
 
 import { addDays, format, isWithinInterval, isBefore, isAfter, differenceInDays, parseISO, startOfDay } from 'date-fns'
 
