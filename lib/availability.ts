@@ -1,4 +1,5 @@
 // Availability checking utilities for vacation rental properties
+// Force rebuild marker: 2026-04-03
 
 import { addDays, format, isWithinInterval, isBefore, isAfter, differenceInDays, parseISO, startOfDay } from 'date-fns'
 
@@ -25,6 +26,17 @@ export interface PropertyAvailability {
   blockedDates: Date[]
   minimumStay: number
   maximumStay?: number
+}
+
+/**
+ * Result of checking a property's availability for a date range
+ */
+export interface PropertyAvailabilityResult {
+  property: { id: string; [key: string]: unknown }
+  isAvailable: boolean
+  conflictingDates: { start: Date; end: Date }[]
+  availableNights: number
+  requestedNights: number
 }
 
 // Mock availability data - in production this would come from a database
@@ -63,6 +75,76 @@ const mockAvailabilityData: Record<string, PropertyAvailability> = {
 }
 
 /**
+ * Filter properties by availability for a date range
+ * Returns availability results for all properties
+ */
+export function filterPropertiesByAvailability<T extends { id: string; availability?: { start: string; end: string }[] }>(
+  properties: T[],
+  checkIn: Date,
+  checkOut: Date
+): (PropertyAvailabilityResult & { property: T })[] {
+  const checkInDate = startOfDay(checkIn)
+  const checkOutDate = startOfDay(checkOut)
+  const requestedNights = differenceInDays(checkOutDate, checkInDate)
+
+  return properties.map(property => {
+    // If no availability data, assume fully available
+    const availability = property.availability
+    if (!availability || !Array.isArray(availability) || availability.length === 0) {
+      return {
+        property,
+        isAvailable: true,
+        conflictingDates: [],
+        availableNights: requestedNights,
+        requestedNights
+      }
+    }
+
+    // Check if the requested dates overlap with available periods
+    let isWithinAvailablePeriod = false
+    
+    for (const period of availability) {
+      const periodStart = startOfDay(parseISO(period.start))
+      const periodEnd = startOfDay(parseISO(period.end))
+      
+      if (!isBefore(checkInDate, periodStart) && !isAfter(checkOutDate, periodEnd)) {
+        isWithinAvailablePeriod = true
+        break
+      }
+    }
+
+    // Also check mock data for booked periods
+    const mockData = mockAvailabilityData[property.id]
+    const conflictingDates: { start: Date; end: Date }[] = []
+    
+    if (mockData) {
+      for (const booking of mockData.bookedDates) {
+        const bookingStart = startOfDay(booking.start)
+        const bookingEnd = startOfDay(booking.end)
+        
+        if (
+          isWithinInterval(checkInDate, { start: bookingStart, end: bookingEnd }) ||
+          isWithinInterval(checkOutDate, { start: bookingStart, end: bookingEnd }) ||
+          (isBefore(checkInDate, bookingStart) && isAfter(checkOutDate, bookingEnd))
+        ) {
+          conflictingDates.push({ start: booking.start, end: booking.end })
+        }
+      }
+    }
+
+    const isAvailable = conflictingDates.length === 0 && (availability.length === 0 || isWithinAvailablePeriod)
+    
+    return {
+      property,
+      isAvailable,
+      conflictingDates,
+      availableNights: isAvailable ? requestedNights : 0,
+      requestedNights
+    }
+  })
+}
+
+/**
  * Check if a date range is available for a property
  */
 export function checkPropertyAvailability(
@@ -73,19 +155,16 @@ export function checkPropertyAvailability(
   const availability = mockAvailabilityData[propertyId]
   
   if (!availability) {
-    // If no availability data, assume available
     return { available: true }
   }
 
   const checkInDate = startOfDay(checkIn)
   const checkOutDate = startOfDay(checkOut)
 
-  // Check for conflicts with booked dates
   const conflicts = availability.bookedDates.filter(booking => {
     const bookingStart = startOfDay(booking.start)
     const bookingEnd = startOfDay(booking.end)
     
-    // Check if the requested dates overlap with this booking
     return (
       (isWithinInterval(checkInDate, { start: bookingStart, end: bookingEnd }) ||
        isWithinInterval(checkOutDate, { start: bookingStart, end: bookingEnd }) ||
@@ -97,7 +176,6 @@ export function checkPropertyAvailability(
     return { available: false, conflictDates: conflicts }
   }
 
-  // Check minimum/maximum stay requirements
   const nights = differenceInDays(checkOutDate, checkInDate)
   
   if (nights < availability.minimumStay) {
@@ -127,7 +205,6 @@ export function getUnavailableDates(
 
   const unavailableDates: Date[] = []
   
-  // Add all booked dates
   availability.bookedDates.forEach(booking => {
     let currentDate = startOfDay(booking.start)
     const bookingEnd = startOfDay(booking.end)
@@ -140,7 +217,6 @@ export function getUnavailableDates(
     }
   })
 
-  // Add blocked dates
   availability.blockedDates.forEach(blockedDate => {
     const blocked = startOfDay(blockedDate)
     if (isWithinInterval(blocked, { start: startOfDay(startDate), end: startOfDay(endDate) })) {
@@ -169,7 +245,7 @@ export function generateSplitStaySuggestion(
   const availability = checkPropertyAvailability(primaryPropertyId, requestedCheckIn, requestedCheckOut)
   
   if (availability.available) {
-    return null // No split stay needed
+    return null
   }
 
   if (!availability.conflictDates || availability.conflictDates.length === 0) {
@@ -183,7 +259,6 @@ export function generateSplitStaySuggestion(
   const conflictStart = startOfDay(conflict.start)
   const conflictEnd = startOfDay(conflict.end)
 
-  // First segment: before the conflict (at primary property)
   if (isBefore(currentDate, conflictStart)) {
     const segmentEnd = conflictStart
     const nights = differenceInDays(segmentEnd, currentDate)
@@ -201,7 +276,6 @@ export function generateSplitStaySuggestion(
     currentDate = segmentEnd
   }
 
-  // Middle segment: during the conflict (at alternative property)
   if (alternativeProperties.length > 0) {
     const altProperty = alternativeProperties[0]
     const segmentStart = currentDate
@@ -221,7 +295,6 @@ export function generateSplitStaySuggestion(
     currentDate = segmentEnd
   }
 
-  // Final segment: after the conflict (back at primary property)
   if (isBefore(currentDate, endDate)) {
     const nights = differenceInDays(endDate, currentDate)
     
@@ -238,7 +311,7 @@ export function generateSplitStaySuggestion(
   }
 
   if (segments.length < 2) {
-    return null // Not a valid split stay
+    return null
   }
 
   const totalPrice = segments.reduce((sum, seg) => sum + seg.totalPrice, 0)
@@ -293,7 +366,6 @@ export function isDateAvailable(propertyId: string, date: Date): boolean {
 
   const checkDate = startOfDay(date)
 
-  // Check booked dates
   for (const booking of availability.bookedDates) {
     if (isWithinInterval(checkDate, { 
       start: startOfDay(booking.start), 
@@ -303,7 +375,6 @@ export function isDateAvailable(propertyId: string, date: Date): boolean {
     }
   }
 
-  // Check blocked dates
   for (const blockedDate of availability.blockedDates) {
     if (startOfDay(blockedDate).getTime() === checkDate.getTime()) {
       return false
