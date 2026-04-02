@@ -125,6 +125,8 @@ export interface UiProperty {
     notes: string  // Default: ''
   }
   featured: boolean  // Default: false
+  // Availability ranges (optional - may not be set)
+  availability?: { start: string; end: string }[]
 }
 
 // Default features (all false)
@@ -272,7 +274,9 @@ export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
       spots: dbProperty.parking_spots || 0,
       notes: ''
     },
-    featured: dbProperty.featured || false
+    featured: dbProperty.featured || false,
+    // Availability is optional - may not be set in database
+    availability: undefined
   }
 }
 

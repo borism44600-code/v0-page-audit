@@ -179,8 +179,8 @@ export interface Property {
   coverImage?: string
   imageAltTexts?: Record<string, string>
   
-  // Availability
-  availability: {
+  // Availability (optional - may not be set for new properties)
+  availability?: {
     start: string
     end: string
   }[]

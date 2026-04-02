@@ -61,13 +61,11 @@ export function AvailabilityCalendar({
     return new Date(year, month, 1).getDay()
   }
 
-  /**
-   * Check if a date is available for booking
-   * SAFETY: Handles undefined/null/non-array availability prop
-   * Returns true (available) if no availability data exists
-   */
+  /** Check if a date is available - SAFE: handles undefined availability */
   const isDateAvailable = (date: Date) => {
+    // Ensure availability is always a valid array before accessing
     const safeAvail = (availability && Array.isArray(availability)) ? availability : []
+    // No availability data means all dates are available
     if (safeAvail.length === 0) return true
     return safeAvail.some(range => {
       const start = new Date(range.start)

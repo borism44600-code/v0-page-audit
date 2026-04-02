@@ -98,16 +98,17 @@ export interface AvailabilitySegment {
   nights: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SplitStaySuggestion {
   type: 'full' | 'split'
   totalNights: number
   segments: AvailabilitySegment[]
-  properties: Property[]
+  properties: Record<string, unknown>[]  // Flexible to accept Property or UiProperty
   message: string
-}
-
-export interface PropertyAvailabilityResult {
-  property: Property
+  }
+  
+  export interface PropertyAvailabilityResult {
+  property: Record<string, unknown>  // Flexible to accept Property or UiProperty
   status: 'available' | 'partial' | 'unavailable'
   availableNights: number
   totalRequestedNights: number
@@ -152,13 +153,18 @@ export function calculateNights(start: Date, end: Date): number {
  * Check if a specific date is within availability ranges
  * Also checks against date blocks if propertyId is provided
  */
+/** Check if a specific date is available - SAFE: handles undefined availability */
 export function isDateAvailable(
   date: Date,
-  availability: { start: string; end: string }[],
+  availability: { start: string; end: string }[] | undefined | null,
   propertyId?: string
 ): boolean {
-  // First check if date is in availability ranges
-  const inAvailabilityRange = availability.some(range => {
+  // Ensure availability is always a valid array before any operations
+  const safeAvailability = (availability && Array.isArray(availability)) ? availability : []
+  // No availability data means all dates are available by default
+  if (safeAvailability.length === 0) return true
+  // Check if date is within any availability range
+  const inAvailabilityRange = safeAvailability.some(range => {
     const start = new Date(range.start)
     const end = new Date(range.end)
     return date >= start && date <= end
@@ -180,7 +186,7 @@ export function isDateAvailable(
 export function isRangeFullyAvailable(
   checkIn: Date,
   checkOut: Date,
-  availability: { start: string; end: string }[]
+  availability: { start: string; end: string }[] | undefined | null
 ): boolean {
   const currentDate = new Date(checkIn)
   while (currentDate < checkOut) {
@@ -198,7 +204,7 @@ export function isRangeFullyAvailable(
 export function getAvailableNightsInRange(
   checkIn: Date,
   checkOut: Date,
-  availability: { start: string; end: string }[]
+  availability: { start: string; end: string }[] | undefined | null
 ): { availableNights: number; availableDates: DateRange[]; unavailableDates: DateRange[] } {
   const availableDates: DateRange[] = []
   const unavailableDates: DateRange[] = []
@@ -252,15 +258,16 @@ export function getAvailableNightsInRange(
  * Check property availability and return detailed status
  */
 export function checkPropertyAvailability(
-  property: Property,
+  property: { availability?: { start: string; end: string }[] } & Omit<Property, 'availability'>,
   checkIn: Date,
   checkOut: Date
 ): PropertyAvailabilityResult {
   const totalRequestedNights = calculateNights(checkIn, checkOut)
+  // SAFETY: property.availability may be undefined
   const { availableNights, availableDates, unavailableDates } = getAvailableNightsInRange(
     checkIn,
     checkOut,
-    property.availability
+    property.availability  // Now handles undefined via getAvailableNightsInRange
   )
   
   let status: 'available' | 'partial' | 'unavailable'
@@ -320,12 +327,22 @@ export function filterPropertiesByAvailability(
  * Find alternative properties for unavailable nights
  * Prioritizes: same type > same district > similar price > any available
  */
+// Type for properties with minimum required fields for alternative search
+type PropertyForAlternative = {
+  id: string
+  type?: string
+  location?: { district?: string }
+  pricePerNight?: number
+  totalGuestCapacity?: number
+  availability?: { start: string; end: string }[]
+}
+
 export function findAlternativeProperties(
-  originalProperty: Property,
+  originalProperty: PropertyForAlternative,
   unavailableDates: DateRange[],
-  allProperties: Property[]
-): Property[] {
-  const alternatives: Property[] = []
+  allProperties: PropertyForAlternative[]
+): PropertyForAlternative[] {
+  const alternatives: PropertyForAlternative[] = []
   
   for (const dateRange of unavailableDates) {
     // Filter properties that are available for these dates
@@ -334,28 +351,32 @@ export function findAlternativeProperties(
       return isRangeFullyAvailable(dateRange.start, dateRange.end, p.availability)
     })
     
-    // Sort by similarity to original property
+    // Sort by similarity to original property (with safe access to optional fields)
     availableForRange.sort((a, b) => {
       let scoreA = 0
       let scoreB = 0
       
       // Same type +3
-      if (a.type === originalProperty.type) scoreA += 3
-      if (b.type === originalProperty.type) scoreB += 3
+      if (a.type && originalProperty.type && a.type === originalProperty.type) scoreA += 3
+      if (b.type && originalProperty.type && b.type === originalProperty.type) scoreB += 3
       
       // Same district +2
-      if (a.location.district === originalProperty.location.district) scoreA += 2
-      if (b.location.district === originalProperty.location.district) scoreB += 2
+      if (a.location?.district && originalProperty.location?.district && a.location.district === originalProperty.location.district) scoreA += 2
+      if (b.location?.district && originalProperty.location?.district && b.location.district === originalProperty.location.district) scoreB += 2
       
       // Similar price range (+/- 30%) +1
-      const priceRangeMin = originalProperty.pricePerNight * 0.7
-      const priceRangeMax = originalProperty.pricePerNight * 1.3
-      if (a.pricePerNight >= priceRangeMin && a.pricePerNight <= priceRangeMax) scoreA += 1
-      if (b.pricePerNight >= priceRangeMin && b.pricePerNight <= priceRangeMax) scoreB += 1
+      const originalPrice = originalProperty.pricePerNight || 0
+      const priceRangeMin = originalPrice * 0.7
+      const priceRangeMax = originalPrice * 1.3
+      const priceA = a.pricePerNight || 0
+      const priceB = b.pricePerNight || 0
+      if (priceA >= priceRangeMin && priceA <= priceRangeMax) scoreA += 1
+      if (priceB >= priceRangeMin && priceB <= priceRangeMax) scoreB += 1
       
       // Similar guest capacity +1
-      if (a.totalGuestCapacity >= originalProperty.totalGuestCapacity) scoreA += 1
-      if (b.totalGuestCapacity >= originalProperty.totalGuestCapacity) scoreB += 1
+      const originalCapacity = originalProperty.totalGuestCapacity || 0
+      if ((a.totalGuestCapacity || 0) >= originalCapacity) scoreA += 1
+      if ((b.totalGuestCapacity || 0) >= originalCapacity) scoreB += 1
       
       return scoreB - scoreA
     })
@@ -371,11 +392,17 @@ export function findAlternativeProperties(
 /**
  * Generate a split-stay suggestion when a property is partially available
  */
+// Type that allows either Property or UiProperty with optional availability
+type PropertyWithOptionalAvailability = { 
+  id: string
+  availability?: { start: string; end: string }[] 
+} & Record<string, unknown>
+
 export function generateSplitStaySuggestion(
-  selectedProperty: Property,
+  selectedProperty: PropertyWithOptionalAvailability,
   checkIn: Date,
   checkOut: Date,
-  allProperties: Property[]
+  allProperties: PropertyWithOptionalAvailability[]
 ): SplitStaySuggestion | null {
   const result = checkPropertyAvailability(selectedProperty, checkIn, checkOut)
   
@@ -414,7 +441,7 @@ export function generateSplitStaySuggestion(
   
   // Build segments
   const segments: AvailabilitySegment[] = []
-  const properties: Property[] = [selectedProperty]
+  const properties: PropertyWithOptionalAvailability[] = [selectedProperty]
   
   // Add available segments from original property
   result.availableDates.forEach(range => {
