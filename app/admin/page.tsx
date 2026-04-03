@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
@@ -32,8 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { mockProperties } from '@/lib/data'
 import { AdminLayout } from '@/components/admin/admin-layout'
+import { createClient } from '@/lib/supabase/client'
 
 const stats = [
   {
@@ -105,7 +106,58 @@ const recentBookings = [
   },
 ]
 
+interface DbProperty {
+  id: string
+  name_en?: string
+  slug?: string
+  category?: string
+  district?: string
+  price_per_night?: number
+  cover_image?: string
+  property_images?: { 
+    is_primary: boolean
+    media?: { blob_url: string } | null
+  }[]
+}
+
 export default function AdminDashboard() {
+  const [properties, setProperties] = useState<DbProperty[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    
+    async function fetchProperties() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, name_en, slug, category, district, price_per_night, cover_image, property_images(is_primary, media:media_id(blob_url))')
+        .order('created_at', { ascending: false })
+        .limit(4)
+      
+      if (isMounted && !error && data) {
+        setProperties(data)
+      }
+      if (isMounted) {
+        setLoading(false)
+      }
+    }
+    fetchProperties()
+    
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const getPropertyImage = (p: DbProperty) => {
+    if (p.cover_image) return p.cover_image
+    const primaryImg = p.property_images?.find(img => img.is_primary && img.media?.blob_url)
+    if (primaryImg) return primaryImg.media!.blob_url
+    const firstImg = p.property_images?.find(img => img.media?.blob_url)
+    if (firstImg) return firstImg.media!.blob_url
+    return '/placeholder-property.jpg'
+  }
+
   return (
     <AdminLayout title="Dashboard">
       {/* Stats Grid */}
@@ -214,44 +266,59 @@ export default function AdminDashboard() {
             </Link>
           </div>
           <div className="p-4 space-y-4">
-            {mockProperties.slice(0, 4).map((property) => (
-              <div key={property.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <Image
-                    src={property.images[0]}
-                    alt={property.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{property.title}</p>
-                  <p className="text-sm text-muted-foreground">{property.location.district}</p>
-                  <p className="text-sm font-semibold text-primary">{property.pricePerNight}/night</p>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            {loading ? (
+              <div className="text-center py-4 text-muted-foreground">Loading...</div>
+            ) : properties.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No properties yet</p>
+                <Link href="/admin/properties/new">
+                  <Button size="sm">Add Your First Property</Button>
+                </Link>
               </div>
-            ))}
+            ) : (
+              properties.map((property) => (
+                <div key={property.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                    <Image
+                      src={getPropertyImage(property)}
+                      alt={property.name_en || 'Property'}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{property.name_en || 'Untitled'}</p>
+                    <p className="text-sm text-muted-foreground">{property.district || 'No district'}</p>
+                    <p className="text-sm font-semibold text-primary">{property.price_per_night || 0}€/night</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/properties/${property.slug || property.id}`}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/properties/${property.id}/edit`}>
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))
+            )}
           </div>
           <div className="p-4 pt-0">
             <Link href="/admin/properties">

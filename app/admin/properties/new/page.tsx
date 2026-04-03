@@ -1,5 +1,6 @@
 'use client'
 
+// Property creation form - All fields save to Supabase database
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { ImageUploader } from '@/components/admin/image-uploader'
+import { createPropertyAction } from '@/app/admin/actions'
 import { 
   PropertyType, PropertyStatus, BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
   SleepingSpace, BedType, BED_TYPE_LABELS, BathroomType, BATHROOM_TYPE_LABELS,
@@ -84,6 +86,7 @@ export default function NewPropertyPage() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState('general')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -225,30 +228,67 @@ export default function NewPropertyPage() {
 
   const handleSave = async (publish = false) => {
     setIsSaving(true)
+    setSaveError(null)
     
-    const propertyData = {
-      ...formData,
-      status: publish ? 'published' : formData.status,
-      sleepingArrangements,
-      slug: formData.slug || generateSlug(formData.title),
-      seoKeywords: formData.seoKeywords.split(',').map(k => k.trim()).filter(Boolean),
-      location: {
+    // Validation
+    if (!formData.title.trim()) {
+      setSaveError('Property title is required')
+      setIsSaving(false)
+      return
+    }
+    
+    try {
+      // Prepare data for database - aligned with Supabase schema
+      const propertyData = {
+        title: formData.title,
+        slug: formData.slug || generateSlug(formData.title),
+        type: formData.type as 'riad' | 'villa' | 'apartment' | 'house',
+        description_short: formData.shortDescription,
+        description_long: formData.description,
         city: formData.city,
         district: formData.district,
-        subDistrict: formData.subDistrict,
         address: formData.address,
-        mapLocation: formData.mapLocation,
-        nearbyInfo: formData.nearbyInfo,
+        map_location: formData.mapLocation,
+        price_per_night: formData.pricePerNight || 0,
+        cleaning_fee: formData.cleaningFee || 0,
+        security_deposit: formData.securityDeposit || 0,
+        num_bedrooms: formData.numberOfBedrooms || 1,
+        num_bathrooms: formData.bathrooms || 1,
+        bedroom_guest_capacity: formData.bedroomGuestCapacity || 2,
+        additional_guest_capacity: formData.additionalGuestCapacity || 0,
+        total_guest_capacity: formData.totalGuestCapacity || formData.bedroomGuestCapacity || 2,
+        amenities: Object.entries(formData.features || {})
+          .filter(([_, value]) => value)
+          .map(([key]) => key),
+        features: formData.features,
+        parking_type: formData.parking,
+        parking_spots: 0,
+        seo_title: formData.metaTitle,
+        seo_description: formData.metaDescription,
+        status: publish ? 'published' : formData.status,
+        featured: formData.featured || false,
+        airbnb_ical_url: formData.airbnbIcalUrl,
+        booking_ical_url: formData.bookingIcalUrl,
+        sleeping_arrangements: sleepingArrangements,
       }
-    }
 
-    // In production, this would save to database
-    console.log('Saving property:', propertyData)
-    
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    router.push('/admin/properties')
+      // Save to database and CHECK the result
+      const result = await createPropertyAction(propertyData)
+      
+      // Check if there was an error
+      if (result.error) {
+        setSaveError(result.error)
+        return // Don't redirect on error
+      }
+      
+      // Only redirect on success
+      router.push('/admin/properties')
+    } catch (error) {
+      console.error('Error saving property:', error)
+      setSaveError(error instanceof Error ? error.message : 'Failed to save property. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -286,6 +326,24 @@ export default function NewPropertyPage() {
 
         {/* Form Content */}
         <div className="flex-1 space-y-6">
+          {/* Error Alert */}
+          {saveError && (
+            <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-medium">Save Error</p>
+                <p className="text-sm opacity-90">{saveError}</p>
+              </div>
+              <button onClick={() => setSaveError(null)} className="ml-auto text-destructive/70 hover:text-destructive">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Header Actions */}
           <div className="flex items-center justify-between">
             <div>
@@ -341,7 +399,7 @@ export default function NewPropertyPage() {
                     placeholder="riad-jardin-secret"
                   />
                   <p className="text-xs text-muted-foreground">
-                    /properties/{formData.slug || 'your-slug'}
+                    {`/properties/${formData.slug || 'your-slug'}`}
                   </p>
                 </div>
 
@@ -1190,18 +1248,17 @@ export default function NewPropertyPage() {
               </h2>
 
 <ImageUploader
-  images={formData.images || []}
-  onChange={(images) => updateField('images', images)}
-  maxImages={20}
-  label="Property Images"
-  description="Upload high-quality photos of the property. First image will be the cover."
-  />
+                images={formData.images || []}
+                onChange={(images) => updateField('images', images)}
+                maxImages={20}
+                label="Property Images"
+                description="Upload high-quality photos of the property. First image will be the cover."
+              />
 
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Image management features (upload, reorder, delete) will be available after saving the property.
-                  </p>
-                </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Image management features (upload, reorder, delete) will be available after saving the property.
+                </p>
               </div>
             </div>
           )}

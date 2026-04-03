@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Calendar, 
   DollarSign, 
@@ -42,8 +42,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
-import { mockProperties } from '@/lib/data'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+
+interface DbProperty {
+  id: string
+  name_en?: string
+}
 
 // Mock seasonal pricing
 const seasonalPricing = [
@@ -70,7 +75,33 @@ const extras = [
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export default function AdminPricingPage() {
-  const [selectedProperty, setSelectedProperty] = useState(mockProperties[0]?.id || '')
+  const [properties, setProperties] = useState<DbProperty[]>([])
+  const [selectedProperty, setSelectedProperty] = useState('')
+
+  // Fetch properties from database
+  useEffect(() => {
+    let isMounted = true
+    
+    async function fetchProperties() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, name_en')
+        .order('created_at', { ascending: false })
+      
+      if (isMounted && !error && data) {
+        setProperties(data)
+        if (data.length > 0 && !selectedProperty) {
+          setSelectedProperty(data[0].id)
+        }
+      }
+    }
+    fetchProperties()
+    
+    return () => {
+      isMounted = false
+    }
+  }, [])
   const [seasonDialogOpen, setSeasonDialogOpen] = useState(false)
   const [extraDialogOpen, setExtraDialogOpen] = useState(false)
   const [currentYear, setCurrentYear] = useState(2026)
@@ -81,7 +112,7 @@ export default function AdminPricingPage() {
     7: 500, 8: 500, 9: 450, 10: 420, 11: 380, 12: 450
   })
 
-  const property = mockProperties.find(p => p.id === selectedProperty)
+  const property = properties.find(p => p.id === selectedProperty)
 
   return (
     <AdminLayout title="Pricing & Extras">
@@ -98,8 +129,8 @@ export default function AdminPricingPage() {
               <SelectValue placeholder="Select property" />
             </SelectTrigger>
             <SelectContent>
-              {mockProperties.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+              {properties.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name_en || 'Untitled'}</SelectItem>
               ))}
             </SelectContent>
           </Select>

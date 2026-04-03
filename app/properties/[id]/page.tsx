@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
@@ -14,9 +14,11 @@ import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { ImageGallery } from '@/components/properties/image-gallery'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
+import { PropertyServices } from '@/components/properties/property-services'
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
-import { mockProperties, mockServices, mockAddons } from '@/lib/data'
+import { getPropertyBySlugClient as fetchPropertyBySlug } from '@/lib/data-fetcher-client'
+import { type UiProperty } from '@/lib/adapters/property-adapter'
 import { FEATURE_LABELS, BED_TYPE_LABELS, BATHROOM_TYPE_LABELS, type PropertyFeatures, type SleepingSpace } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -44,19 +46,93 @@ const propertyStories = {
   }
 }
 
+/**
+ * AmenitiesSection - Renders additional amenities with built-in null safety
+ * SAFETY: Returns null if amenities prop is undefined, null, not an array, or empty
+ * This prevents any .map() call on undefined values
+ */
+function AmenitiesSection({ amenities }: { amenities?: string[] }) {
+  if (!amenities || !Array.isArray(amenities) || amenities.length === 0) {
+    return null
+  }
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+    >
+      <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
+      <div className="flex flex-wrap gap-2">
+        {amenities.map((amenity) => (
+          <span 
+            key={amenity}
+            className="px-4 py-2 bg-secondary rounded-full text-sm"
+          >
+            {amenity}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const property = mockProperties.find(p => p.id === id)
+  const [property, setProperty] = useState<UiProperty | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadProperty() {
+      try {
+        // Fetch from database - client fetcher handles mock fallback internally
+        const dbProperty = await fetchPropertyBySlug(id)
+        if (dbProperty) {
+          setProperty(dbProperty)
+        }
+        // If no property found (null returned), property state remains null and notFound() is called
+      } catch (error) {
+        // fetchPropertyBySlug handles fallback internally, so if we get here it's a real error
+        console.error('Error loading property:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProperty()
+  }, [id])
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="pt-20 pb-16 min-h-screen bg-background">
+          <div className="container mx-auto px-6 py-12">
+            <div className="animate-pulse space-y-8">
+              <div className="h-96 bg-muted rounded-xl" />
+              <div className="h-8 bg-muted rounded w-1/3" />
+              <div className="h-4 bg-muted rounded w-2/3" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   if (!property) {
     notFound()
   }
 
-  const activeFeatures = (Object.entries(property.features) as [keyof PropertyFeatures, boolean][])
+  // Safe access to features - ensure it's an object before iterating
+  const features = property.features || {}
+  const activeFeatures = (Object.entries(features) as [keyof PropertyFeatures, boolean][])
     .filter(([, value]) => value)
     .map(([key]) => ({ key, label: FEATURE_LABELS[key] }))
 
-  const story = propertyStories[property.type]
+  // Safe access to property type with fallback
+  const propertyType = property.type || 'riad'
+  const story = propertyStories[propertyType]
 
   return (
     <>
@@ -70,10 +146,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </Link>
             <span>/</span>
             <Link 
-              href={`/properties/${property.type}s`} 
+              href={`/properties/${propertyType}s`} 
               className="hover:text-foreground transition-colors capitalize"
             >
-              {property.type}s
+              {propertyType}s
             </Link>
             <span>/</span>
             <span className="text-foreground">{property.title}</span>
@@ -98,11 +174,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               >
                 <div className="flex items-center gap-3 text-muted-foreground mb-3">
                   <span className="px-3 py-1 bg-gold/10 text-gold text-xs uppercase tracking-wider rounded-full font-medium">
-                    {property.type}
+                    {propertyType}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    {property.location.subDistrict || property.location.district}
+                    {property.location?.subDistrict || property.location?.district || 'Marrakech'}
                   </span>
                   <span className="flex items-center gap-1 text-gold">
                     <Star className="w-4 h-4 fill-gold" />
@@ -249,25 +325,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </motion.div>
 
-              {/* Additional Amenities */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-xl font-semibold mb-6">Additional Amenities</h2>
-                <div className="flex flex-wrap gap-2">
-                  {property.amenities.map((amenity) => (
-                    <span 
-                      key={amenity}
-                      className="px-4 py-2 bg-secondary rounded-full text-sm"
-                    >
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
+              {/* Additional Amenities Section */}
+              <AmenitiesSection amenities={property?.amenities} />
 
               {/* Location */}
               <motion.div
@@ -281,11 +340,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                      <p className="font-medium">{property.location.district}</p>
-                      {property.location.subDistrict && (
+                      <p className="font-medium">{property.location?.district || 'Medina'}</p>
+                      {property.location?.subDistrict && (
                         <p className="text-muted-foreground">{property.location.subDistrict}</p>
                       )}
-                      {property.location.distanceFromCenter && (
+                      {property.location?.distanceFromCenter && (
                         <p className="text-sm text-muted-foreground mt-2">
                           Distance from center: {property.location.distanceFromCenter.replace('-', ' ')}
                         </p>
@@ -302,54 +361,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 onBookingClick={() => window.location.href = `/booking?property=${property.id}`}
               />
 
-              {/* Services Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-xl font-semibold mb-6">Experiences &amp; Services</h2>
-                <p className="text-muted-foreground mb-6">
-                  Enhance your stay with our premium services, available on request.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {mockServices.slice(0, 4).map((service) => {
-                    const IconComponent = serviceIcons[service.category] || Sparkles
-                    return (
-                      <div 
-                        key={service.id}
-                        className="flex gap-4 p-4 bg-card rounded-lg border border-border hover:border-primary/30 transition-colors"
-                      >
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
-                          <Image 
-                            src={service.image}
-                            alt={service.name}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <IconComponent className="w-4 h-4 text-primary" />
-                            <h4 className="font-medium text-sm">{service.name}</h4>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {service.description}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-                <Link href="/services" className="inline-block mt-4">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    View All Services
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </motion.div>
+              {/* Services Section - Real data from database */}
+              <PropertyServices propertyId={property.id} />
             </div>
 
             {/* Sidebar - Booking Card */}
@@ -377,7 +390,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   <div className="space-y-3 mb-6 pb-6 border-b border-border">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Property Type</span>
-                      <span className="capitalize font-medium">{property.type}</span>
+                      <span className="capitalize font-medium">{propertyType}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Bedrooms</span>
@@ -475,18 +488,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 >
                   <h4 className="font-medium mb-4">Popular Add-ons</h4>
                   <div className="space-y-3">
-                    {mockAddons.slice(0, 3).map((addon) => (
-                      <div key={addon.id} className="flex items-center justify-between text-sm">
+                    {[
+                      { name: 'Private Chef Dinner', price: 'From 45€/person' },
+                      { name: 'Airport Transfer', price: 'From 25€' },
+                      { name: 'Day Trip to Atlas', price: 'From 80€/person' }
+                    ].map((addon) => (
+                      <div key={addon.name} className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{addon.name}</span>
-                        <span className="font-medium text-primary">
-                          {addon.pricePerPerson 
-                            ? `${addon.pricePerPerson}€/person` 
-                            : `${addon.priceFlat}€`}
-                        </span>
+                        <span className="font-medium text-primary">{addon.price}</span>
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3">Add during checkout</p>
+                  <p className="text-xs text-muted-foreground mt-3">Available during checkout</p>
                 </motion.div>
               </div>
             </div>

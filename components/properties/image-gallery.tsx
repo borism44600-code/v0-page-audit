@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, Expand } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Expand, ImageOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +15,21 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
+  // Premium empty state when no images are available
+  if (!images || images.length === 0) {
+    return (
+      <div className="relative aspect-[16/9] lg:aspect-[21/9] rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+        <div className="text-center p-8">
+          <ImageOff className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <p className="text-muted-foreground font-medium">Photos coming soon</p>
+          <p className="text-sm text-muted-foreground/70 mt-1">
+            Professional images for {title} will be available shortly
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
   }
@@ -23,9 +38,6 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
   }
 
-  // Use placeholder if no images
-  const displayImages = images.length > 0 ? images : ['/images/placeholder-property.jpg']
-
   return (
     <>
       {/* Main Gallery */}
@@ -33,7 +45,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
         {/* Main Image */}
         <div className="relative aspect-[16/9] lg:aspect-[21/9] rounded-lg overflow-hidden bg-muted">
           <Image
-            src={displayImages[currentIndex]}
+            src={images[currentIndex]}
             alt={`${title} - Image ${currentIndex + 1}`}
             fill
             className="object-cover"
@@ -43,7 +55,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
           />
           
           {/* Navigation Arrows */}
-          {displayImages.length > 1 && (
+          {images.length > 1 && (
             <>
               <Button
                 variant="ghost"
@@ -76,14 +88,14 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
 
           {/* Image Counter */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-background/80 backdrop-blur-sm rounded-full text-sm">
-            {currentIndex + 1} / {displayImages.length}
+            {currentIndex + 1} / {images.length}
           </div>
         </div>
 
         {/* Thumbnails */}
-        {displayImages.length > 1 && (
+        {images.length > 1 && (
           <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-            {displayImages.map((image, index) => (
+            {images.map((image, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
@@ -122,7 +134,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
           <div className="relative w-full h-full max-w-7xl max-h-[90vh] mx-auto px-4 flex items-center">
             <div className="relative w-full aspect-[16/9]">
               <Image
-                src={displayImages[currentIndex]}
+                src={images[currentIndex]}
                 alt={`${title} - Image ${currentIndex + 1}`}
                 fill
                 className="object-contain"
@@ -130,7 +142,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
               />
             </div>
 
-            {displayImages.length > 1 && (
+            {images.length > 1 && (
               <>
                 <Button
                   variant="ghost"
@@ -153,9 +165,9 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
           </div>
 
           {/* Thumbnails in fullscreen */}
-          {displayImages.length > 1 && (
+          {images.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-full overflow-x-auto px-4">
-              {displayImages.map((image, index) => (
+              {images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentIndex(index)}

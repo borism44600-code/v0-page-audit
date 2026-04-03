@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { adminLoginAction } from '@/app/admin/actions'
 import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,14 +22,10 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
+      const result = await adminLoginAction(email, password)
 
-      if (result?.error) {
-        setError('Invalid email or password. Please try again.')
+      if (result.error) {
+        setError(result.error)
       } else {
         router.push('/admin')
         router.refresh()

@@ -1,19 +1,64 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Utensils, Car, Sparkles, Mountain, ArrowRight } from 'lucide-react'
+import { Utensils, Car, Sparkles, Mountain, ArrowRight, Loader2 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
-import { mockServices } from '@/lib/data'
+import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from '@/i18n/provider'
+
+interface Service {
+  id: string
+  name: string
+  description: string
+  image: string
+  category: string
+}
 
 export default function ServicesPage() {
   const t = useTranslations('services')
   const tHeader = useTranslations('header')
   const tContact = useTranslations('contact')
+  
+  const [services, setServices] = useState<Service[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true)
+          .order('category', { ascending: true })
+          .order('sort_order', { ascending: true })
+        
+        if (error) {
+          console.error('Error fetching services:', error)
+          setServices([])
+        } else if (data) {
+          setServices(data.map(s => ({
+            id: s.id,
+            name: s.name_en || s.name_fr || 'Service',
+            description: s.description_en || s.description_fr || '',
+            image: s.image || '/images/services/default.jpg',
+            category: s.category || 'other'
+          })))
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        setServices([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchServices()
+  }, [])
 
   const categoryInfo = {
     breakfast: {
@@ -42,13 +87,14 @@ export default function ServicesPage() {
       description: t('description')
     }
   }
-  const groupedServices = mockServices.reduce((acc, service) => {
+
+  const groupedServices = services.reduce((acc, service) => {
     if (!acc[service.category]) {
       acc[service.category] = []
     }
     acc[service.category].push(service)
     return acc
-  }, {} as Record<string, typeof mockServices>)
+  }, {} as Record<string, Service[]>)
 
   return (
     <>
@@ -80,62 +126,81 @@ export default function ServicesPage() {
         {/* Services by Category */}
         <section className="py-24">
           <div className="container mx-auto px-6 space-y-24">
-            {Object.entries(groupedServices).map(([category, services], categoryIndex) => {
-              const info = categoryInfo[category as keyof typeof categoryInfo]
-              const IconComponent = info?.icon || Sparkles
-              
-              return (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                  id={category}
-                >
-                  {/* Category Header */}
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                      <IconComponent className="w-7 h-7 text-primary" />
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : services.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-secondary/50 flex items-center justify-center">
+                  <Sparkles className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h2 className="text-2xl font-semibold mb-3">Services Coming Soon</h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  We are preparing our premium concierge services. Contact us directly for personalized assistance.
+                </p>
+                <Link href="/contact" className="inline-block mt-6">
+                  <Button>{tContact('title')}</Button>
+                </Link>
+              </div>
+            ) : (
+              Object.entries(groupedServices).map(([category, categoryServices]) => {
+                const info = categoryInfo[category as keyof typeof categoryInfo]
+                const IconComponent = info?.icon || Sparkles
+                
+                return (
+                  <motion.div
+                    key={category}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    id={category}
+                  >
+                    {/* Category Header */}
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                        <IconComponent className="w-7 h-7 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl md:text-3xl font-semibold">{info?.title || category}</h2>
+                        <p className="text-muted-foreground">{info?.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-semibold">{info?.title || category}</h2>
-                      <p className="text-muted-foreground">{info?.description}</p>
-                    </div>
-                  </div>
 
-                  {/* Services Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {services.map((service, index) => (
-                      <motion.article
-                        key={service.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        className="bg-card rounded-lg overflow-hidden border border-border group"
-                      >
-                        <div className="relative aspect-[4/3] overflow-hidden">
-                          <Image
-                            src={service.image}
-                            alt={service.name}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                        </div>
-                        <div className="p-6">
-                          <h3 className="font-semibold text-lg mb-2">{service.name}</h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed">
-                            {service.description}
-                          </p>
-                        </div>
-                      </motion.article>
-                    ))}
-                  </div>
-                </motion.div>
-              )
-            })}
+                    {/* Services Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {categoryServices.map((service, index) => (
+                        <motion.article
+                          key={service.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className="bg-card rounded-lg overflow-hidden border border-border group"
+                        >
+                          <div className="relative aspect-[4/3] overflow-hidden">
+                            <Image
+                              src={service.image}
+                              alt={service.name}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                          </div>
+                          <div className="p-6">
+                            <h3 className="font-semibold text-lg mb-2">{service.name}</h3>
+                            <p className="text-muted-foreground text-sm leading-relaxed">
+                              {service.description}
+                            </p>
+                          </div>
+                        </motion.article>
+                      ))}
+                    </div>
+                  </motion.div>
+                )
+              })
+            )}
           </div>
         </section>
 

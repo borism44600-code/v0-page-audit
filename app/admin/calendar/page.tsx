@@ -14,8 +14,21 @@ import {
 } from '@/components/ui/dialog'
 import { AdminLayout } from '@/components/admin/admin-layout'
 import { CalendarSync, CalendarSyncStatusBadge } from '@/components/admin/calendar-sync'
-import { mockProperties } from '@/lib/data'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+
+interface DbProperty {
+  id: string
+  name_en?: string
+  slug?: string
+  category?: string
+  district?: string
+  cover_image?: string
+  property_images?: { 
+    is_primary: boolean
+    media?: { blob_url: string } | null
+  }[]
+}
 
 interface PropertySyncStatus {
   propertyId: string
@@ -31,23 +44,56 @@ export default function AdminCalendarPage() {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null)
   const [syncStatuses, setSyncStatuses] = useState<PropertySyncStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [properties, setProperties] = useState<DbProperty[]>([])
   
-  const selectedPropertyData = mockProperties.find(p => p.id === selectedProperty)
+  const selectedPropertyData = properties.find(p => p.id === selectedProperty)
+
+  // Fetch properties from database
+  useEffect(() => {
+    let isMounted = true
+    
+    async function fetchProperties() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, name_en, slug, category, district, cover_image, property_images(is_primary, media:media_id(blob_url))')
+        .order('created_at', { ascending: false })
+      
+      if (isMounted && !error && data) {
+        setProperties(data)
+      }
+    }
+    fetchProperties()
+    
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Fetch all sync statuses
   useEffect(() => {
+    let isMounted = true
+    
     const fetchStatuses = async () => {
       try {
         const response = await fetch('/api/ical/sync')
         const data = await response.json()
-        setSyncStatuses(data.properties || [])
+        if (isMounted) {
+          setSyncStatuses(data.properties || [])
+        }
       } catch (error) {
         console.error('Failed to fetch sync statuses:', error)
       } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
     fetchStatuses()
+    
+    return () => {
+      isMounted = false
+    }
   }, [selectedProperty]) // Refetch when dialog closes
 
   const getPropertyStatus = (propertyId: string): PropertySyncStatus | undefined => {
@@ -130,7 +176,11 @@ export default function AdminCalendarPage() {
 
         {/* Properties Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockProperties.map((property) => {
+          {properties.map((property) => {
+            const title = property.name_en || 'Untitled'
+            const primaryImg = property.property_images?.find(img => img.is_primary && img.media?.blob_url)
+            const firstImg = property.property_images?.find(img => img.media?.blob_url)
+            const image = property.cover_image || primaryImg?.media?.blob_url || firstImg?.media?.blob_url || '/placeholder-property.jpg'
             const status = getPropertyStatus(property.id)
             
             return (
@@ -148,21 +198,21 @@ export default function AdminCalendarPage() {
                 {/* Property Image */}
                 <div className="relative h-32">
                   <Image
-                    src={property.images[0]}
-                    alt={property.title}
+                    src={image}
+                    alt={title}
                     fill
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3">
-                    <h3 className="font-semibold text-white truncate">{property.title}</h3>
-                    <p className="text-xs text-white/80">{property.location.district}</p>
+                    <h3 className="font-semibold text-white truncate">{title}</h3>
+                    <p className="text-xs text-white/80">{property.district || 'No district'}</p>
                   </div>
                   <Badge 
                     variant="secondary" 
                     className="absolute top-3 right-3 capitalize"
                   >
-                    {property.type}
+                    {property.category || 'property'}
                   </Badge>
                 </div>
 
@@ -212,7 +262,7 @@ export default function AdminCalendarPage() {
             {selectedPropertyData && (
               <CalendarSync 
                 propertyId={selectedPropertyData.id}
-                propertyTitle={selectedPropertyData.title}
+                propertyTitle={selectedPropertyData.name_en || 'Property'}
                 className="border-0 p-0"
               />
             )}

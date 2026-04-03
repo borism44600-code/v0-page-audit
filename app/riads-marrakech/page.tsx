@@ -1,19 +1,17 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { ArrowRight, MapPin, Star, Users, Bed, Bath, Check } from 'lucide-react'
+import { ArrowRight, MapPin, Check, Building2 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
 import { PropertyCard } from '@/components/properties/property-card'
-import { mockProperties } from '@/lib/data'
-import { useTranslations, useLocalizedContent } from '@/i18n/provider'
-import { LOCATIONS, PROPERTY_TYPES } from '@/lib/seo'
-
-// Filter only riads
-const riads = mockProperties.filter(p => p.type === 'riad')
+import { fetchPublishedPropertiesClient } from '@/lib/data-fetcher-client'
+import { type UiProperty } from '@/lib/adapters/property-adapter'
+import { LOCATIONS } from '@/lib/seo'
 
 // Content sections for SEO
 const contentSections = {
@@ -72,14 +70,28 @@ Les riads traditionnels comportent plusieurs étages avec des pièces disposées
 }
 
 export default function RiadsMarrakechPage() {
-  const t = useTranslations('properties')
-  const tCommon = useTranslations('common')
-  const getLocalized = useLocalizedContent()
+  const [riads, setRiads] = useState<UiProperty[]>([])
+  const [loading, setLoading] = useState(true)
 
+  useEffect(() => {
+    async function loadRiads() {
+      try {
+        const data = await fetchPublishedPropertiesClient()
+        setRiads(data.filter(p => p.type === 'riad'))
+      } catch (error) {
+        console.error('Error loading riads:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadRiads()
+  }, [])
+
+  // Use English content directly for SSR stability - client hydration will update if needed
   const content = {
-    whatIsRiad: getLocalized(contentSections.whatIsRiad, 'en'),
-    whyChooseRiad: getLocalized(contentSections.whyChooseRiad, 'en'),
-    bestNeighborhoods: getLocalized(contentSections.bestNeighborhoods, 'en')
+    whatIsRiad: contentSections.whatIsRiad.en,
+    whyChooseRiad: contentSections.whyChooseRiad.en,
+    bestNeighborhoods: contentSections.bestNeighborhoods.en
   }
 
   return (
@@ -274,19 +286,45 @@ export default function RiadsMarrakechPage() {
                 authenticity, and exceptional service.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {riads.slice(0, 6).map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
-            <div className="text-center mt-10">
-              <Link href="/properties/riads">
-                <Button size="lg" variant="outline" className="gap-2">
-                  View All {riads.length} Riads
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
+            {loading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-80 bg-muted rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : riads.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="w-8 h-8 text-muted-foreground/50" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Riads Coming Soon</h3>
+                <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                  We&apos;re currently preparing our collection of riads. Contact us to be notified when they become available.
+                </p>
+                <Link href="/contact">
+                  <Button variant="outline" className="gap-2">
+                    Get Notified
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {riads.slice(0, 6).map((property) => (
+                    <PropertyCard key={property.id} property={property} />
+                  ))}
+                </div>
+                <div className="text-center mt-10">
+                  <Link href="/properties/riads">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      View All {riads.length} Riads
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </section>
 

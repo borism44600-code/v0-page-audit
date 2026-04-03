@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockProperties } from '@/lib/data'
+import { createClient } from '@supabase/supabase-js'
 import { 
   generateInternalIcalUrl, 
   isValidAirbnbUrl, 
@@ -7,6 +7,14 @@ import {
   syncExternalCalendars
 } from '@/lib/ical'
 import { PropertyCalendarSync, ExternalCalendarConfig } from '@/lib/types'
+
+// Create Supabase client for server-side API route
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export const runtime = 'nodejs'
 
@@ -37,12 +45,23 @@ export async function GET(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin
   
   // Return all properties if no propertyId specified
+  const supabase = getSupabase()
+  
   if (!propertyId) {
-    const allStatus = mockProperties.map(property => {
+    const { data: properties, error } = await supabase
+      .from('properties')
+      .select('id, name_en')
+      .order('created_at', { ascending: false })
+    
+    if (error || !properties) {
+      return NextResponse.json({ properties: [] })
+    }
+    
+    const allStatus = properties.map(property => {
       const stored = syncStatusStore.get(property.id)
       return {
         propertyId: property.id,
-        propertyTitle: property.title,
+        propertyTitle: property.name_en || 'Untitled',
         internalIcalUrl: generateInternalIcalUrl(property.id, baseUrl),
         airbnbConfigured: !!stored?.airbnbIcalUrl,
         bookingConfigured: !!stored?.bookingIcalUrl,
@@ -53,8 +72,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ properties: allStatus })
   }
   
-  const property = mockProperties.find(p => p.id === propertyId)
-  if (!property) {
+  const { data: property, error: propError } = await supabase
+    .from('properties')
+    .select('id, name_en')
+    .eq('id', propertyId)
+    .single()
+    
+  if (propError || !property) {
     return NextResponse.json({ error: 'Property not found' }, { status: 404 })
   }
   
@@ -84,7 +108,7 @@ export async function GET(request: NextRequest) {
   
   const response: PropertyCalendarSync = {
     propertyId,
-    propertyTitle: property.title,
+    propertyTitle: property.name_en || 'Untitled',
     internalIcalUrl: generateInternalIcalUrl(propertyId, baseUrl),
     channels,
     lastExternalSyncAt: storedStatus?.lastExternalSyncAt,
@@ -117,8 +141,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Property ID is required' }, { status: 400 })
     }
     
-    const property = mockProperties.find(p => p.id === propertyId)
-    if (!property) {
+    const supabaseClient = getSupabase()
+    const { data: propData, error: propErr } = await supabaseClient
+      .from('properties')
+      .select('id, name_en')
+      .eq('id', propertyId)
+      .single()
+      
+    if (propErr || !propData) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
     

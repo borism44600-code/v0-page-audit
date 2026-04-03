@@ -138,10 +138,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// Default values for SSR/prerender when context is not available
+const defaultI18nValues: I18nContextType = {
+  locale: 'en',
+  setLocale: () => {},
+  t: (key: string) => key,
+  direction: 'ltr',
+  getLocalizedText: (content, fallback = '') => {
+    if (typeof content === 'string') return content
+    if (content && typeof content === 'object' && 'en' in content) return (content as Record<string, string>).en || fallback
+    return fallback
+  },
+  isRTL: false
+}
+
 export function useI18n() {
   const context = useContext(I18nContext)
+  // Return default values during SSR/prerender instead of throwing
   if (!context) {
-    throw new Error('useI18n must be used within an I18nProvider')
+    return defaultI18nValues
   }
   return context
 }

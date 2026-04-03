@@ -250,13 +250,13 @@ export function generatePropertySchema(property: {
     '@id': `${SITE_URL}/properties/${property.id}`,
     name: property.name,
     description: property.description,
-    image: property.images.map(img => `${SITE_URL}${img}`),
+    image: (property.images || []).map(img => `${SITE_URL}${img}`),
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Marrakech',
-      addressRegion: property.location.district,
+      addressRegion: property.location?.district || 'Medina',
       addressCountry: 'MA',
-      streetAddress: property.location.address || ''
+      streetAddress: property.location?.address || ''
     },
     geo: {
       '@type': 'GeoCoordinates',
