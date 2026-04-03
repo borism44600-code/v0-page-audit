@@ -24,7 +24,10 @@ interface DbProperty {
   category?: string
   district?: string
   cover_image?: string
-  property_images?: { image_url: string; is_cover: boolean }[]
+  property_images?: { 
+    is_primary: boolean
+    media?: { blob_url: string } | null
+  }[]
 }
 
 interface PropertySyncStatus {
@@ -51,7 +54,7 @@ export default function AdminCalendarPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('properties')
-        .select('id, name_en, slug, category, district, cover_image, property_images(image_url, is_cover)')
+        .select('id, name_en, slug, category, district, cover_image, property_images(is_primary, media:media_id(blob_url))')
         .order('created_at', { ascending: false })
       
       if (!error && data) {
@@ -159,7 +162,9 @@ export default function AdminCalendarPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {properties.map((property) => {
             const title = property.name_en || 'Untitled'
-            const image = property.cover_image || property.property_images?.find(img => img.is_cover)?.image_url || property.property_images?.[0]?.image_url || '/placeholder-property.jpg'
+            const primaryImg = property.property_images?.find(img => img.is_primary && img.media?.blob_url)
+            const firstImg = property.property_images?.find(img => img.media?.blob_url)
+            const image = property.cover_image || primaryImg?.media?.blob_url || firstImg?.media?.blob_url || '/placeholder-property.jpg'
             const status = getPropertyStatus(property.id)
             
             return (

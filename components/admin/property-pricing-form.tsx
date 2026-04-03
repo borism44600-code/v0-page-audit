@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch'
 import { Trash2, Plus, CalendarDays, DollarSign, Clock, Loader2, Save, AlertCircle } from 'lucide-react'
 import { 
   getPricingRules, 
-  setMonthlyPrices, 
+  setMonthlyPrices as saveMonthlyPrices, 
   createPricingRule, 
   deletePricingRule,
   getBlockedDates,
@@ -120,7 +120,7 @@ export function PropertyPricingForm({ propertyId, basePrice }: PropertyPricingFo
     setError(null)
     
     try {
-      const { error } = await setMonthlyPrices(propertyId, monthlyPrices)
+      const { error } = await saveMonthlyPrices(propertyId, monthlyPrices)
       if (error) throw new Error(error)
       
       setSuccessMessage('Monthly prices saved successfully')

@@ -53,10 +53,14 @@ export interface DbProperty {
   updated_at?: string
   property_images?: {
     id: string
-    image_url: string
-    alt_text?: string
-    is_cover: boolean
-    display_order: number
+    is_primary: boolean
+    sort_order: number
+    media?: {
+      id: string
+      blob_url: string
+      alt_text?: string
+      filename?: string
+    } | null
   }[]
   property_rooms?: {
     id: string
@@ -211,15 +215,18 @@ function roomsToSleepingArrangements(rooms: DbProperty['property_rooms'] = []): 
  */
 export function adaptPropertyToUi(dbProperty: DbProperty): UiProperty {
   // Get cover image or first image, fallback to placeholder
+  // Sort images: primary first, then by sort_order
   const sortedImages = (dbProperty.property_images || [])
+    .filter(img => img.media?.blob_url) // Only include images with valid media
     .sort((a, b) => {
-      if (a.is_cover) return -1
-      if (b.is_cover) return 1
-      return a.display_order - b.display_order
+      if (a.is_primary) return -1
+      if (b.is_primary) return 1
+      return (a.sort_order || 0) - (b.sort_order || 0)
     })
   
+  // Extract blob URLs from the media relation
   const images = sortedImages.length > 0 
-    ? sortedImages.map(img => img.image_url)
+    ? sortedImages.map(img => img.media!.blob_url)
     : []  // Empty array - UI handles empty state gracefully
 
   // Get title from multilingual fields, fallback to English

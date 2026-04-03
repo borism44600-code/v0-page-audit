@@ -20,7 +20,7 @@ export async function fetchPublishedPropertiesClient(): Promise<UiProperty[]> {
       .from('properties')
       .select(`
         *,
-        property_images (id, image_url, alt_text, display_order, is_cover),
+        property_images (id, is_primary, sort_order, media:media_id (id, blob_url, alt_text, filename)),
         property_rooms (id, room_name, room_number, bed_type, bed_count, max_guests, has_bathroom, has_shower, has_bathtub)
       `)
       .eq('status', 'published')
@@ -47,7 +47,7 @@ export async function fetchPropertyByIdOrSlugClient(idOrSlug: string): Promise<U
       .from('properties')
       .select(`
         *,
-        property_images (id, image_url, alt_text, display_order, is_cover),
+        property_images (id, is_primary, sort_order, media:media_id (id, blob_url, alt_text, filename)),
         property_rooms (id, room_name, room_number, bed_type, bed_count, max_guests, has_bathroom, has_shower, has_bathtub)
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)

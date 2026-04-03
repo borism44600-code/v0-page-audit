@@ -114,7 +114,10 @@ interface DbProperty {
   district?: string
   price_per_night?: number
   cover_image?: string
-  property_images?: { image_url: string; is_cover: boolean }[]
+  property_images?: { 
+    is_primary: boolean
+    media?: { blob_url: string } | null
+  }[]
 }
 
 export default function AdminDashboard() {
@@ -126,7 +129,7 @@ export default function AdminDashboard() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('properties')
-        .select('id, name_en, slug, category, district, price_per_night, cover_image, property_images(image_url, is_cover)')
+        .select('id, name_en, slug, category, district, price_per_night, cover_image, property_images(is_primary, media:media_id(blob_url))')
         .order('created_at', { ascending: false })
         .limit(4)
       
@@ -140,9 +143,10 @@ export default function AdminDashboard() {
 
   const getPropertyImage = (p: DbProperty) => {
     if (p.cover_image) return p.cover_image
-    const coverImg = p.property_images?.find(img => img.is_cover)
-    if (coverImg) return coverImg.image_url
-    if (p.property_images?.[0]) return p.property_images[0].image_url
+    const primaryImg = p.property_images?.find(img => img.is_primary && img.media?.blob_url)
+    if (primaryImg) return primaryImg.media!.blob_url
+    const firstImg = p.property_images?.find(img => img.media?.blob_url)
+    if (firstImg) return firstImg.media!.blob_url
     return '/placeholder-property.jpg'
   }
 

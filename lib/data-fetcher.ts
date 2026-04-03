@@ -26,10 +26,14 @@ export async function fetchPublishedProperties(): Promise<UiProperty[]> {
         *,
         property_images (
           id,
-          image_url,
-          alt_text,
-          display_order,
-          is_cover
+          is_primary,
+          sort_order,
+          media:media_id (
+            id,
+            blob_url,
+            alt_text,
+            filename
+          )
         ),
         property_rooms (
           id,
@@ -77,10 +81,14 @@ export async function fetchPropertyByIdOrSlug(idOrSlug: string): Promise<UiPrope
         *,
         property_images (
           id,
-          image_url,
-          alt_text,
-          display_order,
-          is_cover
+          is_primary,
+          sort_order,
+          media:media_id (
+            id,
+            blob_url,
+            alt_text,
+            filename
+          )
         ),
         property_rooms (
           id,

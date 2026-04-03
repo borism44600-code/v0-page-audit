@@ -64,8 +64,8 @@ interface Property {
   featured?: boolean
   property_images?: {
     id: string
-    image_url: string
-    is_cover: boolean
+    is_primary: boolean
+    media?: { blob_url: string } | null
   }[]
 }
 
@@ -93,8 +93,11 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
   })
 
   const getCoverImage = (property: Property) => {
-    const coverImage = property.property_images?.find(img => img.is_cover)
-    return coverImage?.image_url || property.property_images?.[0]?.image_url || '/placeholder-property.jpg'
+    const primaryImg = property.property_images?.find(img => img.is_primary && img.media?.blob_url)
+    if (primaryImg) return primaryImg.media!.blob_url
+    const firstImg = property.property_images?.find(img => img.media?.blob_url)
+    if (firstImg) return firstImg.media!.blob_url
+    return '/placeholder-property.jpg'
   }
 
   const handleDelete = async () => {
