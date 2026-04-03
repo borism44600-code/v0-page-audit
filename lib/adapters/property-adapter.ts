@@ -3,7 +3,7 @@
  * This ensures backwards compatibility with existing components
  */
 
-import { PropertyFeatures, SleepingSpace } from '@/lib/types'
+import { PropertyFeatures, SleepingSpace, BedType, BathroomType } from '@/lib/types'
 
 // Database property type (matches actual Supabase schema)
 export interface DbProperty {
@@ -182,19 +182,28 @@ function amenitiestoFeatures(amenities: string[] = []): PropertyFeatures {
  * Convert database rooms to sleeping arrangements
  */
 function roomsToSleepingArrangements(rooms: DbProperty['property_rooms'] = []): SleepingSpace[] {
-  return rooms.map((room, index) => ({
-    id: room.id,
-    name: room.room_name || `Bedroom ${index + 1}`,
-    bedTypes: room.bed_type ? [{
-      type: room.bed_type as 'king' | 'queen' | 'double' | 'single' | 'sofa_bed' | 'bunk',
-      quantity: room.bed_count || 1
-    }] : [],
-    bathroom: {
-      hasPrivate: room.has_bathroom || false,
-      hasShower: room.has_shower || false,
-      hasBathtub: room.has_bathtub || false
+  return rooms.map((room, index) => {
+    // Determine bathroomType from DB columns
+    let bathroomType: BathroomType = 'none'
+    if (room.has_shower && room.has_bathtub) {
+      bathroomType = 'both'
+    } else if (room.has_shower) {
+      bathroomType = 'shower'
+    } else if (room.has_bathtub) {
+      bathroomType = 'bathtub'
     }
-  }))
+    
+    return {
+      roomName: room.room_name || `Bedroom ${index + 1}`,
+      roomType: room.room_name?.toLowerCase().includes('living') ? 'living-room' as const : 'bedroom' as const,
+      beds: room.bed_type ? [{
+        type: (room.bed_type as BedType) || 'double',
+        quantity: room.bed_count || 1
+      }] : [{ type: 'double' as BedType, quantity: 1 }],
+      ensuite: room.has_bathroom || false,
+      bathroomType: room.has_bathroom ? bathroomType : 'none'
+    }
+  })
 }
 
 /**

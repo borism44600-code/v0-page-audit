@@ -103,6 +103,47 @@ export async function createPropertyAction(data: CreatePropertyInput): Promise<{
     }
   }
   
+  // Create property rooms if sleeping arrangements provided
+  if (data.sleeping_arrangements && data.sleeping_arrangements.length > 0) {
+    const roomsData = data.sleeping_arrangements.map((room, index) => {
+      // Determine bathroom facilities based on bathroomType
+      const bathroomType = room.bathroomType || 'none'
+      const hasShower = bathroomType === 'shower' || bathroomType === 'both'
+      const hasBathtub = bathroomType === 'bathtub' || bathroomType === 'both'
+      
+      return {
+        property_id: property.id,
+        room_name: room.roomName,
+        room_number: index + 1,
+        bed_type: room.beds[0]?.type || 'double',
+        bed_count: room.beds.reduce((sum, bed) => sum + bed.quantity, 0),
+        max_guests: room.beds.reduce((sum, bed) => {
+          const guestsPerBed: Record<BedType, number> = {
+            'king': 2, 'queen': 2, 'double': 2, 'single': 1,
+            'sofa-bed-double': 2, 'sofa-bed-single': 1,
+            'extra-bed-single': 1, 'extra-bed-double': 2,
+            'bench-single': 1, 'bench-double': 2,
+            'bunk-bed': 2, 'crib': 1
+          }
+          return sum + (bed.quantity * (guestsPerBed[bed.type] || 1))
+        }, 0),
+        has_bathroom: room.ensuite || false,
+        has_shower: hasShower,
+        has_bathtub: hasBathtub,
+        sort_order: index + 1
+      }
+    })
+    
+    const { error: roomsError } = await supabase
+      .from('property_rooms')
+      .insert(roomsData)
+    
+    if (roomsError) {
+      console.error('Error creating property rooms:', roomsError)
+      // Don't fail the whole operation for rooms error
+    }
+  }
+  
   revalidatePath('/admin/properties')
   revalidatePath('/properties')
   
@@ -199,25 +240,36 @@ export async function updatePropertyAction(id: string, data: UpdatePropertyInput
     
     // Insert new rooms
     if (data.sleeping_arrangements.length > 0) {
-      const roomsData = data.sleeping_arrangements.map((room, index) => ({
-        property_id: id,
-        room_name: room.roomName,
-        room_number: index + 1,
-        // Use first bed type as primary, store full beds array structure
-        bed_type: room.beds[0]?.type || 'double',
-        bed_count: room.beds.reduce((sum, bed) => sum + bed.quantity, 0),
-        max_guests: room.beds.reduce((sum, bed) => {
-          // Estimate guests per bed type
-          const guestsPerBed: Record<BedType, number> = {
-            'king': 2, 'queen': 2, 'double': 2, 'single': 1, 'twin': 2,
-            'sofa-bed-double': 2, 'sofa-bed-single': 1, 'bunk-bed': 2,
-            'floor-mattress': 2, 'crib': 1, 'extra-bed': 1
-          }
-          return sum + (bed.quantity * (guestsPerBed[bed.type] || 1))
-        }, 0),
-        has_bathroom: room.ensuite || false,
-        sort_order: index + 1
-      }))
+      const roomsData = data.sleeping_arrangements.map((room, index) => {
+        // Determine bathroom facilities based on bathroomType
+        const bathroomType = room.bathroomType || 'none'
+        const hasShower = bathroomType === 'shower' || bathroomType === 'both'
+        const hasBathtub = bathroomType === 'bathtub' || bathroomType === 'both'
+        
+        return {
+          property_id: id,
+          room_name: room.roomName,
+          room_number: index + 1,
+          // Use first bed type as primary
+          bed_type: room.beds[0]?.type || 'double',
+          bed_count: room.beds.reduce((sum, bed) => sum + bed.quantity, 0),
+          max_guests: room.beds.reduce((sum, bed) => {
+            // Estimate guests per bed type
+            const guestsPerBed: Record<BedType, number> = {
+              'king': 2, 'queen': 2, 'double': 2, 'single': 1,
+              'sofa-bed-double': 2, 'sofa-bed-single': 1, 
+              'extra-bed-single': 1, 'extra-bed-double': 2,
+              'bench-single': 1, 'bench-double': 2,
+              'bunk-bed': 2, 'crib': 1
+            }
+            return sum + (bed.quantity * (guestsPerBed[bed.type] || 1))
+          }, 0),
+          has_bathroom: room.ensuite || false,
+          has_shower: hasShower,
+          has_bathtub: hasBathtub,
+          sort_order: index + 1
+        }
+      })
       
       await supabase
         .from('property_rooms')

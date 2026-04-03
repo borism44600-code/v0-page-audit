@@ -269,6 +269,7 @@ export default function NewPropertyPage() {
         featured: formData.featured || false,
         airbnb_ical_url: formData.airbnbIcalUrl,
         booking_ical_url: formData.bookingIcalUrl,
+        sleeping_arrangements: sleepingArrangements,
       }
 
       // Save to database and CHECK the result

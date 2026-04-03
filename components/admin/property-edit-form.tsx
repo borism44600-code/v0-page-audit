@@ -6,7 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { 
   ArrowLeft, Save, Eye, Bed, Trash2, Plus, Users, Sofa, Bath,
-  MapPin, DollarSign, Image as ImageIcon, Globe, Settings2, Car, Loader2
+  MapPin, DollarSign, Image as ImageIcon, Globe, Settings2, Car, Loader2,
+  Sparkles, Flame, Waves, Wind, Wifi, ThermometerSun, Mountain, Building2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,7 +30,9 @@ import type { AdminFormProperty } from '@/lib/adapters/admin-property-adapter'
 import { 
   MAIN_DISTRICTS, MEDINA_DISTRICTS, KASBAH_DISTRICTS,
   BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
-  SleepingSpace, BedType, BED_TYPE_LABELS
+  SleepingSpace, BedType, BED_TYPE_LABELS,
+  BathroomType, BATHROOM_TYPE_LABELS,
+  FEATURE_LABELS, type PropertyFeatures
 } from '@/lib/types'
 
 interface PropertyEditFormProps {
@@ -46,6 +49,7 @@ const sections: FormSection[] = [
   { id: 'general', title: 'General', icon: Settings2 },
   { id: 'location', title: 'Location', icon: MapPin },
   { id: 'capacity', title: 'Capacity', icon: Bed },
+  { id: 'features', title: 'Features', icon: Sparkles },
   { id: 'pricing', title: 'Pricing', icon: DollarSign },
   { id: 'parking', title: 'Parking', icon: Car },
   { id: 'sync', title: 'Sync', icon: Globe },
@@ -105,21 +109,51 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
     seoKeywords: '',      // NOT IN DB SCHEMA
   })
 
+  // Features state - initialized from property.features
+  const defaultFeatures: PropertyFeatures = {
+    heatedPool: false, unheatedPool: false, heatedPlungePool: false, unheatedPlungePool: false,
+    jacuzzi: false, hammam: false, bathtub: false, fireplace: false,
+    terrace: false, rooftop: false, privateTerminate: false,
+    wifi: false, airConditioning: false,
+    breakfastPossible: false, mealsPossible: false, airportTransferPossible: false,
+    privateDriverPossible: false, excursionsPossible: false,
+    gasStove: false, washingMachine: false, iron: false, dishwasher: false,
+    oven: false, coffeeMachine: false, fridge: false,
+    mountainView: false, koutboubiaView: false, mouleyYazidView: false, monumentsView: false, souks: false
+  }
+  const [features, setFeatures] = useState<PropertyFeatures>(() => {
+    const propFeatures = property.features as Partial<PropertyFeatures> | null
+    return { ...defaultFeatures, ...propFeatures }
+  })
+
   // Sleeping arrangements state - initialized from property.property_rooms if available
   // Convert DB property_rooms format to SleepingSpace format
   const [sleepingArrangements, setSleepingArrangements] = useState<SleepingSpace[]>(() => {
     if (!property.property_rooms || property.property_rooms.length === 0) {
       return []
     }
-    return property.property_rooms.map(room => ({
-      roomName: room.room_name || 'Room',
-      roomType: room.room_name?.toLowerCase().includes('living') ? 'living-room' : 'bedroom',
-      beds: [{
-        type: (room.bed_type as BedType) || 'double',
-        quantity: room.num_beds || 1
-      }],
-      ensuite: room.has_bathroom || false
-    }))
+    return property.property_rooms.map(room => {
+      // Determine bathroomType from DB columns
+      let bathroomType: BathroomType = 'none'
+      if (room.has_shower && room.has_bathtub) {
+        bathroomType = 'both'
+      } else if (room.has_shower) {
+        bathroomType = 'shower'
+      } else if (room.has_bathtub) {
+        bathroomType = 'bathtub'
+      }
+      
+      return {
+        roomName: room.room_name || 'Room',
+        roomType: room.room_name?.toLowerCase().includes('living') ? 'living-room' : 'bedroom',
+        beds: [{
+          type: (room.bed_type as BedType) || 'double',
+          quantity: room.bed_count || 1
+        }],
+        ensuite: room.has_bathroom || false,
+        bathroomType: room.has_bathroom ? bathroomType : 'none'
+      }
+    })
   })
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -222,7 +256,8 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         airbnb_ical_url: formData.airbnbIcalUrl,
         booking_ical_url: formData.bookingIcalUrl,
         internal_ical_url: formData.internalIcalUrl,
-        sleeping_arrangements: sleepingArrangements
+        sleeping_arrangements: sleepingArrangements,
+        features: features
       }
 
       // Call action and CHECK the result
@@ -710,7 +745,10 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                               <label className="flex items-center gap-2 text-sm">
                                 <Switch
                                   checked={room.ensuite || false}
-                                  onCheckedChange={(checked) => updateRoom(roomIndex, { ensuite: checked })}
+                                  onCheckedChange={(checked) => updateRoom(roomIndex, { 
+                                    ensuite: checked,
+                                    bathroomType: checked ? 'shower' : 'none'
+                                  })}
                                 />
                                 <span className="text-muted-foreground">Ensuite</span>
                               </label>
@@ -726,6 +764,30 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                             </Button>
                           </div>
                         </div>
+
+                        {/* Bathroom Type selector (when ensuite is enabled) */}
+                        {room.roomType === 'bedroom' && room.ensuite && (
+                          <div className="pl-11 pb-2">
+                            <Label className="text-xs text-muted-foreground mb-1 block">Bathroom Type</Label>
+                            <Select
+                              value={room.bathroomType || 'shower'}
+                              onValueChange={(value) => updateRoom(roomIndex, { bathroomType: value as BathroomType })}
+                            >
+                              <SelectTrigger className="w-48">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(BATHROOM_TYPE_LABELS).map(([value, label]) => (
+                                  value !== 'none' && (
+                                    <SelectItem key={value} value={value}>
+                                      {label}
+                                    </SelectItem>
+                                  )
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
 
                         {/* Beds in this room */}
                         <div className="space-y-2 pl-11">
@@ -783,6 +845,106 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Features & Amenities Section */}
+          {activeSection === 'features' && (
+            <div className="space-y-6">
+              {/* Pool & Wellness */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Waves className="w-5 h-5 text-primary" />
+                  Pool & Wellness
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(['heatedPool', 'unheatedPool', 'heatedPlungePool', 'unheatedPlungePool', 'jacuzzi', 'hammam'] as const).map((key) => (
+                    <label key={key} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Switch
+                        checked={features[key]}
+                        onCheckedChange={(checked) => setFeatures(prev => ({ ...prev, [key]: checked }))}
+                      />
+                      <span className="text-sm">{FEATURE_LABELS[key]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comfort & Interior */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-primary" />
+                  Comfort & Interior
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(['fireplace', 'bathtub', 'wifi', 'airConditioning'] as const).map((key) => (
+                    <label key={key} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Switch
+                        checked={features[key]}
+                        onCheckedChange={(checked) => setFeatures(prev => ({ ...prev, [key]: checked }))}
+                      />
+                      <span className="text-sm">{FEATURE_LABELS[key]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Outdoor Spaces */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Mountain className="w-5 h-5 text-primary" />
+                  Outdoor & Views
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(['terrace', 'rooftop', 'privateTerminate', 'mountainView', 'koutboubiaView', 'mouleyYazidView', 'monumentsView', 'souks'] as const).map((key) => (
+                    <label key={key} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Switch
+                        checked={features[key]}
+                        onCheckedChange={(checked) => setFeatures(prev => ({ ...prev, [key]: checked }))}
+                      />
+                      <span className="text-sm">{FEATURE_LABELS[key]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Kitchen & Appliances */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  Kitchen & Appliances
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(['gasStove', 'oven', 'fridge', 'dishwasher', 'washingMachine', 'iron', 'coffeeMachine'] as const).map((key) => (
+                    <label key={key} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Switch
+                        checked={features[key]}
+                        onCheckedChange={(checked) => setFeatures(prev => ({ ...prev, [key]: checked }))}
+                      />
+                      <span className="text-sm">{FEATURE_LABELS[key]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Services Available */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Services Available
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(['breakfastPossible', 'mealsPossible', 'airportTransferPossible', 'privateDriverPossible', 'excursionsPossible'] as const).map((key) => (
+                    <label key={key} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Switch
+                        checked={features[key]}
+                        onCheckedChange={(checked) => setFeatures(prev => ({ ...prev, [key]: checked }))}
+                      />
+                      <span className="text-sm">{FEATURE_LABELS[key]}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
           )}
