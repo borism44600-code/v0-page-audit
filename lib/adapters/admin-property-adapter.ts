@@ -122,11 +122,14 @@ export interface DbPropertyRaw {
   // Relations (from joins)
   property_images?: {
     id: string
-    image_url: string
-    alt_text?: string | null
-    caption?: string | null
-    is_cover: boolean
-    display_order: number
+    is_primary: boolean
+    sort_order: number
+    media?: {
+      id: string
+      blob_url: string
+      alt_text?: string | null
+      filename?: string | null
+    } | null
   }[]
   property_rooms?: {
     id: string
@@ -186,10 +189,14 @@ export interface AdminFormProperty {
   featured?: boolean
   property_images?: {
     id: string
-    image_url: string
-    alt_text?: string
-    is_cover: boolean
-    display_order: number
+    is_primary: boolean
+    sort_order: number
+    media?: {
+      id: string
+      blob_url: string
+      alt_text?: string | null
+      filename?: string | null
+    } | null
   }[]
   property_rooms?: {
     id: string
@@ -282,13 +289,14 @@ export function dbToAdminForm(db: DbPropertyRaw): AdminFormProperty {
     status,
     featured: db.featured || false,
     // Relations
-    property_images: (db.property_images || []).map(img => ({
-      id: img.id,
-      image_url: img.image_url,
-      alt_text: img.alt_text || '',
-      is_cover: img.is_cover,
-      display_order: img.display_order
-    })),
+    property_images: (db.property_images || [])
+      .filter(img => img.media?.blob_url)
+      .map(img => ({
+        id: img.id,
+        is_primary: img.is_primary,
+        sort_order: img.sort_order,
+        media: img.media
+      })),
     property_rooms: (db.property_rooms || []).map(room => ({
       id: room.id,
       room_name: room.room_name,

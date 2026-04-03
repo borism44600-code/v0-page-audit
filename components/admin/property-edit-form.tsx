@@ -1159,22 +1159,23 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
               {property.property_images && property.property_images.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {property.property_images
-                    .sort((a, b) => a.display_order - b.display_order)
+                    .filter(img => img.media?.blob_url)
+                    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
                     .map((image) => (
                       <div key={image.id} className="relative group aspect-square rounded-lg overflow-hidden border">
                         <Image
-                          src={image.image_url}
-                          alt={image.alt_text || property.title}
+                          src={image.media!.blob_url}
+                          alt={image.media?.alt_text || property.title}
                           fill
                           className="object-cover"
                         />
-                        {image.is_cover && (
+                        {image.is_primary && (
                           <div className="absolute top-2 left-2">
                             <Badge className="bg-primary">Cover</Badge>
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          {!image.is_cover && (
+                          {!image.is_primary && (
                             <Button
                               size="sm"
                               variant="secondary"

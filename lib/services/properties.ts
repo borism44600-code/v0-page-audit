@@ -65,11 +65,14 @@ export interface PropertyRoom {
 export interface PropertyImage {
   id?: string
   property_id: string
-  image_url: string
-  alt_text?: string
-  caption?: string
-  display_order: number
-  is_cover: boolean
+  is_primary: boolean
+  sort_order: number
+  media?: {
+    id: string
+    blob_url: string
+    alt_text?: string
+    filename?: string
+  } | null
 }
 
 // Get all properties (adapted to UI field names for admin table)
@@ -82,10 +85,14 @@ export async function getProperties() {
       *,
       property_images (
         id,
-        image_url,
-        alt_text,
-        display_order,
-        is_cover
+        is_primary,
+        sort_order,
+        media:media_id (
+          id,
+          blob_url,
+          alt_text,
+          filename
+        )
       )
     `)
     .order('created_at', { ascending: false })
@@ -127,11 +134,14 @@ export async function getPropertyById(id: string) {
       *,
       property_images (
         id,
-        image_url,
-        alt_text,
-        caption,
-        display_order,
-        is_cover
+        is_primary,
+        sort_order,
+        media:media_id (
+          id,
+          blob_url,
+          alt_text,
+          filename
+        )
       ),
       property_rooms (
         id,
@@ -175,11 +185,14 @@ export async function getPropertyBySlug(slug: string) {
       *,
       property_images (
         id,
-        image_url,
-        alt_text,
-        caption,
-        display_order,
-        is_cover
+        is_primary,
+        sort_order,
+        media:media_id (
+          id,
+          blob_url,
+          alt_text,
+          filename
+        )
       ),
       property_rooms (
         id,
@@ -542,10 +555,14 @@ export async function getPublishedProperties(filters?: {
       *,
       property_images (
         id,
-        image_url,
-        alt_text,
-        display_order,
-        is_cover
+        is_primary,
+        sort_order,
+        media:media_id (
+          id,
+          blob_url,
+          alt_text,
+          filename
+        )
       )
     `)
     .eq('status', 'published')  // Use status column for published properties
