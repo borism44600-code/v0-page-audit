@@ -72,7 +72,7 @@ export interface PropertyImage {
   is_cover: boolean
 }
 
-// Get all properties
+// Get all properties (adapted to UI field names for admin table)
 export async function getProperties() {
   const supabase = await createClient()
   
@@ -95,7 +95,24 @@ export async function getProperties() {
     throw new Error('Failed to fetch properties')
   }
   
-  return data
+  // Adapt DB columns to UI field names expected by PropertiesTable
+  return (data || []).map(p => ({
+    id: p.id,
+    title: p.name_en || p.name_fr || 'Untitled',
+    slug: p.slug || '',
+    type: p.category || 'riad',
+    city: p.location || 'Marrakech',
+    district: p.district || undefined,
+    num_bedrooms: p.bedrooms || 1,
+    num_bathrooms: p.bathrooms || 1,
+    bedroom_guest_capacity: p.bedroom_guest_capacity || 2,
+    additional_guest_capacity: p.additional_guest_capacity || 0,
+    total_guest_capacity: p.max_guests || p.bedroom_guest_capacity || 2,
+    price_per_night: p.price_per_night || 0,
+    status: p.status || (p.is_active ? 'published' : 'draft'),
+    featured: p.featured || false,
+    property_images: p.property_images || []
+  }))
 }
 
 // Get single property by ID (for admin edit form)
