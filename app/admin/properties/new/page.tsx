@@ -1,5 +1,6 @@
 'use client'
 
+// Property creation form - All fields save to Supabase database
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
