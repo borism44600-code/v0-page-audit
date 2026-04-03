@@ -506,11 +506,11 @@ export async function deletePropertyImage(id: string, propertyId: string) {
 export async function reorderPropertyImages(propertyId: string, imageIds: string[]) {
   const supabase = await createClient()
   
-  // Update display_order for each image
+  // Update sort_order for each image (new schema)
   const updates = imageIds.map((id, index) => 
     supabase
       .from('property_images')
-      .update({ display_order: index })
+      .update({ sort_order: index })
       .eq('id', id)
   )
   
@@ -523,16 +523,16 @@ export async function reorderPropertyImages(propertyId: string, imageIds: string
 export async function setCoverImage(propertyId: string, imageId: string) {
   const supabase = await createClient()
   
-  // Reset all images to non-cover
+  // Reset all images to non-primary (new schema uses is_primary)
   await supabase
     .from('property_images')
-    .update({ is_cover: false })
+    .update({ is_primary: false })
     .eq('property_id', propertyId)
   
-  // Set the selected image as cover
+  // Set the selected image as primary
   await supabase
     .from('property_images')
-    .update({ is_cover: true })
+    .update({ is_primary: true })
     .eq('id', imageId)
   
   revalidatePath(`/admin/properties/${propertyId}`)

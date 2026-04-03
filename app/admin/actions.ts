@@ -519,10 +519,9 @@ export async function adminLogoutAction() {
 // ============================================================================
 
 export async function addPropertyImageAction(propertyId: string, imageData: {
-  image_url: string
-  alt_text?: string
-  display_order?: number
-  is_cover?: boolean
+  media_id: string
+  sort_order?: number
+  is_primary?: boolean
 }) {
   const supabase = await createClient()
   
@@ -530,7 +529,9 @@ export async function addPropertyImageAction(propertyId: string, imageData: {
     .from('property_images')
     .insert({
       property_id: propertyId,
-      ...imageData
+      media_id: imageData.media_id,
+      sort_order: imageData.sort_order || 0,
+      is_primary: imageData.is_primary || false
     })
     .select()
     .single()
@@ -566,16 +567,16 @@ export async function deletePropertyImageAction(imageId: string, propertyId: str
 export async function setCoverImageAction(imageId: string, propertyId: string) {
   const supabase = await createClient()
   
-  // Remove cover from all other images
+  // Remove primary from all other images (new schema uses is_primary)
   await supabase
     .from('property_images')
-    .update({ is_cover: false })
+    .update({ is_primary: false })
     .eq('property_id', propertyId)
   
-  // Set this image as cover
+  // Set this image as primary
   const { error } = await supabase
     .from('property_images')
-    .update({ is_cover: true })
+    .update({ is_primary: true })
     .eq('id', imageId)
   
   if (error) {
