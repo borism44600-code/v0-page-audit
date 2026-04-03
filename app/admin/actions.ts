@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import type { SleepingSpace, BedType } from '@/lib/types'
 
 // ============================================================================
 // PROPERTY ACTIONS
@@ -16,6 +17,7 @@ export interface CreatePropertyInput {
   description_long?: string
   city?: string
   district?: string
+  sub_district?: string
   address?: string
   map_location?: string
   price_per_night: number
@@ -37,6 +39,7 @@ export interface CreatePropertyInput {
   airbnb_ical_url?: string
   booking_ical_url?: string
   internal_ical_url?: string
+  sleeping_arrangements?: SleepingSpace[]
 }
 
 export async function createPropertyAction(data: CreatePropertyInput): Promise<{ data?: unknown; error?: string }> {
@@ -125,6 +128,7 @@ export async function updatePropertyAction(id: string, data: UpdatePropertyInput
   if (data.description_long !== undefined) dbData.description_en = data.description_long
   if (data.city !== undefined) dbData.location = data.city
   if (data.district !== undefined) dbData.district = data.district
+  if (data.sub_district !== undefined) dbData.sub_district = data.sub_district
   if (data.address !== undefined) dbData.address = data.address
   if (data.map_location !== undefined) dbData.map_url = data.map_location
   if (data.price_per_night !== undefined) dbData.price_per_night = data.price_per_night
@@ -182,6 +186,42 @@ export async function updatePropertyAction(id: string, data: UpdatePropertyInput
       await supabase
         .from('availability_sync')
         .insert({ property_id: id, ...syncData })
+    }
+  }
+  
+  // Update sleeping arrangements (property_rooms) if provided
+  if (data.sleeping_arrangements !== undefined) {
+    // Delete existing rooms for this property
+    await supabase
+      .from('property_rooms')
+      .delete()
+      .eq('property_id', id)
+    
+    // Insert new rooms
+    if (data.sleeping_arrangements.length > 0) {
+      const roomsData = data.sleeping_arrangements.map((room, index) => ({
+        property_id: id,
+        room_name: room.roomName,
+        room_number: index + 1,
+        // Use first bed type as primary, store full beds array structure
+        bed_type: room.beds[0]?.type || 'double',
+        bed_count: room.beds.reduce((sum, bed) => sum + bed.quantity, 0),
+        max_guests: room.beds.reduce((sum, bed) => {
+          // Estimate guests per bed type
+          const guestsPerBed: Record<BedType, number> = {
+            'king': 2, 'queen': 2, 'double': 2, 'single': 1, 'twin': 2,
+            'sofa-bed-double': 2, 'sofa-bed-single': 1, 'bunk-bed': 2,
+            'floor-mattress': 2, 'crib': 1, 'extra-bed': 1
+          }
+          return sum + (bed.quantity * (guestsPerBed[bed.type] || 1))
+        }, 0),
+        has_bathroom: room.ensuite || false,
+        sort_order: index + 1
+      }))
+      
+      await supabase
+        .from('property_rooms')
+        .insert(roomsData)
     }
   }
   

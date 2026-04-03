@@ -163,6 +163,7 @@ export interface AdminFormProperty {
   description_long?: string
   city: string
   district?: string
+  sub_district?: string
   address?: string
   map_location?: string
   price_per_night: number
@@ -257,6 +258,7 @@ export function dbToAdminForm(db: DbPropertyRaw): AdminFormProperty {
     // Location
     city: db.location || 'Marrakech',
     district: db.district || '',
+    sub_district: db.sub_district || '',
     address: db.address || '',
     map_location: db.map_url || '',
     // Pricing

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
-  ArrowLeft, Save, Eye, Bed, Trash2,
+  ArrowLeft, Save, Eye, Bed, Trash2, Plus, Users, Sofa, Bath,
   MapPin, DollarSign, Image as ImageIcon, Globe, Settings2, Car, Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,11 @@ import { updatePropertyAction, addPropertyImageAction, deletePropertyImageAction
 
 // Import the AdminFormProperty type from the adapter
 import type { AdminFormProperty } from '@/lib/adapters/admin-property-adapter'
-import { MAIN_DISTRICTS, MEDINA_DISTRICTS, KASBAH_DISTRICTS } from '@/lib/types'
+import { 
+  MAIN_DISTRICTS, MEDINA_DISTRICTS, KASBAH_DISTRICTS,
+  BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
+  SleepingSpace, BedType, BED_TYPE_LABELS
+} from '@/lib/types'
 
 interface PropertyEditFormProps {
   property: AdminFormProperty
@@ -101,9 +105,78 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
     seoKeywords: '',      // NOT IN DB SCHEMA
   })
 
+  // Sleeping arrangements state - initialized from property.property_rooms if available
+  // Convert DB property_rooms format to SleepingSpace format
+  const [sleepingArrangements, setSleepingArrangements] = useState<SleepingSpace[]>(() => {
+    if (!property.property_rooms || property.property_rooms.length === 0) {
+      return []
+    }
+    return property.property_rooms.map(room => ({
+      roomName: room.room_name || 'Room',
+      roomType: room.room_name?.toLowerCase().includes('living') ? 'living-room' : 'bedroom',
+      beds: [{
+        type: (room.bed_type as BedType) || 'double',
+        quantity: room.num_beds || 1
+      }],
+      ensuite: room.has_bathroom || false
+    }))
+  })
+
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setSaveSuccess(false)
+  }
+
+  // Sleeping arrangements management functions
+  const addBedroom = () => {
+    const newRoom: SleepingSpace = {
+      roomName: `Bedroom ${sleepingArrangements.filter(r => r.roomType === 'bedroom').length + 1}`,
+      roomType: 'bedroom',
+      beds: [{ type: 'double', quantity: 1 }],
+      ensuite: false
+    }
+    setSleepingArrangements([...sleepingArrangements, newRoom])
+  }
+
+  const addLivingRoom = () => {
+    const newRoom: SleepingSpace = {
+      roomName: 'Living Room',
+      roomType: 'living-room',
+      beds: [{ type: 'sofa-bed-double', quantity: 1 }],
+      notes: 'Additional sleeping space'
+    }
+    setSleepingArrangements([...sleepingArrangements, newRoom])
+  }
+
+  const removeRoom = (index: number) => {
+    setSleepingArrangements(sleepingArrangements.filter((_, i) => i !== index))
+  }
+
+  const updateRoom = (index: number, updates: Partial<SleepingSpace>) => {
+    setSleepingArrangements(sleepingArrangements.map((room, i) => 
+      i === index ? { ...room, ...updates } : room
+    ))
+  }
+
+  const addBedToRoom = (roomIndex: number) => {
+    const room = sleepingArrangements[roomIndex]
+    updateRoom(roomIndex, {
+      beds: [...room.beds, { type: 'single', quantity: 1 }]
+    })
+  }
+
+  const removeBedFromRoom = (roomIndex: number, bedIndex: number) => {
+    const room = sleepingArrangements[roomIndex]
+    updateRoom(roomIndex, {
+      beds: room.beds.filter((_, i) => i !== bedIndex)
+    })
+  }
+
+  const updateBed = (roomIndex: number, bedIndex: number, updates: Partial<{ type: BedType; quantity: number }>) => {
+    const room = sleepingArrangements[roomIndex]
+    updateRoom(roomIndex, {
+      beds: room.beds.map((bed, i) => i === bedIndex ? { ...bed, ...updates } : bed)
+    })
   }
 
   const handleSave = async (publish = false) => {
@@ -148,7 +221,8 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         featured: formData.featured,
         airbnb_ical_url: formData.airbnbIcalUrl,
         booking_ical_url: formData.bookingIcalUrl,
-        internal_ical_url: formData.internalIcalUrl
+        internal_ical_url: formData.internalIcalUrl,
+        sleeping_arrangements: sleepingArrangements
       }
 
       // Call action and CHECK the result
@@ -430,64 +504,285 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
 
           {/* Capacity Section */}
           {activeSection === 'capacity' && (
-            <div className="bg-card rounded-xl border border-border p-6 space-y-6">
-              <h3 className="text-lg font-semibold">Capacity & Rooms</h3>
-              
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="bedrooms">Number of Bedrooms</Label>
-                  <Input
-                    id="bedrooms"
-                    type="number"
-                    min="1"
-                    value={formData.numberOfBedrooms}
-                    onChange={(e) => handleInputChange('numberOfBedrooms', parseInt(e.target.value) || 1)}
-                  />
+            <div className="space-y-6">
+              {/* Room Configuration */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Bed className="w-5 h-5 text-primary" />
+                  Room Configuration
+                </h2>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Bed className="w-4 h-4 text-primary" />
+                      Bedrooms
+                    </Label>
+                    <Select
+                      value={formData.numberOfBedrooms.toString()}
+                      onValueChange={(value) => handleInputChange('numberOfBedrooms', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BEDROOM_OPTIONS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value.toString()}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Bath className="w-4 h-4 text-primary" />
+                      Bathrooms
+                    </Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={formData.numberOfBathrooms}
+                      onChange={(e) => handleInputChange('numberOfBathrooms', parseInt(e.target.value) || 1)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Guest Capacity */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Guest Capacity
+                </h2>
+                <p className="text-sm text-muted-foreground -mt-4">
+                  Specify how many guests can be accommodated in different sleeping areas
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-muted/30 rounded-xl p-4">
+                    <Label className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Bed className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <span className="block font-medium">Bedroom Guests</span>
+                        <span className="text-xs text-muted-foreground">In bedrooms only</span>
+                      </div>
+                    </Label>
+                    <Select
+                      value={formData.bedroomGuestCapacity.toString()}
+                      onValueChange={(value) => {
+                        const bedroomCapacity = parseInt(value)
+                        handleInputChange('bedroomGuestCapacity', bedroomCapacity)
+                        handleInputChange('totalGuestCapacity', bedroomCapacity + formData.additionalGuestCapacity)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GUEST_CAPACITY_OPTIONS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value.toString()}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="bg-muted/30 rounded-xl p-4">
+                    <Label className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                        <Sofa className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <span className="block font-medium">Additional Guests</span>
+                        <span className="text-xs text-muted-foreground">Sofa beds, etc.</span>
+                      </div>
+                    </Label>
+                    <Select
+                      value={formData.additionalGuestCapacity.toString()}
+                      onValueChange={(value) => {
+                        const additionalCapacity = parseInt(value)
+                        handleInputChange('additionalGuestCapacity', additionalCapacity)
+                        handleInputChange('totalGuestCapacity', formData.bedroomGuestCapacity + additionalCapacity)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">None</SelectItem>
+                        {[1, 2, 3, 4, 5, 6].map(n => (
+                          <SelectItem key={n} value={n.toString()}>
+                            {n} guest{n > 1 ? 's' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
+                    <Label className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <span className="block font-medium">Total Capacity</span>
+                        <span className="text-xs text-muted-foreground">Auto-calculated</span>
+                      </div>
+                    </Label>
+                    <div className="text-2xl font-semibold text-primary">
+                      {formData.totalGuestCapacity} guests
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      = {formData.bedroomGuestCapacity} (bedrooms) + {formData.additionalGuestCapacity} (additional)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sleeping Arrangements */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">Detailed Sleeping Arrangements</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Specify beds and bathroom facilities in each room
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={addBedroom}>
+                      <Plus className="w-3 h-3 mr-1" />
+                      Bedroom
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={addLivingRoom}>
+                      <Plus className="w-3 h-3 mr-1" />
+                      Living Room
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="bathrooms">Number of Bathrooms</Label>
-                  <Input
-                    id="bathrooms"
-                    type="number"
-                    min="1"
-                    value={formData.numberOfBathrooms}
-                    onChange={(e) => handleInputChange('numberOfBathrooms', parseInt(e.target.value) || 1)}
-                  />
-                </div>
+                {sleepingArrangements.length === 0 ? (
+                  <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                    <Bed className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No sleeping arrangements defined yet.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add bedrooms and living rooms to specify beds in each space.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {sleepingArrangements.map((room, roomIndex) => (
+                      <div 
+                        key={roomIndex}
+                        className="bg-muted/30 rounded-xl p-4 border border-border/50"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            {room.roomType === 'bedroom' ? (
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Bed className="w-4 h-4 text-primary" />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                <Sofa className="w-4 h-4 text-amber-600" />
+                              </div>
+                            )}
+                            <div>
+                              <Input
+                                value={room.roomName}
+                                onChange={(e) => updateRoom(roomIndex, { roomName: e.target.value })}
+                                className="font-medium h-8 w-40"
+                              />
+                              <span className="text-xs text-muted-foreground capitalize">
+                                {room.roomType.replace('-', ' ')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {room.roomType === 'bedroom' && (
+                              <label className="flex items-center gap-2 text-sm">
+                                <Switch
+                                  checked={room.ensuite || false}
+                                  onCheckedChange={(checked) => updateRoom(roomIndex, { ensuite: checked })}
+                                />
+                                <span className="text-muted-foreground">Ensuite</span>
+                              </label>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRoom(roomIndex)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="bedroomCapacity">Bedroom Guest Capacity</Label>
-                  <Input
-                    id="bedroomCapacity"
-                    type="number"
-                    min="1"
-                    value={formData.bedroomGuestCapacity}
-                    onChange={(e) => handleInputChange('bedroomGuestCapacity', parseInt(e.target.value) || 1)}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="additionalCapacity">Additional Guest Capacity</Label>
-                  <Input
-                    id="additionalCapacity"
-                    type="number"
-                    min="0"
-                    value={formData.additionalGuestCapacity}
-                    onChange={(e) => handleInputChange('additionalGuestCapacity', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="totalCapacity">Total Guest Capacity</Label>
-                  <Input
-                    id="totalCapacity"
-                    type="number"
-                    min="1"
-                    value={formData.totalGuestCapacity}
-                    onChange={(e) => handleInputChange('totalGuestCapacity', parseInt(e.target.value) || 1)}
-                  />
-                </div>
+                        {/* Beds in this room */}
+                        <div className="space-y-2 pl-11">
+                          {room.beds.map((bed, bedIndex) => (
+                            <div key={bedIndex} className="flex items-center gap-2">
+                              <Select
+                                value={bed.type}
+                                onValueChange={(value) => updateBed(roomIndex, bedIndex, { type: value as BedType })}
+                              >
+                                <SelectTrigger className="w-48">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(BED_TYPE_LABELS).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-muted-foreground">x</span>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="4"
+                                value={bed.quantity}
+                                onChange={(e) => updateBed(roomIndex, bedIndex, { quantity: parseInt(e.target.value) || 1 })}
+                                className="w-16"
+                              />
+                              {room.beds.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeBedFromRoom(roomIndex, bedIndex)}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => addBedToRoom(roomIndex)}
+                            className="text-primary"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add Bed
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
