@@ -340,7 +340,7 @@ export async function calculatePrice(
   // Get property base price
   const { data: property } = await supabase
     .from('properties')
-    .select('base_price')
+    .select('price_per_night')
     .eq('id', propertyId)
     .single()
   
@@ -348,7 +348,7 @@ export async function calculatePrice(
     return { data: null, error: 'Property not found' }
   }
   
-  const basePrice = property.base_price || 100
+  const basePrice = property.price_per_night || 100
   
   // Get all pricing rules for this property
   const { data: rules } = await supabase
@@ -517,7 +517,7 @@ export async function getCalendarPrices(
   // Get property base price
   const { data: property } = await supabase
     .from('properties')
-    .select('base_price')
+    .select('price_per_night')
     .eq('id', propertyId)
     .single()
   
@@ -525,7 +525,7 @@ export async function getCalendarPrices(
     return { data: null, error: 'Property not found' }
   }
   
-  const basePrice = property.base_price || 100
+  const basePrice = property.price_per_night || 100
   
   // Get all pricing rules
   const { data: rules } = await supabase
