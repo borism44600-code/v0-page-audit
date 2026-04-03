@@ -26,6 +26,7 @@ import { updatePropertyAction, addPropertyImageAction, deletePropertyImageAction
 
 // Import the AdminFormProperty type from the adapter
 import type { AdminFormProperty } from '@/lib/adapters/admin-property-adapter'
+import { MAIN_DISTRICTS, MEDINA_DISTRICTS, KASBAH_DISTRICTS } from '@/lib/types'
 
 interface PropertyEditFormProps {
   property: AdminFormProperty
@@ -70,6 +71,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
     // Location
     city: property.city || 'Marrakech',
     district: property.district || '',
+    subDistrict: property.sub_district || '',
     address: property.address || '',
     mapLocation: property.map_location || '',
     // Capacity
@@ -127,6 +129,7 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
         description_long: formData.description,
         city: formData.city,
         district: formData.district,
+        sub_district: formData.subDistrict,
         address: formData.address,
         map_location: formData.mapLocation,
         price_per_night: formData.pricePerNight,
@@ -364,14 +367,42 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="district">District</Label>
-                  <Input
-                    id="district"
-                    value={formData.district}
-                    onChange={(e) => handleInputChange('district', e.target.value)}
-                    placeholder="e.g., Medina, Gueliz, Palmeraie"
-                  />
+                  <Label htmlFor="district">District / Quarter</Label>
+                  <Select value={formData.district} onValueChange={(v) => handleInputChange('district', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAIN_DISTRICTS.map(district => (
+                        <SelectItem key={district} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {/* Sub-district for Medina or Kasbah */}
+                {(formData.district === 'Medina of Marrakech' || formData.district === 'Kasbah Royal District') && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="subDistrict">Sub-District / Area</Label>
+                    <Select 
+                      value={formData.subDistrict || ''} 
+                      onValueChange={(v) => handleInputChange('subDistrict', v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select sub-district (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(formData.district === 'Kasbah Royal District' ? KASBAH_DISTRICTS : MEDINA_DISTRICTS).map(sub => (
+                          <SelectItem key={sub} value={sub}>
+                            {sub}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="grid gap-2">
                   <Label htmlFor="address">Address</Label>
