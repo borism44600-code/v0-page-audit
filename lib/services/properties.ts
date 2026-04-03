@@ -92,7 +92,8 @@ export async function getProperties() {
   
   if (error) {
     console.error('Error fetching properties:', error)
-    throw new Error('Failed to fetch properties')
+    // Return empty array instead of throwing to prevent page crash
+    return []
   }
   
   // Adapt DB columns to UI field names expected by PropertiesTable

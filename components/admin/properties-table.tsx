@@ -79,11 +79,18 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const filteredProperties = properties.filter(property =>
-    property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (property.district?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    property.city.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Safety: ensure properties is always an array
+  const safeProperties = Array.isArray(properties) ? properties : []
+
+  const filteredProperties = safeProperties.filter(property => {
+    if (!property) return false
+    const title = property.title || ''
+    const district = property.district || ''
+    const city = property.city || ''
+    return title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      district.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      city.toLowerCase().includes(searchQuery.toLowerCase())
+  })
 
   const getCoverImage = (property: Property) => {
     const coverImage = property.property_images?.find(img => img.is_cover)
@@ -258,7 +265,7 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
 
       {/* Summary */}
       <div className="text-sm text-muted-foreground">
-        Showing {filteredProperties.length} of {properties.length} properties
+        Showing {filteredProperties.length} of {safeProperties.length} properties
       </div>
 
       {/* Delete Confirmation Dialog */}

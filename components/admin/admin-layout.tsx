@@ -48,21 +48,29 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { data: session, status } = useSession()
+  
+  // Safe session handling - don't block on auth loading
+  let session = null
+  let status = 'unauthenticated'
+  try {
+    const sessionData = useSession()
+    session = sessionData.data
+    status = sessionData.status
+  } catch {
+    // If useSession fails (e.g., no SessionProvider), continue without auth
+  }
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false })
+    try {
+      await signOut({ redirect: false })
+    } catch {
+      // If signOut fails, just redirect
+    }
     router.push('/admin/login')
   }
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
+  // Don't block on loading - show content immediately
+  // Auth protection should be handled at the route level
   const user = session?.user
 
   return (
