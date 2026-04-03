@@ -28,6 +28,7 @@ import { updatePropertyAction, addPropertyImageAction, deletePropertyImageAction
 // Import the AdminFormProperty type from the adapter
 import type { AdminFormProperty } from '@/lib/adapters/admin-property-adapter'
 import { PropertyServicesForm } from './property-services-form'
+import { PropertyPricingForm } from './property-pricing-form'
 import { 
   MAIN_DISTRICTS, MEDINA_DISTRICTS, KASBAH_DISTRICTS,
   BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
@@ -991,25 +992,14 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                 </div>
               </div>
 
-              {/* Non-persisted field - kept for future use */}
-              <div className="border-t border-border pt-4 mt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <h4 className="text-sm font-medium text-muted-foreground">Additional (not saved to database)</h4>
-                  <Badge variant="outline" className="text-xs">UI Only</Badge>
-                </div>
-                <div className="grid gap-2 opacity-60">
-                  <Label htmlFor="serviceFee">Service Fee (EUR)</Label>
-                  <Input
-                    id="serviceFee"
-                    type="number"
-                    min="0"
-                    value={formData.serviceFee}
-                    onChange={(e) => handleInputChange('serviceFee', parseFloat(e.target.value) || 0)}
-                    className="max-w-xs"
-                  />
-                  <p className="text-xs text-muted-foreground">This field is not yet connected to the database.</p>
-                </div>
-              </div>
+            </div>
+            
+            {/* Advanced Pricing Management */}
+            <div className="mt-6">
+              <PropertyPricingForm 
+                propertyId={property.id} 
+                basePrice={formData.pricePerNight}
+              />
             </div>
           )}
 
