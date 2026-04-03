@@ -54,13 +54,19 @@ export function PropertyServicesForm({ propertyId }: PropertyServicesFormProps) 
 
   // Load existing pricing
   useEffect(() => {
+    let isMounted = true
+    
     async function loadPricing() {
       const existing = await getPropertyServicePricing(propertyId)
-      if (existing) {
+      if (isMounted && existing) {
         setPricing(existing)
       }
     }
     loadPricing()
+    
+    return () => {
+      isMounted = false
+    }
   }, [propertyId])
 
   const handleSave = () => {

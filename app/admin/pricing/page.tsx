@@ -80,6 +80,8 @@ export default function AdminPricingPage() {
 
   // Fetch properties from database
   useEffect(() => {
+    let isMounted = true
+    
     async function fetchProperties() {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -87,7 +89,7 @@ export default function AdminPricingPage() {
         .select('id, name_en')
         .order('created_at', { ascending: false })
       
-      if (!error && data) {
+      if (isMounted && !error && data) {
         setProperties(data)
         if (data.length > 0 && !selectedProperty) {
           setSelectedProperty(data[0].id)
@@ -95,6 +97,10 @@ export default function AdminPricingPage() {
       }
     }
     fetchProperties()
+    
+    return () => {
+      isMounted = false
+    }
   }, [])
   const [seasonDialogOpen, setSeasonDialogOpen] = useState(false)
   const [extraDialogOpen, setExtraDialogOpen] = useState(false)

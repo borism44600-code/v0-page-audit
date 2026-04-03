@@ -14,12 +14,20 @@ export function PropertyServices({ propertyId }: PropertyServicesProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    
     async function loadServices() {
       const data = await getPropertyServicePricing(propertyId)
-      setPricing(data)
-      setLoading(false)
+      if (isMounted) {
+        setPricing(data)
+        setLoading(false)
+      }
     }
     loadServices()
+    
+    return () => {
+      isMounted = false
+    }
   }, [propertyId])
 
   if (loading) {

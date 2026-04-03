@@ -67,53 +67,63 @@ export function PropertyPricingForm({ propertyId, basePrice }: PropertyPricingFo
   const [newBlockType, setNewBlockType] = useState<'manual' | 'maintenance' | 'owner_use'>('manual')
   
   useEffect(() => {
-    loadData()
-  }, [propertyId])
-  
-  async function loadData() {
-    setLoading(true)
-    setError(null)
+    let isMounted = true
     
-    try {
-      // Load pricing rules
-      const { data: rules, error: rulesError } = await getPricingRules(propertyId)
-      if (rulesError) throw new Error(rulesError)
+    async function loadData() {
+      setLoading(true)
+      setError(null)
       
-      if (rules) {
-        // Separate rules by type
-        const monthly = rules.filter(r => r.rule_type === 'monthly')
-        const periods = rules.filter(r => r.rule_type === 'period')
-        const dates = rules.filter(r => r.rule_type === 'date_override')
+      try {
+        // Load pricing rules
+        const { data: rules, error: rulesError } = await getPricingRules(propertyId)
+        if (rulesError) throw new Error(rulesError)
         
-        // Map monthly rules to state
-        if (monthly.length > 0) {
-          setMonthlyPrices(MONTHS.map((_, i) => {
-            const rule = monthly.find(r => r.month === i + 1)
-            return {
-              month: i + 1,
-              price: rule?.price_per_night || basePrice,
-              minNights: rule?.min_nights || 1
-            }
-          }))
+        if (isMounted && rules) {
+          // Separate rules by type
+          const monthly = rules.filter(r => r.rule_type === 'monthly')
+          const periods = rules.filter(r => r.rule_type === 'period')
+          const dates = rules.filter(r => r.rule_type === 'date_override')
+          
+          // Map monthly rules to state
+          if (monthly.length > 0) {
+            setMonthlyPrices(MONTHS.map((_, i) => {
+              const rule = monthly.find(r => r.month === i + 1)
+              return {
+                month: i + 1,
+                price: rule?.price_per_night || basePrice,
+                minNights: rule?.min_nights || 1
+              }
+            }))
+          }
+          
+          setPeriodRules(periods)
+          setDateOverrides(dates)
         }
         
-        setPeriodRules(periods)
-        setDateOverrides(dates)
+        // Load blocked dates
+        const { data: blocks, error: blocksError } = await getBlockedDates(propertyId)
+        if (blocksError) throw new Error(blocksError)
+        
+        if (isMounted && blocks) {
+          setBlockedDates(blocks)
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load pricing data')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
       }
-      
-      // Load blocked dates
-      const { data: blocks, error: blocksError } = await getBlockedDates(propertyId)
-      if (blocksError) throw new Error(blocksError)
-      
-      if (blocks) {
-        setBlockedDates(blocks)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load pricing data')
-    } finally {
-      setLoading(false)
     }
-  }
+    
+    loadData()
+    
+    return () => {
+      isMounted = false
+    }
+  }, [propertyId, basePrice])
   
   async function handleSaveMonthlyPrices() {
     setSaving(true)

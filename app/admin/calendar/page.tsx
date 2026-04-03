@@ -50,6 +50,8 @@ export default function AdminCalendarPage() {
 
   // Fetch properties from database
   useEffect(() => {
+    let isMounted = true
+    
     async function fetchProperties() {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -57,27 +59,41 @@ export default function AdminCalendarPage() {
         .select('id, name_en, slug, category, district, cover_image, property_images(is_primary, media:media_id(blob_url))')
         .order('created_at', { ascending: false })
       
-      if (!error && data) {
+      if (isMounted && !error && data) {
         setProperties(data)
       }
     }
     fetchProperties()
+    
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // Fetch all sync statuses
   useEffect(() => {
+    let isMounted = true
+    
     const fetchStatuses = async () => {
       try {
         const response = await fetch('/api/ical/sync')
         const data = await response.json()
-        setSyncStatuses(data.properties || [])
+        if (isMounted) {
+          setSyncStatuses(data.properties || [])
+        }
       } catch (error) {
         console.error('Failed to fetch sync statuses:', error)
       } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
     fetchStatuses()
+    
+    return () => {
+      isMounted = false
+    }
   }, [selectedProperty]) // Refetch when dialog closes
 
   const getPropertyStatus = (propertyId: string): PropertySyncStatus | undefined => {

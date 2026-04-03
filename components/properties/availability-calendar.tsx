@@ -47,6 +47,8 @@ export function AvailabilityCalendar({
 
   // Load unavailable dates from database
   useEffect(() => {
+    let isMounted = true
+    
     async function loadData() {
       setLoading(true)
       try {
@@ -60,7 +62,7 @@ export function AvailabilityCalendar({
           format(end, 'yyyy-MM-dd')
         )
         
-        if (unavailableData) {
+        if (isMounted && unavailableData) {
           setUnavailableDates(unavailableData)
         }
         
@@ -72,18 +74,24 @@ export function AvailabilityCalendar({
             format(end, 'yyyy-MM-dd')
           )
           
-          if (pricesData) {
+          if (isMounted && pricesData) {
             setPrices(pricesData)
           }
         }
       } catch (error) {
         console.error('Error loading calendar data:', error)
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
     
     loadData()
+    
+    return () => {
+      isMounted = false
+    }
   }, [propertyId, currentMonth, compact, showPrices])
 
   const isDateUnavailable = (date: Date) => {

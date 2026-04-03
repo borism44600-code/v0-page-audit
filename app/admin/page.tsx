@@ -125,6 +125,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    
     async function fetchProperties() {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -133,12 +135,18 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false })
         .limit(4)
       
-      if (!error && data) {
+      if (isMounted && !error && data) {
         setProperties(data)
       }
-      setLoading(false)
+      if (isMounted) {
+        setLoading(false)
+      }
     }
     fetchProperties()
+    
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const getPropertyImage = (p: DbProperty) => {
