@@ -27,6 +27,7 @@ import { updatePropertyAction, addPropertyImageAction, deletePropertyImageAction
 
 // Import the AdminFormProperty type from the adapter
 import type { AdminFormProperty } from '@/lib/adapters/admin-property-adapter'
+import { PropertyServicesForm } from './property-services-form'
 import { 
   MAIN_DISTRICTS, MEDINA_DISTRICTS, KASBAH_DISTRICTS,
   BEDROOM_OPTIONS, GUEST_CAPACITY_OPTIONS,
@@ -51,6 +52,7 @@ const sections: FormSection[] = [
   { id: 'capacity', title: 'Capacity', icon: Bed },
   { id: 'features', title: 'Features', icon: Sparkles },
   { id: 'pricing', title: 'Pricing', icon: DollarSign },
+  { id: 'services', title: 'Services', icon: Users },
   { id: 'parking', title: 'Parking', icon: Car },
   { id: 'sync', title: 'Sync', icon: Globe },
   { id: 'seo', title: 'SEO', icon: Globe },
@@ -1009,6 +1011,11 @@ export function PropertyEditForm({ property }: PropertyEditFormProps) {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Services Section */}
+          {activeSection === 'services' && (
+            <PropertyServicesForm propertyId={property.id} />
           )}
 
           {/* Parking Section */}

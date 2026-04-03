@@ -14,6 +14,7 @@ import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { ImageGallery } from '@/components/properties/image-gallery'
 import { AvailabilityCalendar } from '@/components/properties/availability-calendar'
+import { PropertyServices } from '@/components/properties/property-services'
 import { Button } from '@/components/ui/button'
 import { MiniTestimonial } from '@/components/ui/social-proof'
 import { getPropertyBySlugClient as fetchPropertyBySlug } from '@/lib/data-fetcher-client'
@@ -360,40 +361,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 onBookingClick={() => window.location.href = `/booking?property=${property.id}`}
               />
 
-              {/* Services Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-xl font-semibold mb-6">Experiences &amp; Services</h2>
-                <p className="text-muted-foreground mb-4">
-                  Enhance your stay with our premium services, available on request.
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  {[
-                    { icon: Utensils, label: 'Private Chef' },
-                    { icon: Mountain, label: 'Excursions' },
-                    { icon: Sparkles, label: 'Spa & Wellness' },
-                    { icon: Car, label: 'Airport Transfer' }
-                  ].map((service) => (
-                    <div 
-                      key={service.label}
-                      className="flex flex-col items-center gap-2 p-4 bg-card rounded-lg border border-border text-center"
-                    >
-                      <service.icon className="w-6 h-6 text-primary" />
-                      <span className="text-sm font-medium">{service.label}</span>
-                    </div>
-                  ))}
-                </div>
-                <Link href="/services" className="inline-block">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    View All Services
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </motion.div>
+              {/* Services Section - Real data from database */}
+              <PropertyServices propertyId={property.id} />
             </div>
 
             {/* Sidebar - Booking Card */}
